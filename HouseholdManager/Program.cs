@@ -1,7 +1,11 @@
 using HouseholdManager.Data;
 using HouseholdManager.Models;
-using Microsoft.EntityFrameworkCore;
+using HouseholdManager.Repositories.Implementations;
+using HouseholdManager.Repositories.Interfaces;
+using HouseholdManager.Services.Implementations;
+using HouseholdManager.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +30,14 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+// Repository registration
+builder.Services.AddScoped<IHouseholdRepository, HouseholdRepository>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IHouseholdMemberRepository, HouseholdMemberRepository>();
+
+//// Domain Service registration
+//builder.Services.AddScoped<IHouseholdService, HouseholdService>();
 
 var app = builder.Build();
 
