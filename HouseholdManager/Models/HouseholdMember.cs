@@ -1,25 +1,27 @@
 ﻿using HouseholdManager.Models.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HouseholdManager.Models
 {
     /// <summary>
-    /// Relationship between a user and a household with a role
+    /// Junction table linking users to households with roles
     /// Allows one user to have different roles in different households
     /// </summary>
+    [Table("HouseholdMembers")]
     public class HouseholdMember
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        /// <summary>
-        /// User ID (link to ApplicationUser)
+        // <summary>
+        /// Foreign key to ApplicationUser
         /// </summary>
         [Required]
-        [StringLength(450)] // Standard length for Identity UserId
+        [StringLength(450)]
         public string UserId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Household ID
+        /// Foreign key to Household
         /// </summary>
         [Required]
         public Guid HouseholdId { get; set; }
@@ -36,11 +38,18 @@ namespace HouseholdManager.Models
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
-
         /// <summary>
         /// The user who is a member of the household
         /// </summary>
+        [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; } = null!;
+
+        // <summary>
+        /// The household the user belongs to
+        /// </summary>
+        [ForeignKey("HouseholdId")]
+        [InverseProperty(nameof(Household.Members))]
+        public virtual Household Household { get; set; } = null!;
 
         /// <summary>
         /// Checks if this member is the owner of the household

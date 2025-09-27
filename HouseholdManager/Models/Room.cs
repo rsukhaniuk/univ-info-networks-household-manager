@@ -1,0 +1,50 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace HouseholdManager.Models
+{
+    /// <summary>
+    /// Represents a room within a household that can have tasks assigned to it
+    /// </summary>
+    [Table("Rooms")]
+    public class Room
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Relative path to room photo (stored in wwwroot/uploads)
+        /// </summary>
+        [StringLength(260)]
+        public string? PhotoPath { get; set; }
+
+        /// <summary>
+        /// Cleaning priority (1 = low, 10 = high)
+        /// </summary>
+        [Range(1, 10)]
+        public int Priority { get; set; } = 5;
+
+        /// <summary>
+        /// Foreign key to Household
+        /// </summary>
+        [Required]
+        public Guid HouseholdId { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation properties
+        /// <summary>
+        /// The household this room belongs to
+        /// </summary>
+        [ForeignKey("HouseholdId")]
+        public virtual Household Household { get; set; } = null!;
+
+
+    }
+}

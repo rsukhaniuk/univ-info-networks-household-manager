@@ -10,5 +10,12 @@ namespace HouseholdManager.Data
             : base(options)
         {
         }
+
+        // DbSets for domain models
+        public DbSet<Household> Households { get; set; }
+        public DbSet<HouseholdMember> HouseholdMembers { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        
+
     }
 }
