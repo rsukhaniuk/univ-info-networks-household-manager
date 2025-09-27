@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using univ_info_networks_lab1.Models;
+using HouseholdManager.Models;
 
-namespace univ_info_networks_lab1.Controllers
+namespace HouseholdManager.Controllers
 {
     public class HomeController : Controller
     {
@@ -27,6 +27,11 @@ namespace univ_info_networks_lab1.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        public IActionResult About()
+        {
+            return View();
         }
     }
 }

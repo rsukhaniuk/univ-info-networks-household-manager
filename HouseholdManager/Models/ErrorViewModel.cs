@@ -1,4 +1,4 @@
-namespace univ_info_networks_lab1.Models
+namespace HouseholdManager.Models
 {
     public class ErrorViewModel
     {
