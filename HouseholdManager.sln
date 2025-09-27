@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36511.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager", "HouseholdManager\HouseholdManager.csproj", "{75548D5C-69EA-44CC-A896-31AFF93C9272}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Tests", "HouseholdManager.Tests\HouseholdManager.Tests.csproj", "{4AB35E22-AE9C-4D9C-9726-26924A539383}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{75548D5C-69EA-44CC-A896-31AFF93C9272}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75548D5C-69EA-44CC-A896-31AFF93C9272}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75548D5C-69EA-44CC-A896-31AFF93C9272}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AB35E22-AE9C-4D9C-9726-26924A539383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AB35E22-AE9C-4D9C-9726-26924A539383}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AB35E22-AE9C-4D9C-9726-26924A539383}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AB35E22-AE9C-4D9C-9726-26924A539383}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
