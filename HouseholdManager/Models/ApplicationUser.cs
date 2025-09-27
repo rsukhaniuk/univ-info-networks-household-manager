@@ -48,6 +48,16 @@ namespace HouseholdManager.Models
         public virtual ICollection<HouseholdMember> HouseholdMemberships { get; set; } = new List<HouseholdMember>();
 
         /// <summary>
+        /// Tasks assigned to this user
+        /// </summary>
+        public virtual ICollection<HouseholdTask> AssignedTasks { get; set; } = new List<HouseholdTask>();
+
+        /// <summary>
+        /// Task executions performed by this user
+        /// </summary>
+        public virtual ICollection<TaskExecution> TaskExecutions { get; set; } = new List<TaskExecution>();
+
+        /// <summary>
         /// Checks if the user has the Owner role in a specific household
         /// </summary>
         public bool IsOwnerOf(Guid householdId)

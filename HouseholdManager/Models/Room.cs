@@ -6,7 +6,6 @@ namespace HouseholdManager.Models
     /// <summary>
     /// Represents a room within a household that can have tasks assigned to it
     /// </summary>
-    [Table("Rooms")]
     public class Room
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -34,6 +33,7 @@ namespace HouseholdManager.Models
         /// Foreign key to Household
         /// </summary>
         [Required]
+        [ForeignKey(nameof(Household))]
         public Guid HouseholdId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -42,9 +42,22 @@ namespace HouseholdManager.Models
         /// <summary>
         /// The household this room belongs to
         /// </summary>
-        [ForeignKey("HouseholdId")]
         public virtual Household Household { get; set; } = null!;
 
+        /// <summary>
+        /// Tasks assigned to this room
+        /// </summary>
+        [InverseProperty(nameof(HouseholdTask.Room))]
+        public virtual ICollection<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
 
+        /// <summary>
+        /// Get active tasks for this room
+        /// </summary>
+        public IEnumerable<HouseholdTask> ActiveTasks => Tasks.Where(t => t.IsActive);
+
+        /// <summary>
+        /// Get count of active tasks
+        /// </summary>
+        public int ActiveTaskCount => Tasks.Count(t => t.IsActive);
     }
 }

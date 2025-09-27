@@ -38,7 +38,10 @@ namespace HouseholdManager.Models
         /// </summary>
         public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
 
-        
+        /// <summary>
+        /// Tasks defined for this household
+        /// </summary>
+        public virtual ICollection<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
 
         /// <summary>
         /// Generate a new unique invite code

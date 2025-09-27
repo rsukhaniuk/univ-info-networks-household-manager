@@ -52,6 +52,13 @@ namespace HouseholdManager.Models
         public virtual Household Household { get; set; } = null!;
 
         /// <summary>
+        /// Task executions performed by this user in this household
+        /// </summary>
+        public virtual ICollection<TaskExecution> TaskExecutions { get; set; } = new List<TaskExecution>();
+
+        /// <summary>
+
+        /// <summary>
         /// Checks if this member is the owner of the household
         /// </summary>
         public bool IsOwner => Role == HouseholdRole.Owner;
