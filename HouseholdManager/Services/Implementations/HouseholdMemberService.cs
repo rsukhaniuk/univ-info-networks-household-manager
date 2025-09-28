@@ -12,15 +12,18 @@ namespace HouseholdManager.Services.Implementations
     {
         private readonly IHouseholdMemberRepository _memberRepository;
         private readonly IHouseholdRepository _householdRepository;
+        private readonly ITaskRepository _taskRepository;
         private readonly ILogger<HouseholdMemberService> _logger;
 
         public HouseholdMemberService(
             IHouseholdMemberRepository memberRepository,
             IHouseholdRepository householdRepository,
+            ITaskRepository taskRepository,
             ILogger<HouseholdMemberService> logger)
         {
             _memberRepository = memberRepository;
             _householdRepository = householdRepository;
+            _taskRepository = taskRepository;
             _logger = logger;
         }
 
@@ -98,10 +101,30 @@ namespace HouseholdManager.Services.Implementations
             return await _memberRepository.GetOwnerCountAsync(householdId, cancellationToken);
         }
 
-        //public async Task<Dictionary<string, int>> GetMemberTaskCountsAsync(Guid householdId, CancellationToken cancellationToken = default)
-        //{
-            
-        //}
+        public async Task<Dictionary<string, int>> GetMemberTaskCountsAsync(Guid householdId, CancellationToken cancellationToken = default)
+        {
+            var members = await _memberRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+            var taskCounts = new Dictionary<string, int>();
+
+            // Initialize all members with 0 tasks
+            foreach (var member in members)
+            {
+                taskCounts[member.UserId] = 0;
+            }
+
+            // Get active tasks and count by assigned user
+            var activeTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
+
+            foreach (var task in activeTasks.Where(t => !string.IsNullOrEmpty(t.AssignedUserId)))
+            {
+                if (taskCounts.ContainsKey(task.AssignedUserId!))
+                {
+                    taskCounts[task.AssignedUserId!]++;
+                }
+            }
+
+            return taskCounts;
+        }
 
         // Validation
         public async Task ValidateMemberAccessAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)

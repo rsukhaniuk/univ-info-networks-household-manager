@@ -22,7 +22,7 @@ namespace HouseholdManager.Services.Interfaces
         // Member statistics
         Task<int> GetMemberCountAsync(Guid householdId, CancellationToken cancellationToken = default);
         Task<int> GetOwnerCountAsync(Guid householdId, CancellationToken cancellationToken = default);
-        //Task<Dictionary<string, int>> GetMemberTaskCountsAsync(Guid householdId, CancellationToken cancellationToken = default);
+        Task<Dictionary<string, int>> GetMemberTaskCountsAsync(Guid householdId, CancellationToken cancellationToken = default);
 
         // Validation
         Task ValidateMemberAccessAsync(Guid householdId, string userId, CancellationToken cancellationToken = default);
