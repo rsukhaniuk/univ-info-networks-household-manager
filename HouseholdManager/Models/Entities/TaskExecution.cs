@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HouseholdManager.Models
+namespace HouseholdManager.Models.Entities
 {
     /// <summary>
     /// Represents a completed task execution with optional photo and notes

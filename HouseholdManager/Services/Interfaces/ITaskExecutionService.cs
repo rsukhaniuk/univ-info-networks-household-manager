@@ -1,4 +1,4 @@
-﻿using HouseholdManager.Models;
+﻿using HouseholdManager.Models.Entities;
 
 namespace HouseholdManager.Services.Interfaces
 {

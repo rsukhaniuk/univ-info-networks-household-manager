@@ -1,4 +1,4 @@
-namespace HouseholdManager.Models
+namespace HouseholdManager.Models.Entities
 {
     public class ErrorViewModel
     {

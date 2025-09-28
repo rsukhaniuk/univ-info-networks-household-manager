@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HouseholdManager.Models
+namespace HouseholdManager.Models.Entities
 {
     /// <summary>
     /// Junction table linking users to households with roles

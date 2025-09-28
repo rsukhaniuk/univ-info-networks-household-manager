@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
-namespace HouseholdManager.Models
+namespace HouseholdManager.Models.Entities
 {
     public class ApplicationUser : IdentityUser
     {

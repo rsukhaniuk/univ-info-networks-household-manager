@@ -1,5 +1,5 @@
 using HouseholdManager.Data;
-using HouseholdManager.Models;
+using HouseholdManager.Models.Entities;
 using HouseholdManager.Repositories.Implementations;
 using HouseholdManager.Repositories.Interfaces;
 using HouseholdManager.Services.Implementations;

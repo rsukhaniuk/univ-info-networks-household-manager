@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HouseholdManager.Models
+namespace HouseholdManager.Models.Entities
 {
     /// <summary>
     /// Represents a room within a household that can have tasks assigned to it

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using HouseholdManager.Models.Enums;
 
-namespace HouseholdManager.Models
+namespace HouseholdManager.Models.Entities
 {
     /// <summary>
     /// Represents a household task that can be assigned and tracked

@@ -1,4 +1,4 @@
-﻿using HouseholdManager.Models;
+﻿using HouseholdManager.Models.Entities;
 using HouseholdManager.Models.Enums;
 
 namespace HouseholdManager.Services.Interfaces
