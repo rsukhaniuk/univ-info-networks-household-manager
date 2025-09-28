@@ -313,6 +313,54 @@ namespace HouseholdManager.Tests.Services
 
         [Test]
         [Category("HouseholdService")]
+        [Category("UpdateHousehold")]
+        public async Task UpdateHouseholdAsync_UpdatesHousehold_WhenUserIsOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var requestingUserId = "owner123";
+            var existing = new Household
+            {
+                Id = householdId,
+                Name = "Old Name",
+                Description = "Old Description",
+                InviteCode = Guid.NewGuid()
+            };
+
+            _mockHouseholdRepository
+                .Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(existing);
+
+            _mockMemberRepository
+                .Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+
+            _mockHouseholdRepository
+                .Setup(r => r.UpdateAsync(It.IsAny<Household>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            var updated = new Household
+            {
+                Id = householdId,
+                Name = "Updated Name",
+                Description = "Updated Description"
+            };
+
+            // Act
+            await _householdService.UpdateHouseholdAsync(updated);
+
+            // Assert
+            _mockHouseholdRepository.Verify(r => r.UpdateAsync(
+                It.Is<Household>(h =>
+                    h.Id == householdId &&
+                    h.Name == "Updated Name" &&
+                    h.Description == "Updated Description"),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        [Category("HouseholdService")]
         [Category("RegenerateInviteCode")]
         public async Task RegenerateInviteCodeAsync_GeneratesNewCode_WhenUserIsOwner()
         {

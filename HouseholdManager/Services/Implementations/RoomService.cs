@@ -11,15 +11,18 @@ namespace HouseholdManager.Services.Implementations
     {
         private readonly IRoomRepository _roomRepository;
         private readonly IHouseholdService _householdService;
+        private readonly IFileUploadService _fileUploadService;
         private readonly ILogger<RoomService> _logger;
 
         public RoomService(
             IRoomRepository roomRepository,
             IHouseholdService householdService,
+            IFileUploadService fileUploadService,
             ILogger<RoomService> logger)
         {
             _roomRepository = roomRepository;
             _householdService = householdService;
+            _fileUploadService = fileUploadService;
             _logger = logger;
         }
 
@@ -80,20 +83,59 @@ namespace HouseholdManager.Services.Implementations
             if (room == null)
                 throw new InvalidOperationException("Room not found");
 
+            // Delete room photo if exists
+            if (!string.IsNullOrEmpty(room.PhotoPath))
+            {
+                await _fileUploadService.DeleteFileAsync(room.PhotoPath, cancellationToken);
+            }
+
             await _roomRepository.DeleteByIdAsync(id, cancellationToken);
             _logger.LogInformation("Deleted room {RoomId}", id);
         }
 
-        //// Photo management
-        //public async Task<string> UploadRoomPhotoAsync(Guid roomId, IFormFile photo, string requestingUserId, CancellationToken cancellationToken = default)
-        //{
-            
-        //}
+        // Photo management
+        public async Task<string> UploadRoomPhotoAsync(Guid roomId, IFormFile photo, string requestingUserId, CancellationToken cancellationToken = default)
+        {
+            await ValidateRoomOwnerAccessAsync(roomId, requestingUserId, cancellationToken);
 
-        //public async Task DeleteRoomPhotoAsync(Guid roomId, string requestingUserId, CancellationToken cancellationToken = default)
-        //{
-            
-        //}
+            var room = await _roomRepository.GetByIdAsync(roomId, cancellationToken);
+            if (room == null)
+                throw new InvalidOperationException("Room not found");
+
+            // Delete old photo if exists
+            if (!string.IsNullOrEmpty(room.PhotoPath))
+            {
+                await _fileUploadService.DeleteFileAsync(room.PhotoPath, cancellationToken);
+            }
+
+            // Upload new photo
+            var photoPath = await _fileUploadService.UploadRoomPhotoAsync(photo, cancellationToken);
+
+            // Update room
+            room.PhotoPath = photoPath;
+            await _roomRepository.UpdateAsync(room, cancellationToken);
+
+            _logger.LogInformation("Uploaded photo for room {RoomId}: {PhotoPath}", roomId, photoPath);
+            return photoPath;
+        }
+
+        public async Task DeleteRoomPhotoAsync(Guid roomId, string requestingUserId, CancellationToken cancellationToken = default)
+        {
+            await ValidateRoomOwnerAccessAsync(roomId, requestingUserId, cancellationToken);
+
+            var room = await _roomRepository.GetByIdAsync(roomId, cancellationToken);
+            if (room == null)
+                throw new InvalidOperationException("Room not found");
+
+            if (!string.IsNullOrEmpty(room.PhotoPath))
+            {
+                await _fileUploadService.DeleteFileAsync(room.PhotoPath, cancellationToken);
+                room.PhotoPath = null;
+                await _roomRepository.UpdateAsync(room, cancellationToken);
+
+                _logger.LogInformation("Deleted photo for room {RoomId}", roomId);
+            }
+        }
 
         // Validation
         public async Task<bool> IsNameUniqueInHouseholdAsync(string name, Guid householdId, Guid? excludeRoomId = null, CancellationToken cancellationToken = default)

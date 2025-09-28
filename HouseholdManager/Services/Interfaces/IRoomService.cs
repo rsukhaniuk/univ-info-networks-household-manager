@@ -15,9 +15,9 @@ namespace HouseholdManager.Services.Interfaces
         Task UpdateRoomAsync(Room room, string requestingUserId, CancellationToken cancellationToken = default);
         Task DeleteRoomAsync(Guid id, string requestingUserId, CancellationToken cancellationToken = default);
 
-        //// Photo management
-        //Task<string> UploadRoomPhotoAsync(Guid roomId, IFormFile photo, string requestingUserId, CancellationToken cancellationToken = default);
-        //Task DeleteRoomPhotoAsync(Guid roomId, string requestingUserId, CancellationToken cancellationToken = default);
+        // Photo management
+        Task<string> UploadRoomPhotoAsync(Guid roomId, IFormFile photo, string requestingUserId, CancellationToken cancellationToken = default);
+        Task DeleteRoomPhotoAsync(Guid roomId, string requestingUserId, CancellationToken cancellationToken = default);
 
         // Validation
         Task<bool> IsNameUniqueInHouseholdAsync(string name, Guid householdId, Guid? excludeRoomId = null, CancellationToken cancellationToken = default);
