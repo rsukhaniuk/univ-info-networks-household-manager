@@ -33,7 +33,6 @@ namespace HouseholdManager.Models.Entities
         /// Foreign key to Household
         /// </summary>
         [Required]
-        [ForeignKey(nameof(Household))]
         public Guid HouseholdId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -42,12 +41,13 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// The household this room belongs to
         /// </summary>
+        [ForeignKey("HouseholdId")]
         public virtual Household Household { get; set; } = null!;
 
         /// <summary>
         /// Tasks assigned to this room
         /// </summary>
-        [InverseProperty(nameof(HouseholdTask.Room))]
+        [InverseProperty("Room")]
         public virtual ICollection<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
 
         /// <summary>

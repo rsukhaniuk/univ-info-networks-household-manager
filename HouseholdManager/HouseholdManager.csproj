@@ -21,4 +21,15 @@
     <PackageReference Include="MockQueryable.Moq" Version="8.0.0" />
   </ItemGroup>
 
+	<ItemGroup>
+		<Folder Include="Migrations\_Archive\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Migrations\_Archive\**\*.cs" />
+		<EmbeddedResource Remove="Migrations\_Archive\**\*" />
+		<None Remove="Migrations\_Archive\**\*" />
+		<Content Remove="Migrations\_Archive\**\*" />
+	</ItemGroup>
+
 </Project>

@@ -73,25 +73,22 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// The household this task belongs to
         /// </summary>
-        [ForeignKey("HouseholdId")]
         public virtual Household Household { get; set; } = null!;
 
         /// <summary>
         /// The room this task is assigned to
         /// </summary>
-        [ForeignKey(nameof(RoomId))]
-        [InverseProperty(nameof(Room.Tasks))]
         public virtual Room Room { get; set; } = null!;
 
         /// <summary>
         /// The user assigned to this task (optional)
         /// </summary>
-        [ForeignKey("AssignedUserId")]
         public virtual ApplicationUser? AssignedUser { get; set; }
 
         /// <summary>
         /// Execution history for this task
         /// </summary>
+        [InverseProperty("Task")]
         public virtual ICollection<TaskExecution> Executions { get; set; } = new List<TaskExecution>();
 
         /// <summary>

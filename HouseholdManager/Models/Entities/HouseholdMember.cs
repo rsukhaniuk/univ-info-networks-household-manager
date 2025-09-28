@@ -13,7 +13,7 @@ namespace HouseholdManager.Models.Entities
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        // <summary>
+        /// <summary>
         /// Foreign key to ApplicationUser
         /// </summary>
         [Required]
@@ -41,22 +41,17 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// The user who is a member of the household
         /// </summary>
-        [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; } = null!;
 
-        // <summary>
+        /// <summary>
         /// The household the user belongs to
         /// </summary>
-        [ForeignKey("HouseholdId")]
-        [InverseProperty(nameof(Household.Members))]
         public virtual Household Household { get; set; } = null!;
 
         /// <summary>
         /// Task executions performed by this user in this household
         /// </summary>
         public virtual ICollection<TaskExecution> TaskExecutions { get; set; } = new List<TaskExecution>();
-
-        /// <summary>
 
         /// <summary>
         /// Checks if this member is the owner of the household

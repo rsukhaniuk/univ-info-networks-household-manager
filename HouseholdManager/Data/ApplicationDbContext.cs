@@ -22,6 +22,38 @@ namespace HouseholdManager.Data
         {
             base.OnModelCreating(builder);
 
+            // Configure HouseholdTask relationships explicitly
+            builder.Entity<HouseholdTask>()
+                .HasOne(ht => ht.Household)
+                .WithMany(h => h.Tasks)
+                .HasForeignKey(ht => ht.HouseholdId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<HouseholdTask>()
+                .HasOne(ht => ht.Room)
+                .WithMany(r => r.Tasks)
+                .HasForeignKey(ht => ht.RoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<HouseholdTask>()
+                .HasOne(ht => ht.AssignedUser)
+                .WithMany(u => u.AssignedTasks)
+                .HasForeignKey(ht => ht.AssignedUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure denormalized relationships in TaskExecution to avoid conflicts
+            builder.Entity<TaskExecution>()
+                .HasOne(te => te.Household)
+                .WithMany()
+                .HasForeignKey(te => te.HouseholdId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<TaskExecution>()
+                .HasOne(te => te.Room)
+                .WithMany()
+                .HasForeignKey(te => te.RoomId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             // Only configurations that CAN'T be done with Data Annotations
 
             // Unique composite constraint - user can only join household once
@@ -54,24 +86,6 @@ namespace HouseholdManager.Data
             builder.Entity<HouseholdTask>()
                 .Property(e => e.ScheduledWeekday)
                 .HasConversion<string>();
-
-            // Custom cascade behavior
-            builder.Entity<HouseholdTask>()
-                .HasOne(e => e.AssignedUser)
-                .WithMany(e => e.AssignedTasks)
-                .OnDelete(DeleteBehavior.SetNull); // Unassign when user deleted
-
-            builder.Entity<TaskExecution>()
-                .HasOne(e => e.User)
-                .WithMany(e => e.TaskExecutions)
-                .OnDelete(DeleteBehavior.Restrict); // Keep history when user deleted
-
-            // Performance indexes for common queries
-            builder.Entity<HouseholdTask>()
-                .HasIndex(e => new { e.HouseholdId, e.IsActive });
-
-            builder.Entity<TaskExecution>()
-                .HasIndex(e => new { e.UserId, e.WeekStarting });
         }
     }
 }

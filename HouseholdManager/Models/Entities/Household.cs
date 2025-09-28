@@ -30,17 +30,19 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// Members of this household with their roles
         /// </summary>
-        [InverseProperty(nameof(HouseholdMember.Household))]
+        [InverseProperty("Household")]
         public virtual ICollection<HouseholdMember> Members { get; set; } = new List<HouseholdMember>();
 
         /// <summary>
         /// Rooms in this household
         /// </summary>
+        [InverseProperty("Household")]
         public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
 
         /// <summary>
         /// Tasks defined for this household
         /// </summary>
+        [InverseProperty("Household")]
         public virtual ICollection<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
 
         /// <summary>
@@ -54,6 +56,7 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// Get all owners of this household
         /// </summary>
+        [NotMapped]
         public IEnumerable<HouseholdMember> Owners => Members.Where(m => m.IsOwner);
 
         /// <summary>

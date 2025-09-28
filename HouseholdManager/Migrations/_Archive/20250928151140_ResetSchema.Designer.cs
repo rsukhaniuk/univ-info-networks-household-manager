@@ -4,6 +4,7 @@ using HouseholdManager.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HouseholdManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250928151140_ResetSchema")]
+    partial class ResetSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,9 +204,6 @@ namespace HouseholdManager.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("RoomId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -226,11 +226,9 @@ namespace HouseholdManager.Migrations
 
                     b.HasIndex("AssignedUserId");
 
-                    b.HasIndex("HouseholdId");
-
                     b.HasIndex("RoomId");
 
-                    b.HasIndex("RoomId1");
+                    b.HasIndex("HouseholdId", "IsActive");
 
                     b.ToTable("HouseholdTasks");
                 });
@@ -282,7 +280,7 @@ namespace HouseholdManager.Migrations
                     b.Property<Guid>("HouseholdId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("HouseholdMemberId")
+                    b.Property<Guid>("HouseholdMemberId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Notes")
@@ -317,7 +315,7 @@ namespace HouseholdManager.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "WeekStarting");
 
                     b.ToTable("TaskExecutions");
                 });
@@ -497,10 +495,6 @@ namespace HouseholdManager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HouseholdManager.Models.Entities.Room", null)
-                        .WithMany("ActiveTasks")
-                        .HasForeignKey("RoomId1");
-
                     b.Navigation("AssignedUser");
 
                     b.Navigation("Household");
@@ -524,17 +518,19 @@ namespace HouseholdManager.Migrations
                     b.HasOne("HouseholdManager.Models.Entities.Household", "Household")
                         .WithMany()
                         .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HouseholdManager.Models.Entities.HouseholdMember", null)
+                    b.HasOne("HouseholdManager.Models.Entities.HouseholdMember", "HouseholdMember")
                         .WithMany("TaskExecutions")
-                        .HasForeignKey("HouseholdMemberId");
+                        .HasForeignKey("HouseholdMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("HouseholdManager.Models.Entities.Room", "Room")
                         .WithMany()
                         .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("HouseholdManager.Models.Entities.HouseholdTask", "Task")
@@ -546,10 +542,12 @@ namespace HouseholdManager.Migrations
                     b.HasOne("HouseholdManager.Models.Entities.ApplicationUser", "User")
                         .WithMany("TaskExecutions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Household");
+
+                    b.Navigation("HouseholdMember");
 
                     b.Navigation("Room");
 
@@ -639,8 +637,6 @@ namespace HouseholdManager.Migrations
 
             modelBuilder.Entity("HouseholdManager.Models.Entities.Room", b =>
                 {
-                    b.Navigation("ActiveTasks");
-
                     b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618

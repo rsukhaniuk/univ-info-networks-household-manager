@@ -1,6 +1,7 @@
 ﻿using HouseholdManager.Models.Enums;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HouseholdManager.Models.Entities
 {
@@ -45,16 +46,19 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// Household memberships of the user (only for SystemRole.User)
         /// </summary>
+        [InverseProperty("User")]
         public virtual ICollection<HouseholdMember> HouseholdMemberships { get; set; } = new List<HouseholdMember>();
 
         /// <summary>
         /// Tasks assigned to this user
         /// </summary>
+        [InverseProperty("AssignedUser")]
         public virtual ICollection<HouseholdTask> AssignedTasks { get; set; } = new List<HouseholdTask>();
 
         /// <summary>
         /// Task executions performed by this user
         /// </summary>
+        [InverseProperty("User")]
         public virtual ICollection<TaskExecution> TaskExecutions { get; set; } = new List<TaskExecution>();
 
         /// <summary>

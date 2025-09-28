@@ -35,9 +35,20 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IHouseholdRepository, HouseholdRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IHouseholdMemberRepository, HouseholdMemberRepository>();
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<IExecutionRepository, ExecutionRepository>();
 
-//// Domain Service registration
-//builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+// Core Services
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
+
+// Domain Services
+builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IHouseholdTaskService, HouseholdTaskService>();
+builder.Services.AddScoped<ITaskExecutionService, TaskExecutionService>();
+builder.Services.AddScoped<IHouseholdMemberService, HouseholdMemberService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
