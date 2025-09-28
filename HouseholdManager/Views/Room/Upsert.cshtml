@@ -62,9 +62,9 @@
         <div class="col-lg-8 col-xl-6">
             <div class="card shadow-sm">
                 <div class="card-body p-4">
-                    <form asp-action="Upsert" method="post" novalidate>
+                    <form asp-action="Upsert" method="post" enctype="multipart/form-data" novalidate>
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                        
+
                         <!-- Hidden fields -->
                         <input asp-for="Id" type="hidden" />
                         <input asp-for="HouseholdId" type="hidden" />
@@ -78,7 +78,7 @@
                                 <i class="fas fa-door-open text-success me-2"></i>
                                 Room Name <span class="text-danger">*</span>
                             </label>
-                            <input asp-for="Name" class="form-control form-control-lg" 
+                            <input asp-for="Name" class="form-control form-control-lg"
                                    placeholder="e.g., Living Room, Kitchen, Master Bedroom" />
                             <span asp-validation-for="Name" class="text-danger small"></span>
                             <div class="form-text">
@@ -93,7 +93,7 @@
                                 <i class="fas fa-align-left text-info me-2"></i>
                                 Description <span class="text-muted">(optional)</span>
                             </label>
-                            <textarea asp-for="Description" class="form-control" rows="3" 
+                            <textarea asp-for="Description" class="form-control" rows="3"
                                       placeholder="Add any additional details about this room..."></textarea>
                             <span asp-validation-for="Description" class="text-danger small"></span>
                             <div class="form-text">
@@ -110,7 +110,7 @@
                             </label>
                             <div class="row align-items-center">
                                 <div class="col-8">
-                                    <input asp-for="Priority" type="range" class="form-range" 
+                                    <input asp-for="Priority" type="range" class="form-range"
                                            min="1" max="10" step="1" id="priorityRange" />
                                 </div>
                                 <div class="col-4">
@@ -127,38 +127,81 @@
                             </div>
                         </div>
 
-                        @if (Model.IsEdit && !string.IsNullOrEmpty(Model.PhotoPath))
-                        {
-                            <!-- Current Photo Preview -->
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">
-                                    <i class="fas fa-image text-primary me-2"></i>
-                                    Current Photo
-                                </label>
-                                <div class="text-center">
-                                    <img src="~/@Model.PhotoPath" alt="@Model.Name" 
-                                         class="img-fluid rounded shadow-sm" style="max-height: 200px;">
-                                    <div class="form-text mt-2">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        To change or delete the photo, save your changes first, then use "Manage Photo" in room details
+                        <!-- Photo Section -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-camera text-primary me-2"></i>
+                                Room Photo <span class="text-muted">(optional)</span>
+                            </label>
+
+                            @if (Model.IsEdit && !string.IsNullOrEmpty(Model.PhotoPath))
+                            {
+                                <!-- Current Photo Preview -->
+                                <div class="current-photo-section mb-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-image me-1"></i>Current Photo
+                                        </span>
+                                        <small class="text-muted">Upload a new photo to replace this one</small>
+                                    </div>
+                                    <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+                                        <img src="~/@Model.PhotoPath" alt="@Model.Name"
+                                             class="img-fluid rounded shadow-sm" style="max-height: 200px; max-width: 100%;">
                                     </div>
                                 </div>
+                            }
+
+                            <!-- Photo Upload Input -->
+                            <div class="photo-upload-section">
+                                <input type="file" name="photo" id="photoInput" class="form-control"
+                                       accept="image/*" onchange="previewPhoto(this)" />
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    @if (Model.IsEdit && !string.IsNullOrEmpty(Model.PhotoPath))
+                                    {
+                                        <span>Upload a new photo to replace the current one. Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB</span>
+                                    }
+                                    else if (Model.IsEdit)
+                                    {
+                                        <span>Upload a photo for this room. Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB</span>
+                                    }
+                                </div>
                             </div>
-                        }
+
+                            <!-- New Photo Preview -->
+                            <div id="newPhotoPreview" class="mt-3" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-upload me-1"></i>New Photo Selected
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearPhotoSelection()">
+                                        <i class="fas fa-times me-1"></i>Clear
+                                    </button>
+                                </div>
+                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+                                    <img id="newPhotoImg" class="img-fluid rounded shadow-sm"
+                                         style="max-height: 200px; max-width: 100%;">
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Form Actions -->
                         <div class="row g-3 mt-4">
                             <div class="col-sm-6">
                                 @if (Model.IsEdit)
                                 {
-                                    <a asp-action="Details" asp-route-id="@Model.Id" 
+                                    <a asp-action="Details" asp-route-id="@Model.Id"
                                        class="btn btn-outline-secondary w-100">
                                         <i class="fas fa-times me-2"></i>Cancel
                                     </a>
                                 }
                                 else
                                 {
-                                    <a asp-action="Index" asp-route-householdId="@Model.HouseholdId" 
+                                    <a asp-action="Index" asp-route-householdId="@Model.HouseholdId"
                                        class="btn btn-outline-secondary w-100">
                                         <i class="fas fa-times me-2"></i>Cancel
                                     </a>
@@ -210,7 +253,7 @@
                                 </div>
                                 <div>
                                     <strong>Photos:</strong>
-                                    <p class="small text-muted mb-0">Add photos after creating the room to help identify it quickly</p>
+                                    <p class="small text-muted mb-0">@(Model.IsEdit ? "Replace photos anytime by uploading new ones" : "Add photos to help identify rooms quickly")</p>
                                 </div>
                             </div>
                         </div>
@@ -221,7 +264,7 @@
                                 </div>
                                 <div>
                                     <strong>Tasks:</strong>
-                                    <p class="small text-muted mb-0">Create room-specific cleaning tasks after adding the room</p>
+                                    <p class="small text-muted mb-0">Create room-specific cleaning tasks after @(Model.IsEdit ? "updating" : "adding") the room</p>
                                 </div>
                             </div>
                         </div>
@@ -234,4 +277,85 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Priority range slider functionality
+            const priorityRange = document.getElementById('priorityRange');
+            const priorityValue = document.getElementById('priorityValue');
+            const priorityStars = document.getElementById('priorityStars');
+
+            function updatePriority() {
+                const value = priorityRange.value;
+                priorityValue.textContent = value;
+
+                // Update stars visual
+                let starsHtml = '';
+                for (let i = 1; i <= 10; i++) {
+                    if (i <= value) {
+                        starsHtml += '<i class="fas fa-star text-warning"></i>';
+                    } else {
+                        starsHtml += '<i class="far fa-star text-muted"></i>';
+                    }
+                }
+                priorityStars.innerHTML = starsHtml;
+            }
+
+            // Initialize priority display
+            updatePriority();
+
+            // Update priority on range change
+            priorityRange.addEventListener('input', updatePriority);
+        });
+
+        // Photo preview functionality
+        function previewPhoto(input) {
+            const file = input.files[0];
+            if (file) {
+                // Validate file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    input.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type.toLowerCase())) {
+                    alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
+                    input.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('newPhotoImg').src = e.target.result;
+                    document.getElementById('newPhotoPreview').style.display = 'block';
+
+                    // Dim current photo if exists
+                    const currentPhotoSection = document.querySelector('.current-photo-section');
+                    if (currentPhotoSection) {
+                        currentPhotoSection.style.opacity = '0.6';
+                        currentPhotoSection.style.transition = 'opacity 0.3s ease';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearPhotoSelection() {
+            // Clear file input
+            document.getElementById('photoInput').value = '';
+
+            // Hide preview
+            document.getElementById('newPhotoPreview').style.display = 'none';
+
+            // Restore current photo opacity
+            const currentPhotoSection = document.querySelector('.current-photo-section');
+            if (currentPhotoSection) {
+                currentPhotoSection.style.opacity = '1';
+            }
+        }
+    </script>
 }

@@ -62,26 +62,26 @@
                                 @if (!string.IsNullOrEmpty(Model.Room.PhotoPath))
                                 {
                                     <div class="me-4">
-                                        <img src="~/@Model.Room.PhotoPath" alt="@Model.Room.Name"
+                                        <img src="~/@Model.Room.PhotoPath" alt="@Model.Room.Name" 
                                              class="rounded shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
                                     </div>
                                 }
                                 else
                                 {
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-4 shadow-sm"
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-4 shadow-sm" 
                                          style="width: 120px; height: 120px;">
                                         <i class="fas fa-door-open text-muted fa-2x"></i>
                                     </div>
                                 }
-
+                                
                                 <div class="flex-grow-1">
                                     <h1 class="h3 mb-2">@Model.Room.Name</h1>
-
+                                    
                                     @if (!string.IsNullOrEmpty(Model.Room.Description))
                                     {
                                         <p class="text-muted mb-3">@Model.Room.Description</p>
                                     }
-
+                                    
                                     <div class="row g-3">
                                         <div class="col-sm-6">
                                             <div class="d-flex align-items-center">
@@ -120,27 +120,27 @@
                                 </div>
                             </div>
                         </div>
-
+                        
                         <div class="col-md-4 text-md-end mt-3 mt-md-0">
                             @if (Model.IsOwner || isSystemAdmin)
                             {
                                 <div class="d-grid gap-2">
                                     @if (Model.IsOwner)
                                     {
-                                        <a asp-action="Upsert" asp-route-id="@Model.Room.Id"
+                                        <a asp-action="Upsert" asp-route-id="@Model.Room.Id" 
                                            class="btn btn-warning">
                                             <i class="fas fa-edit me-1"></i>Edit Room
                                         </a>
-
-                                        <button type="button" class="btn btn-outline-primary"
-                                                data-bs-toggle="modal"
+                                        
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                data-bs-toggle="modal" 
                                                 data-bs-target="#photoModal">
                                             <i class="fas fa-camera me-1"></i>Manage Photo
                                         </button>
                                     }
-
-                                    <button type="button" class="btn btn-outline-danger"
-                                            data-bs-toggle="modal"
+                                    
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            data-bs-toggle="modal" 
                                             data-bs-target="#deleteModal">
                                         <i class="fas fa-trash me-1"></i>Delete Room
                                     </button>
@@ -148,7 +148,7 @@
                             }
                             else
                             {
-                                <a asp-action="Index" asp-route-householdId="@Model.Room.HouseholdId"
+                                <a asp-action="Index" asp-route-householdId="@Model.Room.HouseholdId" 
                                    class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left me-1"></i>Back to Rooms
                                 </a>
@@ -167,7 +167,7 @@
                     </h5>
                     @if (Model.IsOwner)
                     {
-                        <a asp-controller="Task" asp-action="Upsert" asp-route-roomId="@Model.Room.Id"
+                        <a asp-controller="Task" asp-action="Upsert" asp-route-roomId="@Model.Room.Id" 
                            class="btn btn-sm btn-info">
                             <i class="fas fa-plus me-1"></i>Add Task
                         </a>
@@ -264,13 +264,13 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a asp-controller="Task" asp-action="Details" asp-route-id="@task.Id"
+                                                    <a asp-controller="Task" asp-action="Details" asp-route-id="@task.Id" 
                                                        class="btn btn-outline-primary" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
                                                     @if (Model.IsOwner)
                                                     {
-                                                        <a asp-controller="Task" asp-action="Upsert" asp-route-id="@task.Id"
+                                                        <a asp-controller="Task" asp-action="Upsert" asp-route-id="@task.Id" 
                                                            class="btn btn-outline-warning" title="Edit Task">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
@@ -291,7 +291,7 @@
                             <p class="text-muted mb-4">This room doesn't have any tasks assigned to it.</p>
                             @if (Model.IsOwner)
                             {
-                                <a asp-controller="Task" asp-action="Upsert" asp-route-roomId="@Model.Room.Id"
+                                <a asp-controller="Task" asp-action="Upsert" asp-route-roomId="@Model.Room.Id" 
                                    class="btn btn-info">
                                     <i class="fas fa-plus me-1"></i>Create First Task
                                 </a>
@@ -302,7 +302,7 @@
                 @if (Model.Room.Tasks.Any())
                 {
                     <div class="card-footer bg-transparent text-center">
-                        <a asp-controller="Task" asp-action="Index" asp-route-householdId="@Model.Room.HouseholdId"
+                        <a asp-controller="Task" asp-action="Index" asp-route-householdId="@Model.Room.HouseholdId" 
                            class="btn btn-outline-info">
                             <i class="fas fa-list me-1"></i>View All Household Tasks
                         </a>
@@ -327,23 +327,23 @@
                 @if (!string.IsNullOrEmpty(Model.Room.PhotoPath))
                 {
                     <div class="text-center mb-4">
-                        <img src="~/@Model.Room.PhotoPath" alt="@Model.Room.Name"
+                        <img src="~/@Model.Room.PhotoPath" alt="@Model.Room.Name" 
                              class="img-fluid rounded shadow-sm" style="max-height: 200px;">
                     </div>
-
+                    
                     <div class="text-center mb-4">
                         <form asp-action="DeletePhoto" asp-route-id="@Model.Room.Id" method="post" class="d-inline">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-danger"
+                            <button type="submit" class="btn btn-outline-danger" 
                                     onclick="return confirm('Are you sure you want to delete this photo?')">
                                 <i class="fas fa-trash me-1"></i>Delete Current Photo
                             </button>
                         </form>
                     </div>
-
+                    
                     <hr>
                 }
-
+                
                 <h6>Upload New Photo</h6>
                 <form asp-action="UploadPhoto" asp-route-id="@Model.Room.Id" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
@@ -379,16 +379,16 @@
             </div>
             <div class="modal-body">
                 <p class="mb-3">Are you sure you want to delete the room <strong>@Model.Room.Name</strong>?</p>
-
+                
                 @if (Model.Room.Tasks.Any())
                 {
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Warning:</strong> This room has @Model.Room.Tasks.Count task(s).
+                        <strong>Warning:</strong> This room has @Model.Room.Tasks.Count task(s). 
                         Deleting this room will also delete all associated tasks and their execution history.
                     </div>
                 }
-
+                
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <strong>Warning:</strong> This action cannot be undone. All room data and photos will be permanently deleted.

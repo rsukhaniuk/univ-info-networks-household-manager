@@ -77,6 +77,14 @@ namespace HouseholdManager.Controllers
                 if (room == null)
                     return NotFound();
 
+                // Load household separately since GetRoomWithTasksAsync doesn't include it
+                var household = await _householdService.GetHouseholdAsync(room.HouseholdId);
+                if (household == null)
+                    return NotFound();
+
+                // Set the household navigation property
+                room.Household = household;
+
                 var isOwner = await _householdService.IsUserOwnerAsync(room.HouseholdId, UserId);
 
                 var model = new RoomDetailsViewModel
@@ -166,7 +174,7 @@ namespace HouseholdManager.Controllers
         // Create/Edit room - POST (Upsert pattern)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Upsert(UpsertRoomViewModel model)
+        public async Task<IActionResult> Upsert(UpsertRoomViewModel model, IFormFile? photo)
         {
             if (!ModelState.IsValid)
                 return View(model);
@@ -197,7 +205,24 @@ namespace HouseholdManager.Controllers
                     room.Priority = model.Priority;
 
                     await _roomService.UpdateRoomAsync(room, UserId);
-                    TempData["Success"] = "Room updated successfully!";
+
+                    // Handle photo upload for edit (will replace existing photo if any)
+                    if (photo != null && photo.Length > 0)
+                    {
+                        try
+                        {
+                            await _roomService.UploadRoomPhotoAsync(model.Id, photo, UserId);
+                            TempData["Success"] = "Room and photo updated successfully!";
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            TempData["Warning"] = $"Room updated successfully, but photo upload failed: {ex.Message}";
+                        }
+                    }
+                    else
+                    {
+                        TempData["Success"] = "Room updated successfully!";
+                    }
                 }
                 else
                 {
@@ -221,7 +246,24 @@ namespace HouseholdManager.Controllers
                         model.Priority,
                         UserId);
 
-                    TempData["Success"] = "Room created successfully!";
+                    // Handle photo upload for new room
+                    if (photo != null && photo.Length > 0)
+                    {
+                        try
+                        {
+                            await _roomService.UploadRoomPhotoAsync(room.Id, photo, UserId);
+                            TempData["Success"] = "Room created with photo successfully!";
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            TempData["Warning"] = $"Room created successfully, but photo upload failed: {ex.Message}";
+                        }
+                    }
+                    else
+                    {
+                        TempData["Success"] = "Room created successfully!";
+                    }
+
                     return RedirectToAction("Details", new { id = room.Id });
                 }
 
@@ -240,7 +282,7 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Upload room photo
+        // Upload room photo (separate endpoint for existing rooms)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadPhoto(Guid id, IFormFile photo)
@@ -346,10 +388,4 @@ namespace HouseholdManager.Controllers
             }
         }
     }
-}
-
-// ViewModels
-namespace HouseholdManager.Models.ViewModels
-{
-    
 }
