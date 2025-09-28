@@ -1,255 +1,422 @@
 ﻿@model IEnumerable<HouseholdManager.Models.Entities.Household>
 @using HouseholdManager.Models.Enums
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<HouseholdManager.Models.Entities.ApplicationUser> UserManager
+
 @{
     ViewData["Title"] = "My Households";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var isSystemAdmin = currentUser?.IsSystemAdmin ?? false;
 }
 
-<div class="container py-4">
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+
+<div class="container">
     <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h2 mb-1">
-                        <i class="fas fa-home text-primary me-2"></i>My Households
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="text-center text-lg-start">
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-home text-primary me-2"></i>
+                        @if (isSystemAdmin)
+                        {
+                            <span>All Households</span>
+                            <span class="badge bg-danger ms-2">System Admin</span>
+                        }
+                        else
+                        {
+                            <span>My Households</span>
+                        }
                     </h1>
-                    <p class="text-muted mb-0">Manage your household memberships and create new ones.</p>
+                    <p class="text-muted mb-0">
+                        @if (isSystemAdmin)
+                        {
+                            <span>System-wide household management</span>
+                        }
+                        else
+                        {
+                            <span>Manage and view your household memberships</span>
+                        }
+                    </p>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="@Url.Action("Join", "Household")" class="btn btn-outline-primary">
-                        <i class="fas fa-users me-2"></i>Join Household
-                    </a>
-                    <a href="@Url.Action("Upsert", "Household")" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Create New
-                    </a>
-                </div>
+
+                <!-- Action Buttons -->
+                @if (!isSystemAdmin)
+                {
+                    <div class="btn-group" role="group">
+                        <a asp-action="Upsert" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-1"></i>
+                            Create Household
+                        </a>
+                        <a asp-action="Join" class="btn btn-success btn-lg ms-2">
+                            <i class="fas fa-key me-1"></i>
+                            Join Household
+                        </a>
+                    </div>
+                }
             </div>
         </div>
     </div>
 
-    @if (!Model.Any())
+    <!-- Success/Error Messages -->
+    @if (TempData["Success"] != null)
     {
-        <!-- Empty State -->
-        <div class="row justify-content-center">
-            <div class="col-lg-8 col-xl-6">
-                <div class="card border-0 shadow-lg">
-                    <div class="card-body text-center py-5">
-                        <div class="mb-4">
-                            <i class="fas fa-home fa-5x text-muted opacity-50"></i>
-                        </div>
-                        <h2 class="card-title mb-3">No Households Yet</h2>
-                        <p class="text-muted mb-4 lead">
-                            You're not a member of any households. Get started by creating your first household
-                            or joining an existing one with an invite code.
-                        </p>
-                        <div class="d-grid gap-2 d-md-block">
-                            <a href="@Url.Action("Upsert", "Household")" class="btn btn-primary btn-lg px-4 me-md-3">
-                                <i class="fas fa-plus me-2"></i>Create My First Household
-                            </a>
-                            <a href="@Url.Action("Join", "Household")" class="btn btn-outline-primary btn-lg px-4">
-                                <i class="fas fa-users me-2"></i>Join with Invite Code
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    else
+
+    @if (TempData["Error"] != null)
     {
-        <!-- Households Grid -->
-        <div class="row g-4">
-            @foreach (var household in Model)
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Households Table -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            @if (!Model.Any())
             {
-                var currentUser = User.Identity?.Name;
-                var userMembership = household.Members.FirstOrDefault(m => m.User?.Email == currentUser);
-                var isOwner = userMembership?.Role == HouseholdRole.Owner;
-                var memberSince = userMembership?.JoinedAt.ToString("MMM yyyy") ?? "";
-
-                <div class="col-lg-6 col-xl-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <!-- Card Header with Role Badge -->
-                        <div class="card-header bg-white border-bottom-0 pb-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <h5 class="card-title mb-0 text-truncate">@household.Name</h5>
-                                @if (isOwner)
-                                {
-                                    <span class="badge bg-warning text-dark ms-2">
-                                        <i class="fas fa-crown me-1"></i>Owner
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary ms-2">
-                                        <i class="fas fa-user me-1"></i>Member
-                                    </span>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Card Body -->
-                        <div class="card-body pt-2">
-                            @if (!string.IsNullOrEmpty(household.Description))
+                <!-- Empty State -->
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Households Found</h4>
+                        <p class="text-muted mb-4">
+                            @if (isSystemAdmin)
                             {
-                                <p class="card-text text-muted small mb-3">@household.Description</p>
+                                <span>No households have been created in the system yet.</span>
                             }
+                            else
+                            {
+                                <span>You're not a member of any households yet. Create your first household or join an existing one!</span>
+                            }
+                        </p>
 
-                            <!-- Household Stats -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-4 text-center">
-                                    <div class="border rounded py-2">
-                                        <div class="fw-bold text-primary">@household.Members.Count</div>
-                                        <small class="text-muted">Members</small>
-                                    </div>
-                                </div>
-                                <div class="col-4 text-center">
-                                    <div class="border rounded py-2">
-                                        <div class="fw-bold text-success">@household.Rooms.Count</div>
-                                        <small class="text-muted">Rooms</small>
-                                    </div>
-                                </div>
-                                <div class="col-4 text-center">
-                                    <div class="border rounded py-2">
-                                        <div class="fw-bold text-info">@household.Tasks.Count(t => t.IsActive)</div>
-                                        <small class="text-muted">Tasks</small>
-                                    </div>
-                                </div>
+                        @if (!isSystemAdmin)
+                        {
+                            <div class="d-flex justify-content-center gap-2">
+                                <a asp-action="Upsert" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Create Household
+                                </a>
+                                <a asp-action="Join" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-key me-1"></i>
+                                    Join Household
+                                </a>
                             </div>
-
-                            <!-- Member Since -->
-                            <div class="small text-muted mb-3">
-                                <i class="fas fa-calendar-alt me-1"></i>
-                                Member since @memberSince
-                            </div>
-                        </div>
-
-                        <!-- Card Footer with Actions -->
-                        <div class="card-footer bg-white border-top-0">
-                            <div class="d-grid gap-2">
-                                <!-- Primary Action: Enter Household -->
-                                <form asp-controller="Home" asp-action="SwitchHousehold" method="post" class="d-inline">
-                                    <input type="hidden" name="householdId" value="@household.Id" />
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-door-open me-2"></i>Enter Household
-                                    </button>
-                                </form>
-
-                                <!-- Secondary Actions -->
-                                <div class="btn-group w-100" role="group">
-                                    @if (isOwner)
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- DataTable -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <table id="householdsTable" class="table table-hover" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-home me-1"></i>Household</th>
+                                    <th><i class="fas fa-users me-1"></i>Members</th>
+                                    <th><i class="fas fa-calendar me-1"></i>Created</th>
+                                    @if (isSystemAdmin)
                                     {
-                                        <a href="@Url.Action("Upsert", "Household", new { id = household.Id })" class="btn btn-outline-secondary btn-sm">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </a>
-                                        <a href="@Url.Action("Members", "User", new { householdId = household.Id })" class="btn btn-outline-info btn-sm">
-                                            <i class="fas fa-users me-1"></i>Members
-                                        </a>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal-@household.Id">
-                                            <i class="fas fa-trash me-1"></i>Delete
-                                        </button>
+                                        <th><i class="fas fa-crown me-1"></i>Owner</th>
                                     }
                                     else
                                     {
-                                        <a href="@Url.Action("Details", "Household", new { id = household.Id })" class="btn btn-outline-secondary btn-sm">
-                                            <i class="fas fa-eye me-1"></i>Details
-                                        </a>
-                                        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#leaveModal-@household.Id">
-                                            <i class="fas fa-sign-out-alt me-1"></i>Leave
-                                        </button>
+                                        <th><i class="fas fa-user-tag me-1"></i>My Role</th>
                                     }
-                                </div>
-                            </div>
-                        </div>
+                                    <th data-orderable="false"><i class="fas fa-cogs me-1"></i>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var household in Model)
+                                {
+                                    var userMembership = household.Members.FirstOrDefault(m => m.UserId == currentUser?.Id);
+                                    var isOwner = userMembership?.IsOwner ?? false;
+                                    var householdOwner = household.Members.FirstOrDefault(m => m.IsOwner);
+
+                                    <tr>
+                                        <!-- Household Name -->
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-home text-white"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">
+                                                        <a asp-action="Details" asp-route-id="@household.Id"
+                                                           class="text-decoration-none">
+                                                            @household.Name
+                                                        </a>
+                                                    </h6>
+                                                    @if (!string.IsNullOrEmpty(household.Description))
+                                                    {
+                                                        <small class="text-muted">@household.Description</small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Member Count -->
+                                        <td>
+                                            <span class="badge bg-info rounded-pill">
+                                                @household.MemberCount
+                                            </span>
+                                        </td>
+
+                                        <!-- Created Date -->
+                                        <td data-order="@household.CreatedAt.ToString("yyyy-MM-dd")">
+                                            <span class="text-muted">
+                                                @household.CreatedAt.ToString("MMM dd, yyyy")
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">
+                                                @household.CreatedAt.ToString("HH:mm")
+                                            </small>
+                                        </td>
+
+                                        <!-- Role/Owner Column -->
+                                        <td>
+                                            @if (isSystemAdmin)
+                                            {
+                                                @if (householdOwner != null)
+                                                {
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-crown text-warning me-1"></i>
+                                                        <span>@householdOwner.User.FullName</span>
+                                                    </div>
+                                                    <small class="text-muted">@householdOwner.User.Email</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No owner</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @if (isOwner)
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-crown me-1"></i>
+                                                        Owner
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-user me-1"></i>
+                                                        Member
+                                                    </span>
+                                                }
+                                            }
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <!-- Details Button -->
+                                                <a asp-action="Details" asp-route-id="@household.Id"
+                                                   class="btn btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+
+                                                @if (isSystemAdmin)
+                                                {
+                                                    <!-- System Admin Actions -->
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-household-id="@household.Id"
+                                                            data-household-name="@household.Name"
+                                                            title="Delete Household">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                                else if (isOwner)
+                                                {
+                                                    <!-- Owner Actions -->
+                                                    <a asp-action="Upsert" asp-route-id="@household.Id"
+                                                       class="btn btn-outline-warning" title="Edit Household">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-household-id="@household.Id"
+                                                            data-household-name="@household.Name"
+                                                            title="Delete Household">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <!-- Member Actions -->
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#leaveModal"
+                                                            data-household-id="@household.Id"
+                                                            data-household-name="@household.Name"
+                                                            title="Leave Household">
+                                                        <i class="fas fa-sign-out-alt"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <!-- Delete Modal (for Owners) -->
-                @if (isOwner)
-                {
-                    <div class="modal fade" id="deleteModal-@household.Id" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Delete Household</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p>Are you sure you want to delete <strong>@household.Name</strong>?</p>
-                                    <div class="alert alert-warning">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        This action cannot be undone. All rooms, tasks, and execution history will be permanently lost.
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <form asp-action="Delete" method="post" class="d-inline">
-                                        <input type="hidden" name="id" value="@household.Id" />
-                                        <button type="submit" class="btn btn-danger">
-                                            <i class="fas fa-trash me-1"></i>Delete Household
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-                <!-- Leave Modal (for Members) -->
-                @if (!isOwner)
-                {
-                    <div class="modal fade" id="leaveModal-@household.Id" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Leave Household</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p>Are you sure you want to leave <strong>@household.Name</strong>?</p>
-                                    <p class="text-muted">You can rejoin later if the owner invites you again.</p>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <form asp-action="Leave" method="post" class="d-inline">
-                                        <input type="hidden" name="householdId" value="@household.Id" />
-                                        <button type="submit" class="btn btn-warning">
-                                            <i class="fas fa-sign-out-alt me-1"></i>Leave Household
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
             }
         </div>
+    </div>
+</div>
 
-        <!-- Quick Stats Summary -->
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card bg-light border-0">
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <div class="h4 text-primary mb-0">@Model.Count()</div>
-                                <small class="text-muted">Total Households</small>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="h4 text-warning mb-0">@Model.Count(h => h.Members.Any(m => m.User?.Email == User.Identity.Name && m.Role == HouseholdRole.Owner))</div>
-                                <small class="text-muted">Owned by You</small>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="h4 text-success mb-0">@Model.Sum(h => h.Members.Count)</div>
-                                <small class="text-muted">Total Members</small>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="h4 text-info mb-0">@Model.Sum(h => h.Tasks.Count(t => t.IsActive))</div>
-                                <small class="text-muted">Active Tasks</small>
-                            </div>
-                        </div>
-                    </div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Delete Household
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to delete the household <strong id="deleteHouseholdName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All rooms, tasks, and execution history will be permanently deleted.
                 </div>
             </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Delete Household
+                    </button>
+                </form>
+            </div>
         </div>
-    }
+    </div>
 </div>
+
+<!-- Leave Confirmation Modal -->
+<div class="modal fade" id="leaveModal" tabindex="-1" aria-labelledby="leaveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-warning" id="leaveModalLabel">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Leave Household
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to leave the household <strong id="leaveHouseholdName"></strong>?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You can rejoin this household later using the invite code, if available.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="leaveForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        Leave Household
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#householdsTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                order: [[2, 'desc']], // Sort by created date descending
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search households...",
+                    lengthMenu: "Show _MENU_ households",
+                    info: "Showing _START_ to _END_ of _TOTAL_ households",
+                    infoEmpty: "No households found",
+                    infoFiltered: "(filtered from _MAX_ total households)",
+                    emptyTable: "No households available",
+                    zeroRecords: "No matching households found"
+                },
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                columnDefs: [
+                    {
+                        targets: -1, // Last column (Actions)
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        targets: 1, // Member count column
+                        type: 'num'
+                    }
+                ]
+            });
+
+            // Modal handlers
+            $('#deleteModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const householdId = button.data('household-id');
+                const householdName = button.data('household-name');
+
+                $('#deleteHouseholdName').text(householdName);
+                $('#deleteForm').attr('action', '@Url.Action("Delete", "Household")/' + householdId);
+            });
+
+            $('#leaveModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const householdId = button.data('household-id');
+                const householdName = button.data('household-name');
+
+                $('#leaveHouseholdName').text(householdName);
+                $('#leaveForm').attr('action', '@Url.Action("Leave", "Household")/' + householdId);
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+}

@@ -5,61 +5,49 @@
 
 <div class="container py-4">
     <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex align-items-center">
-                <a href="@Url.Action("Index", "Household")" class="btn btn-outline-secondary me-3">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Households
-                </a>
-                <div>
-                    <h1 class="h2 mb-1">
-                        <i class="fas fa-users text-primary me-2"></i>Join Household
-                    </h1>
-                    <p class="text-muted mb-0">Enter an invite code to join an existing household.</p>
-                </div>
-            </div>
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8 col-xl-6 text-center">
+            <h1 class="h2 mb-1">
+                <i class="fas fa-users text-primary me-2"></i>Join Household
+            </h1>
+            <p class="text-muted mb-0">Enter an invite code to join an existing household</p>
         </div>
     </div>
 
     <!-- Form Container -->
     <div class="row justify-content-center">
         <div class="col-lg-8 col-xl-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h4 class="card-title mb-0">
-                        <i class="fas fa-key text-primary me-2"></i>Invite Code
-                    </h4>
-                </div>
-
+            <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <form asp-action="Join" method="post" novalidate>
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                         <!-- Invite Code Input -->
                         <div class="mb-4">
-                            <label asp-for="InviteCode" class="form-label fw-semibold">
+                            <label asp-for="InviteCode" class="form-label fw-semibold text-center d-block">
                                 <i class="fas fa-key text-primary me-2"></i>Invite Code
                                 <span class="text-danger">*</span>
                             </label>
                             <input asp-for="InviteCode" class="form-control form-control-lg text-center"
-                                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                   style="letter-spacing: 1px; font-family: monospace;" />
+                                   placeholder="--------"
+                                   maxlength="36"
+                                   style="letter-spacing: 2px; font-family: monospace; font-size: 1.2rem;" />
                             <span asp-validation-for="InviteCode" class="text-danger small"></span>
-                            <div class="form-text">
+                            <div class="form-text text-center">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Enter the invite code provided by the household owner.
+                                Get this code from the household owner
                             </div>
                         </div>
 
                         <!-- Form Actions -->
                         <div class="row g-3">
                             <div class="col-sm-6">
-                                <a href="@Url.Action("Index", "Household")" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-times me-2"></i>Cancel
+                                <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
                                 </a>
                             </div>
                             <div class="col-sm-6">
-                                <button type="submit" class="btn btn-primary w-100">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
                                     <i class="fas fa-users me-2"></i>Join Household
                                 </button>
                             </div>
@@ -67,139 +55,10 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Help Section -->
-            <div class="card border-0 mt-4" style="background-color: #f8f9fa;">
-                <div class="card-body p-4">
-                    <h5 class="card-title">
-                        <i class="fas fa-question-circle text-info me-2"></i>How to Get an Invite Code
-                    </h5>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                        <span class="fw-bold small">1</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">Ask the Household Owner</h6>
-                                    <p class="small text-muted mb-0">
-                                        Contact the person who owns the household and ask them to share their invite code with you.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                        <span class="fw-bold small">2</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">Owner Shares the Code</h6>
-                                    <p class="small text-muted mb-0">
-                                        The household owner can find their invite code in their household settings or details page.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                        <span class="fw-bold small">3</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">Enter Code Above</h6>
-                                    <p class="small text-muted mb-0">
-                                        Paste or type the invite code in the field above and click "Join Household".
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-warning mt-3 mb-0">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-shield-alt me-2"></i>
-                            <div>
-                                <strong>Security Note:</strong> Only join households from people you trust.
-                                Once you join, you'll have access to household information and may be assigned cleaning tasks.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Alternative Actions -->
-            <div class="text-center mt-4">
-                <p class="text-muted mb-3">Don't have an invite code?</p>
-                <a href="@Url.Action("Upsert", "Household")" class="btn btn-outline-primary">
-                    <i class="fas fa-plus me-2"></i>Create Your Own Household
-                </a>
-            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-        // Auto-format invite code as user types
-        document.addEventListener('DOMContentLoaded', function() {
-            const inviteCodeInput = document.querySelector('input[name="InviteCode"]');
-
-            if (inviteCodeInput) {
-                inviteCodeInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/[^a-fA-F0-9]/g, ''); // Remove non-hex characters
-
-                    // Format as GUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-                    if (value.length > 0) {
-                        let formatted = '';
-                        if (value.length > 8) {
-                            formatted += value.substring(0, 8) + '-';
-                            if (value.length > 12) {
-                                formatted += value.substring(8, 12) + '-';
-                                if (value.length > 16) {
-                                    formatted += value.substring(12, 16) + '-';
-                                    if (value.length > 20) {
-                                        formatted += value.substring(16, 20) + '-';
-                                        formatted += value.substring(20, 32);
-                                    } else {
-                                        formatted += value.substring(16);
-                                    }
-                                } else {
-                                    formatted += value.substring(12);
-                                }
-                            } else {
-                                formatted += value.substring(8);
-                            }
-                        } else {
-                            formatted = value;
-                        }
-
-                        e.target.value = formatted.toLowerCase();
-                    }
-                });
-
-                // Handle paste events to clean up pasted GUIDs
-                inviteCodeInput.addEventListener('paste', function(e) {
-                    setTimeout(() => {
-                        let value = e.target.value.replace(/[^a-fA-F0-9]/g, '');
-                        if (value.length === 32) {
-                            e.target.value = value.substring(0, 8) + '-' +
-                                           value.substring(8, 12) + '-' +
-                                           value.substring(12, 16) + '-' +
-                                           value.substring(16, 20) + '-' +
-                                           value.substring(20, 32);
-                        }
-                    }, 10);
-                });
-            }
-        });
-    </script>
 }

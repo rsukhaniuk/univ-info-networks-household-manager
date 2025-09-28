@@ -36,7 +36,7 @@ namespace HouseholdManager.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Dashboard");
+                return RedirectToAction("Index", "Household");
             }
 
             return View();
@@ -93,7 +93,7 @@ namespace HouseholdManager.Controllers
                     if (!isMember)
                     {
                         TempData["Error"] = "You are not a member of that household.";
-                        return RedirectToAction("Dashboard");
+                        return RedirectToAction("Index", "Household");
                     }
                 }
 
@@ -108,7 +108,7 @@ namespace HouseholdManager.Controllers
                 TempData["Error"] = "An error occurred while switching households.";
             }
 
-            return RedirectToAction("Dashboard");
+            return RedirectToAction("Index", "Household");
         }
 
         // Static pages

@@ -1,0 +1,502 @@
+﻿@model HouseholdManager.Models.ViewModels.HouseholdDetailsViewModel
+@using HouseholdManager.Models.Enums
+
+@{
+    ViewData["Title"] = Model.Household.Name;
+}
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-action="Index" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>My Households
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Household.Name</li>
+        </ol>
+    </nav>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Household Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-4"
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-home text-white fa-lg"></i>
+                                </div>
+                                <div>
+                                    <h1 class="h3 mb-1">@Model.Household.Name</h1>
+                                    @if (!string.IsNullOrEmpty(Model.Household.Description))
+                                    {
+                                        <p class="text-muted mb-2">@Model.Household.Description</p>
+                                    }
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        <small>Created @Model.Household.CreatedAt.ToString("MMMM dd, yyyy")</small>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-users me-1"></i>
+                                        <small>@Model.Household.MemberCount members</small>
+                                        @if (Model.IsOwner)
+                                        {
+                                            <span class="mx-2">•</span>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-crown me-1"></i>Owner
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            @if (Model.IsOwner)
+                            {
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Upsert" asp-route-id="@Model.Household.Id"
+                                       class="btn btn-warning">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                    <button type="button" class="btn btn-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#inviteModal">
+                                        <i class="fas fa-share me-1"></i>Invite
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column - Members & Rooms -->
+                <div class="col-lg-6 mb-4">
+                    <!-- Members Section -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                Members (@Model.Household.Members.Count)
+                            </h5>
+                            @if (Model.IsOwner)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#inviteModal">
+                                    <i class="fas fa-user-plus me-1"></i>Invite
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            @if (Model.Household.Members.Any())
+                            {
+                                @foreach (var member in Model.Household.Members.OrderByDescending(m => m.Role).ThenBy(m => m.User.FullName))
+                                {
+                                    <div class="d-flex align-items-center justify-content-between py-2 @(member != Model.Household.Members.Last() ? "border-bottom" : "")">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">@member.User.FullName</h6>
+                                                <small class="text-muted">@member.User.Email</small>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            @if (member.Role == HouseholdRole.Owner)
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-crown me-1"></i>Owner
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Member</span>
+                                            }
+                                            <br>
+                                            <small class="text-muted">Joined @member.JoinedAt.ToString("MMM yyyy")</small>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted text-center py-3 mb-0">
+                                    <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                                    No members yet. Invite someone to join!
+                                </p>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Rooms Section -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-door-open text-success me-2"></i>
+                                Rooms (@Model.Rooms.Count)
+                            </h5>
+                            @if (Model.IsOwner)
+                            {
+                                <a asp-controller="Room" asp-action="Upsert" asp-route-householdId="@Model.Household.Id"
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-plus me-1"></i>Add Room
+                                </a>
+                            }
+                        </div>
+                        <div class="card-body">
+                            @if (Model.Rooms.Any())
+                            {
+                                <div class="row">
+                                    @foreach (var room in Model.Rooms.OrderBy(r => r.Name))
+                                    {
+                                        <div class="col-sm-6 mb-3">
+                                            <div class="border rounded p-3 h-100">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                         style="width: 30px; height: 30px;">
+                                                        <i class="fas fa-door-open text-white"></i>
+                                                    </div>
+                                                    <h6 class="mb-0">@room.Name</h6>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(room.Description))
+                                                {
+                                                    <p class="text-muted small mb-2">@room.Description</p>
+                                                }
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted">
+                                                        Priority: @room.Priority/10
+                                                    </small>
+                                                    <small class="text-muted">
+                                                        @room.ActiveTaskCount tasks
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted text-center py-3 mb-0">
+                                    <i class="fas fa-door-open fa-2x mb-2 d-block"></i>
+                                    No rooms yet. Add your first room!
+                                </p>
+                            }
+                        </div>
+                        @if (Model.Rooms.Any())
+                        {
+                            <div class="card-footer bg-transparent text-center">
+                                <a asp-controller="Room" asp-action="Index" asp-route-householdId="@Model.Household.Id"
+                                   class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-list me-1"></i>View All Rooms
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Right Column - Tasks -->
+                <div class="col-lg-6 mb-4">
+                    <!-- Active Tasks Section -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-tasks text-info me-2"></i>
+                                Active Tasks (@Model.ActiveTasks.Count)
+                            </h5>
+                            @if (Model.IsOwner)
+                            {
+                                <a asp-controller="Task" asp-action="Upsert" asp-route-householdId="@Model.Household.Id"
+                                   class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-plus me-1"></i>Add Task
+                                </a>
+                            }
+                        </div>
+                        <div class="card-body">
+                            @if (Model.ActiveTasks.Any())
+                            {
+                                @foreach (var task in Model.ActiveTasks.OrderBy(t => t.Priority).ThenBy(t => t.Title).Take(10))
+                                {
+                                    <div class="d-flex align-items-center justify-content-between py-2 @(task != Model.ActiveTasks.Last() ? "border-bottom" : "")">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <h6 class="mb-0 me-2">@task.Title</h6>
+                                                @switch (task.Priority)
+                                                {
+                                                    case HouseholdManager.Models.Enums.TaskPriority.High:
+                                                        <span class="badge bg-danger">High</span>
+                                                        break;
+                                                    case HouseholdManager.Models.Enums.TaskPriority.Medium:
+                                                        <span class="badge bg-warning text-dark">Medium</span>
+                                                        break;
+                                                    case HouseholdManager.Models.Enums.TaskPriority.Low:
+                                                        <span class="badge bg-success">Low</span>
+                                                        break;
+                                                }
+                                            </div>
+                                            <div class="d-flex align-items-center text-muted">
+                                                <small class="me-3">
+                                                    <i class="fas fa-door-open me-1"></i>@task.Room.Name
+                                                </small>
+                                                <small class="me-3">
+                                                    <i class="fas fa-clock me-1"></i>@task.FormattedEstimatedTime
+                                                </small>
+                                                @if (!string.IsNullOrEmpty(task.AssignedUserId))
+                                                {
+                                                    <small>
+                                                        <i class="fas fa-user me-1"></i>@task.AssignedUser?.FullName
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-warning">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
+                                                    </small>
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="ms-2">
+                                            @if (task.Type == HouseholdManager.Models.Enums.TaskType.OneTime && task.DueDate.HasValue)
+                                            {
+                                                @if (task.IsOverdue)
+                                                {
+                                                    <small class="text-danger">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>Overdue
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">
+                                                        Due @task.DueDate.Value.ToString("MMM dd")
+                                                    </small>
+                                                }
+                                            }
+                                            else if (task.Type == HouseholdManager.Models.Enums.TaskType.Regular && task.ScheduledWeekday.HasValue)
+                                            {
+                                                <small class="text-muted">
+                                                    @task.ScheduledWeekday.Value.ToString()s
+                                                </small>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (Model.ActiveTasks.Count > 10)
+                                {
+                                    <div class="text-center mt-3">
+                                        <p class="text-muted mb-2">Showing 10 of @Model.ActiveTasks.Count tasks</p>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted text-center py-3 mb-0">
+                                    <i class="fas fa-tasks fa-2x mb-2 d-block"></i>
+                                    No active tasks. Create your first task!
+                                </p>
+                            }
+                        </div>
+                        @if (Model.ActiveTasks.Any())
+                        {
+                            <div class="card-footer bg-transparent text-center">
+                                <a asp-controller="Task" asp-action="Index" asp-route-householdId="@Model.Household.Id"
+                                   class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-list me-1"></i>View All Tasks
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    <a asp-controller="Room" asp-action="Index" asp-route-householdId="@Model.Household.Id"
+                                       class="btn btn-light w-100">
+                                        <i class="fas fa-door-open me-2"></i>Manage Rooms
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <a asp-controller="Task" asp-action="Index" asp-route-householdId="@Model.Household.Id"
+                                       class="btn btn-light w-100">
+                                        <i class="fas fa-tasks me-2"></i>All Tasks
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <a asp-controller="Task" asp-action="Calendar" asp-route-householdId="@Model.Household.Id"
+                                       class="btn btn-light w-100">
+                                        <i class="fas fa-calendar me-2"></i>Calendar
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <a asp-controller="Execution" asp-action="Index" asp-route-householdId="@Model.Household.Id"
+                                       class="btn btn-light w-100">
+                                        <i class="fas fa-history me-2"></i>History
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Code Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="inviteModalLabel">
+                    <i class="fas fa-share me-2"></i>Invite Members
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <h4>Invite Code</h4>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <code id="inviteCode" class="fs-3 fw-bold text-primary me-3">@Model.Household.InviteCode</code>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="copyInviteCode()">
+                                    <i class="fas fa-copy me-1"></i>Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Share this invite code with people you want to add to your household. They can use this code to join via the "Join Household" option.
+                </div>
+
+                <div class="text-center">
+                    <form asp-action="RegenerateInviteCode" asp-route-id="@Model.Household.Id" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-warning"
+                                onclick="return confirm('Are you sure you want to generate a new invite code? The old code will no longer work.')">
+                            <i class="fas fa-refresh me-1"></i>Generate New Code
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Copy invite code to clipboard
+        function copyInviteCode() {
+            const inviteCode = document.getElementById('inviteCode').textContent;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                // Modern clipboard API
+                navigator.clipboard.writeText(inviteCode).then(function() {
+                    showCopySuccess();
+                }).catch(function(err) {
+                    console.error('Could not copy text: ', err);
+                    fallbackCopyTextToClipboard(inviteCode);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyTextToClipboard(inviteCode);
+            }
+        }
+
+        // Fallback copy method
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                } else {
+                    alert('Failed to copy invite code. Please copy it manually: ' + text);
+                }
+            } catch (err) {
+                console.error('Fallback: Could not copy text: ', err);
+                alert('Failed to copy invite code. Please copy it manually: ' + text);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // Show copy success feedback
+        function showCopySuccess() {
+            const button = document.querySelector('#inviteModal button[onclick="copyInviteCode()"]');
+            if (!button) return;
+
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            button.disabled = true;
+
+            setTimeout(function() {
+                button.innerHTML = originalContent;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+                button.disabled = false;
+            }, 2000);
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+}

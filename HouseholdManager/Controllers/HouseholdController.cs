@@ -218,7 +218,6 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Regenerate invite code
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegenerateInviteCode(Guid id)
@@ -227,7 +226,7 @@ namespace HouseholdManager.Controllers
             {
                 var newCode = await _householdService.RegenerateInviteCodeAsync(id, UserId);
                 TempData["Success"] = "Invite code regenerated successfully!";
-                return RedirectToAction("Edit", new { id });
+                return RedirectToAction("Details", new { id }); // Changed from Edit to Details
             }
             catch (UnauthorizedAccessException)
             {
@@ -238,7 +237,7 @@ namespace HouseholdManager.Controllers
             {
                 _logger.LogError(ex, "Error regenerating invite code for household {HouseholdId}", id);
                 TempData["Error"] = "An error occurred while regenerating the invite code.";
-                return RedirectToAction("Edit", new { id });
+                return RedirectToAction("Details", new { id }); // Changed from Edit to Details
             }
         }
 
