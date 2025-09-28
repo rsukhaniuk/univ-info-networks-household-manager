@@ -1,0 +1,397 @@
+﻿@model HouseholdManager.Models.ViewModels.RoomIndexViewModel
+@using HouseholdManager.Models.Enums
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<HouseholdManager.Models.Entities.ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = $"Rooms - {Model.Household.Name}";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var isSystemAdmin = currentUser?.IsSystemAdmin ?? false;
+}
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Index" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>My Households
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Details" asp-route-id="@Model.Household.Id" class="text-decoration-none">
+                    @Model.Household.Name
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Rooms</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-door-open text-success me-2"></i>
+                        Rooms in @Model.Household.Name
+                        @if (isSystemAdmin)
+                        {
+                            <span class="badge bg-danger ms-2">System Admin</span>
+                        }
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Manage and organize rooms in this household
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                @if (Model.IsOwner)
+                {
+                    <div class="btn-group" role="group">
+                        <a asp-action="Create" asp-route-householdId="@Model.Household.Id"
+                           class="btn btn-success btn-lg">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Room
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Rooms Table -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            @if (!Model.Rooms.Any())
+            {
+                <!-- Empty State -->
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-door-open fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Rooms Found</h4>
+                        <p class="text-muted mb-4">
+                            This household doesn't have any rooms yet. Add your first room to get started!
+                        </p>
+
+                        @if (Model.IsOwner)
+                        {
+                            <a asp-action="Create" asp-route-householdId="@Model.Household.Id"
+                               class="btn btn-success btn-lg">
+                                <i class="fas fa-plus me-1"></i>
+                                Add First Room
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Household" asp-action="Details" asp-route-id="@Model.Household.Id"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Back to Household
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- DataTable -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Rooms (@Model.Rooms.Count)
+                        </h5>
+                        @if (Model.IsOwner)
+                        {
+                            <a asp-action="Create" asp-route-householdId="@Model.Household.Id"
+                               class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i>Add Room
+                            </a>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <table id="roomsTable" class="table table-hover" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-image me-1"></i>Photo</th>
+                                    <th><i class="fas fa-door-open me-1"></i>Name</th>
+                                    <th><i class="fas fa-align-left me-1"></i>Description</th>
+                                    <th><i class="fas fa-star me-1"></i>Priority</th>
+                                    <th><i class="fas fa-tasks me-1"></i>Tasks</th>
+                                    <th data-orderable="false"><i class="fas fa-cogs me-1"></i>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var room in Model.Rooms)
+                                {
+                                    <tr>
+                                        <!-- Photo -->
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(room.PhotoPath))
+                                            {
+                                                <img src="~/@room.PhotoPath" alt="@room.Name"
+                                                     class="rounded" style="width: 64px; height: 64px; object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                                     style="width: 64px; height: 64px;">
+                                                    <i class="fas fa-door-open text-muted fa-lg"></i>
+                                                </div>
+                                            }
+                                        </td>
+
+                                        <!-- Name -->
+                                        <td>
+                                            <h6 class="mb-0">
+                                                <a asp-action="Details" asp-route-id="@room.Id"
+                                                   class="text-decoration-none">
+                                                    @room.Name
+                                                </a>
+                                            </h6>
+                                            <small class="text-muted">
+                                                Created @room.CreatedAt.ToString("MMM dd, yyyy")
+                                            </small>
+                                        </td>
+
+                                        <!-- Description -->
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(room.Description))
+                                            {
+                                                @if (room.Description.Length > 50)
+                                                {
+                                                    <span title="@room.Description">
+                                                        @room.Description.Substring(0, 50)...
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@room.Description</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No description</span>
+                                            }
+                                        </td>
+
+                                        <!-- Priority -->
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @for (int i = 1; i <= 10; i++)
+                                                {
+                                                    @if (i <= room.Priority)
+                                                    {
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="far fa-star text-muted"></i>
+                                                    }
+                                                }
+                                                <span class="ms-2 text-muted">(@room.Priority/10)</span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Tasks Count -->
+                                        <td>
+                                            <span class="badge bg-info">
+                                                @room.ActiveTaskCount
+                                            </span>
+                                            <small class="text-muted d-block">
+                                                active tasks
+                                            </small>
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <!-- Details Button - Always Available -->
+                                                <a asp-action="Details" asp-route-id="@room.Id"
+                                                   class="btn btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+
+                                                @if (isSystemAdmin)
+                                                {
+                                                    <!-- System Admin Actions -->
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-room-id="@room.Id"
+                                                            data-room-name="@room.Name"
+                                                            data-task-count="@room.ActiveTaskCount"
+                                                            title="Delete Room">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                                else if (Model.IsOwner)
+                                                {
+                                                    <!-- Owner Actions -->
+                                                    <a asp-action="Edit" asp-route-id="@room.Id"
+                                                       class="btn btn-outline-warning" title="Edit Room">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-room-id="@room.Id"
+                                                            data-room-name="@room.Name"
+                                                            data-task-count="@room.ActiveTaskCount"
+                                                            title="Delete Room">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Delete Room
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to delete the room <strong id="deleteRoomName"></strong>?</p>
+                <div class="alert alert-warning" id="taskWarning" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This room has <span id="taskCount"></span> active task(s).
+                    Deleting this room will also delete all associated tasks and their execution history.
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All room data and photos will be permanently deleted.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Delete Room
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#roomsTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
+                order: [[1, 'asc']], // Sort by name
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search rooms...",
+                    lengthMenu: "Show _MENU_ rooms",
+                    info: "Showing _START_ to _END_ of _TOTAL_ rooms",
+                    infoEmpty: "No rooms found",
+                    infoFiltered: "(filtered from _MAX_ total rooms)",
+                    emptyTable: "No rooms available",
+                    zeroRecords: "No matching rooms found"
+                },
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                columnDefs: [
+                    {
+                        targets: [0, -1], // Photo and Actions columns
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        targets: 3, // Priority column
+                        type: 'num'
+                    },
+                    {
+                        targets: 4, // Tasks column
+                        type: 'num'
+                    }
+                ]
+            });
+
+            // Delete modal handler
+            $('#deleteModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const roomId = button.data('room-id');
+                const roomName = button.data('room-name');
+                const taskCount = button.data('task-count');
+
+                $('#deleteRoomName').text(roomName);
+                $('#deleteForm').attr('action', '@Url.Action("Delete", "Room")/' + roomId);
+
+                if (taskCount > 0) {
+                    $('#taskCount').text(taskCount);
+                    $('#taskWarning').show();
+                } else {
+                    $('#taskWarning').hide();
+                }
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+}

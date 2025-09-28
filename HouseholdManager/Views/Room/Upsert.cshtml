@@ -1,0 +1,237 @@
+﻿@model HouseholdManager.Models.ViewModels.UpsertRoomViewModel
+
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Index" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>My Households
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Details" asp-route-id="@Model.HouseholdId" class="text-decoration-none">
+                    @Model.HouseholdName
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Room" asp-action="Index" asp-route-householdId="@Model.HouseholdId" class="text-decoration-none">
+                    Rooms
+                </a>
+            </li>
+            @if (Model.IsEdit)
+            {
+                <li class="breadcrumb-item">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none">
+                        @Model.Name
+                    </a>
+                </li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">@(Model.IsEdit ? "Edit" : "Create")</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8 col-xl-6">
+            <div class="text-center">
+                <h1 class="h3 mb-1">
+                    <i class="@Model.SubmitIcon text-success me-2"></i>
+                    @Model.PageTitle
+                </h1>
+                <p class="text-muted mb-0">
+                    @if (Model.IsEdit)
+                    {
+                        <span>Update room information for @Model.HouseholdName</span>
+                    }
+                    else
+                    {
+                        <span>Add a new room to @Model.HouseholdName</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="Upsert" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <!-- Hidden fields -->
+                        <input asp-for="Id" type="hidden" />
+                        <input asp-for="HouseholdId" type="hidden" />
+                        <input asp-for="HouseholdName" type="hidden" />
+                        <input asp-for="IsEdit" type="hidden" />
+                        <input asp-for="PhotoPath" type="hidden" />
+
+                        <!-- Room Name -->
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label fw-semibold">
+                                <i class="fas fa-door-open text-success me-2"></i>
+                                Room Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" class="form-control form-control-lg" 
+                                   placeholder="e.g., Living Room, Kitchen, Master Bedroom" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Choose a descriptive name that's unique within this household
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">
+                                <i class="fas fa-align-left text-info me-2"></i>
+                                Description <span class="text-muted">(optional)</span>
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="3" 
+                                      placeholder="Add any additional details about this room..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Describe the room's purpose, size, or any special notes
+                            </div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="mb-4">
+                            <label asp-for="Priority" class="form-label fw-semibold">
+                                <i class="fas fa-star text-warning me-2"></i>
+                                Cleaning Priority <span class="text-danger">*</span>
+                            </label>
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <input asp-for="Priority" type="range" class="form-range" 
+                                           min="1" max="10" step="1" id="priorityRange" />
+                                </div>
+                                <div class="col-4">
+                                    <div class="d-flex align-items-center">
+                                        <span id="priorityValue" class="badge bg-warning text-dark me-2">@Model.Priority</span>
+                                        <div id="priorityStars"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Priority" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                1 = Low priority (rarely cleaned), 10 = High priority (frequently cleaned)
+                            </div>
+                        </div>
+
+                        @if (Model.IsEdit && !string.IsNullOrEmpty(Model.PhotoPath))
+                        {
+                            <!-- Current Photo Preview -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-image text-primary me-2"></i>
+                                    Current Photo
+                                </label>
+                                <div class="text-center">
+                                    <img src="~/@Model.PhotoPath" alt="@Model.Name" 
+                                         class="img-fluid rounded shadow-sm" style="max-height: 200px;">
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        To change or delete the photo, save your changes first, then use "Manage Photo" in room details
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Form Actions -->
+                        <div class="row g-3 mt-4">
+                            <div class="col-sm-6">
+                                @if (Model.IsEdit)
+                                {
+                                    <a asp-action="Details" asp-route-id="@Model.Id" 
+                                       class="btn btn-outline-secondary w-100">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Index" asp-route-householdId="@Model.HouseholdId" 
+                                       class="btn btn-outline-secondary w-100">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                }
+                            </div>
+                            <div class="col-sm-6">
+                                <button type="submit" class="btn @Model.SubmitClass btn-lg w-100">
+                                    <i class="@Model.SubmitIcon me-2"></i>@Model.SubmitText
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card border-0 mt-4" style="background-color: #f8f9fa;">
+                <div class="card-body p-4">
+                    <h6 class="card-title">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>Tips for Room Management
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-tag text-success"></i>
+                                </div>
+                                <div>
+                                    <strong>Naming:</strong>
+                                    <p class="small text-muted mb-0">Use clear, specific names like "Master Bedroom" instead of just "Bedroom"</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-star text-warning"></i>
+                                </div>
+                                <div>
+                                    <strong>Priority:</strong>
+                                    <p class="small text-muted mb-0">High priority for guest areas, lower for storage rooms</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-camera text-info"></i>
+                                </div>
+                                <div>
+                                    <strong>Photos:</strong>
+                                    <p class="small text-muted mb-0">Add photos after creating the room to help identify it quickly</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-tasks text-primary"></i>
+                                </div>
+                                <div>
+                                    <strong>Tasks:</strong>
+                                    <p class="small text-muted mb-0">Create room-specific cleaning tasks after adding the room</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

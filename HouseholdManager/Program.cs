@@ -1,5 +1,6 @@
 using HouseholdManager.Data;
 using HouseholdManager.Models.Entities;
+using HouseholdManager.Models.Enums;
 using HouseholdManager.Repositories.Implementations;
 using HouseholdManager.Repositories.Interfaces;
 using HouseholdManager.Services.Implementations;
@@ -76,4 +77,72 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+        // Ensure database is created
+        context.Database.EnsureCreated();
+
+        // Seed roles if they don't exist
+        await SeedRolesAsync(roleManager);
+
+        // Seed admin user if specified in configuration
+        await SeedAdminUserAsync(userManager, app.Configuration);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
 app.Run();
+
+// Helper methods for seeding
+static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
+{
+    string[] roleNames = { "Admin", "Manager", "User" };
+
+    foreach (var roleName in roleNames)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+}
+
+static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+{
+    var adminEmail = configuration["AdminUser:Email"];
+    var adminPassword = configuration["AdminUser:Password"];
+
+    if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
+        return;
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser == null)
+    {
+        adminUser = new ApplicationUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            FirstName = "System",
+            LastName = "Administrator",
+            Role = SystemRole.SystemAdmin,
+            EmailConfirmed = true
+        };
+
+        var result = await userManager.CreateAsync(adminUser, adminPassword);
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+}
