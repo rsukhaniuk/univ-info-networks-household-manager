@@ -201,9 +201,6 @@ namespace HouseholdManager.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("RoomId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -229,8 +226,6 @@ namespace HouseholdManager.Migrations
                     b.HasIndex("HouseholdId");
 
                     b.HasIndex("RoomId");
-
-                    b.HasIndex("RoomId1");
 
                     b.ToTable("HouseholdTasks");
                 });
@@ -309,11 +304,7 @@ namespace HouseholdManager.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("HouseholdId");
-
                     b.HasIndex("HouseholdMemberId");
-
-                    b.HasIndex("RoomId");
 
                     b.HasIndex("TaskId");
 
@@ -482,8 +473,7 @@ namespace HouseholdManager.Migrations
                 {
                     b.HasOne("HouseholdManager.Models.Entities.ApplicationUser", "AssignedUser")
                         .WithMany("AssignedTasks")
-                        .HasForeignKey("AssignedUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("AssignedUserId");
 
                     b.HasOne("HouseholdManager.Models.Entities.Household", "Household")
                         .WithMany("Tasks")
@@ -494,12 +484,8 @@ namespace HouseholdManager.Migrations
                     b.HasOne("HouseholdManager.Models.Entities.Room", "Room")
                         .WithMany("Tasks")
                         .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("HouseholdManager.Models.Entities.Room", null)
-                        .WithMany("ActiveTasks")
-                        .HasForeignKey("RoomId1");
 
                     b.Navigation("AssignedUser");
 
@@ -521,21 +507,9 @@ namespace HouseholdManager.Migrations
 
             modelBuilder.Entity("HouseholdManager.Models.Entities.TaskExecution", b =>
                 {
-                    b.HasOne("HouseholdManager.Models.Entities.Household", "Household")
-                        .WithMany()
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("HouseholdManager.Models.Entities.HouseholdMember", null)
                         .WithMany("TaskExecutions")
                         .HasForeignKey("HouseholdMemberId");
-
-                    b.HasOne("HouseholdManager.Models.Entities.Room", "Room")
-                        .WithMany()
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
 
                     b.HasOne("HouseholdManager.Models.Entities.HouseholdTask", "Task")
                         .WithMany("Executions")
@@ -548,10 +522,6 @@ namespace HouseholdManager.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Household");
-
-                    b.Navigation("Room");
 
                     b.Navigation("Task");
 
@@ -639,8 +609,6 @@ namespace HouseholdManager.Migrations
 
             modelBuilder.Entity("HouseholdManager.Models.Entities.Room", b =>
                 {
-                    b.Navigation("ActiveTasks");
-
                     b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618

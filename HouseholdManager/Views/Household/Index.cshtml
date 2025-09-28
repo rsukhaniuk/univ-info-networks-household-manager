@@ -1,0 +1,255 @@
+﻿@model IEnumerable<HouseholdManager.Models.Entities.Household>
+@using HouseholdManager.Models.Enums
+@{
+    ViewData["Title"] = "My Households";
+}
+
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-home text-primary me-2"></i>My Households
+                    </h1>
+                    <p class="text-muted mb-0">Manage your household memberships and create new ones.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="@Url.Action("Join", "Household")" class="btn btn-outline-primary">
+                        <i class="fas fa-users me-2"></i>Join Household
+                    </a>
+                    <a href="@Url.Action("Upsert", "Household")" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create New
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <!-- Empty State -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-home fa-5x text-muted opacity-50"></i>
+                        </div>
+                        <h2 class="card-title mb-3">No Households Yet</h2>
+                        <p class="text-muted mb-4 lead">
+                            You're not a member of any households. Get started by creating your first household
+                            or joining an existing one with an invite code.
+                        </p>
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="@Url.Action("Upsert", "Household")" class="btn btn-primary btn-lg px-4 me-md-3">
+                                <i class="fas fa-plus me-2"></i>Create My First Household
+                            </a>
+                            <a href="@Url.Action("Join", "Household")" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-users me-2"></i>Join with Invite Code
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Households Grid -->
+        <div class="row g-4">
+            @foreach (var household in Model)
+            {
+                var currentUser = User.Identity?.Name;
+                var userMembership = household.Members.FirstOrDefault(m => m.User?.Email == currentUser);
+                var isOwner = userMembership?.Role == HouseholdRole.Owner;
+                var memberSince = userMembership?.JoinedAt.ToString("MMM yyyy") ?? "";
+
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <!-- Card Header with Role Badge -->
+                        <div class="card-header bg-white border-bottom-0 pb-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h5 class="card-title mb-0 text-truncate">@household.Name</h5>
+                                @if (isOwner)
+                                {
+                                    <span class="badge bg-warning text-dark ms-2">
+                                        <i class="fas fa-crown me-1"></i>Owner
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary ms-2">
+                                        <i class="fas fa-user me-1"></i>Member
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body pt-2">
+                            @if (!string.IsNullOrEmpty(household.Description))
+                            {
+                                <p class="card-text text-muted small mb-3">@household.Description</p>
+                            }
+
+                            <!-- Household Stats -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-4 text-center">
+                                    <div class="border rounded py-2">
+                                        <div class="fw-bold text-primary">@household.Members.Count</div>
+                                        <small class="text-muted">Members</small>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="border rounded py-2">
+                                        <div class="fw-bold text-success">@household.Rooms.Count</div>
+                                        <small class="text-muted">Rooms</small>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="border rounded py-2">
+                                        <div class="fw-bold text-info">@household.Tasks.Count(t => t.IsActive)</div>
+                                        <small class="text-muted">Tasks</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Member Since -->
+                            <div class="small text-muted mb-3">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Member since @memberSince
+                            </div>
+                        </div>
+
+                        <!-- Card Footer with Actions -->
+                        <div class="card-footer bg-white border-top-0">
+                            <div class="d-grid gap-2">
+                                <!-- Primary Action: Enter Household -->
+                                <form asp-controller="Home" asp-action="SwitchHousehold" method="post" class="d-inline">
+                                    <input type="hidden" name="householdId" value="@household.Id" />
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-door-open me-2"></i>Enter Household
+                                    </button>
+                                </form>
+
+                                <!-- Secondary Actions -->
+                                <div class="btn-group w-100" role="group">
+                                    @if (isOwner)
+                                    {
+                                        <a href="@Url.Action("Upsert", "Household", new { id = household.Id })" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <a href="@Url.Action("Members", "User", new { householdId = household.Id })" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-users me-1"></i>Members
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal-@household.Id">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Action("Details", "Household", new { id = household.Id })" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>Details
+                                        </a>
+                                        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#leaveModal-@household.Id">
+                                            <i class="fas fa-sign-out-alt me-1"></i>Leave
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Modal (for Owners) -->
+                @if (isOwner)
+                {
+                    <div class="modal fade" id="deleteModal-@household.Id" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete Household</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete <strong>@household.Name</strong>?</p>
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        This action cannot be undone. All rooms, tasks, and execution history will be permanently lost.
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form asp-action="Delete" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@household.Id" />
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-trash me-1"></i>Delete Household
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Leave Modal (for Members) -->
+                @if (!isOwner)
+                {
+                    <div class="modal fade" id="leaveModal-@household.Id" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Leave Household</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to leave <strong>@household.Name</strong>?</p>
+                                    <p class="text-muted">You can rejoin later if the owner invites you again.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form asp-action="Leave" method="post" class="d-inline">
+                                        <input type="hidden" name="householdId" value="@household.Id" />
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-sign-out-alt me-1"></i>Leave Household
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Quick Stats Summary -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card bg-light border-0">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="h4 text-primary mb-0">@Model.Count()</div>
+                                <small class="text-muted">Total Households</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="h4 text-warning mb-0">@Model.Count(h => h.Members.Any(m => m.User?.Email == User.Identity.Name && m.Role == HouseholdRole.Owner))</div>
+                                <small class="text-muted">Owned by You</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="h4 text-success mb-0">@Model.Sum(h => h.Members.Count)</div>
+                                <small class="text-muted">Total Members</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="h4 text-info mb-0">@Model.Sum(h => h.Tasks.Count(t => t.IsActive))</div>
+                                <small class="text-muted">Active Tasks</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

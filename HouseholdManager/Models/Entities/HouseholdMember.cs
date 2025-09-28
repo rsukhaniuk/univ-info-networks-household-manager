@@ -41,11 +41,13 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// The user who is a member of the household
         /// </summary>
+        [ForeignKey(nameof(UserId))]
         public virtual ApplicationUser User { get; set; } = null!;
 
         /// <summary>
         /// The household the user belongs to
         /// </summary>
+        [ForeignKey(nameof(HouseholdId))]
         public virtual Household Household { get; set; } = null!;
 
         /// <summary>

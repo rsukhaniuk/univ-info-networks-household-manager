@@ -243,8 +243,7 @@ namespace HouseholdManager.Migrations
                     AssignedUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false),
-                    RoomId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -253,8 +252,7 @@ namespace HouseholdManager.Migrations
                         name: "FK_HouseholdTasks_AspNetUsers_AssignedUserId",
                         column: x => x.AssignedUserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_HouseholdTasks_Households_HouseholdId",
                         column: x => x.HouseholdId,
@@ -266,12 +264,7 @@ namespace HouseholdManager.Migrations
                         column: x => x.RoomId,
                         principalTable: "Rooms",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_HouseholdTasks_Rooms_RoomId1",
-                        column: x => x.RoomId1,
-                        principalTable: "Rooms",
-                        principalColumn: "Id");
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -309,16 +302,6 @@ namespace HouseholdManager.Migrations
                         principalTable: "HouseholdTasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TaskExecutions_Households_HouseholdId",
-                        column: x => x.HouseholdId,
-                        principalTable: "Households",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_TaskExecutions_Rooms_RoomId",
-                        column: x => x.RoomId,
-                        principalTable: "Rooms",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -393,29 +376,14 @@ namespace HouseholdManager.Migrations
                 column: "RoomId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_HouseholdTasks_RoomId1",
-                table: "HouseholdTasks",
-                column: "RoomId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Rooms_HouseholdId",
                 table: "Rooms",
-                column: "HouseholdId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TaskExecutions_HouseholdId",
-                table: "TaskExecutions",
                 column: "HouseholdId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TaskExecutions_HouseholdMemberId",
                 table: "TaskExecutions",
                 column: "HouseholdMemberId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TaskExecutions_RoomId",
-                table: "TaskExecutions",
-                column: "RoomId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TaskExecutions_TaskId",

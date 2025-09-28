@@ -60,26 +60,26 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// The task that was executed
         /// </summary>
-        [ForeignKey("TaskId")]
+        [ForeignKey(nameof(TaskId))]
         public virtual HouseholdTask Task { get; set; } = null!;
 
         /// <summary>
         /// The user who completed the task
         /// </summary>
-        [ForeignKey("UserId")]
+        [ForeignKey(nameof(UserId))]
         public virtual ApplicationUser User { get; set; } = null!;
 
         /// <summary>
-        /// The household this execution belongs to (denormalized)
+        /// The household this execution belongs to (denormalized - not mapped)
         /// </summary>
-        [ForeignKey("HouseholdId")]
-        public virtual Household Household { get; set; } = null!;
+        [NotMapped]
+        public virtual Household? Household { get; set; }
 
         /// <summary>
-        /// The room where task was executed (denormalized)
+        /// The room where task was executed (denormalized - not mapped)
         /// </summary>
-        [ForeignKey("RoomId")]
-        public virtual Room Room { get; set; } = null!;
+        [NotMapped]
+        public virtual Room? Room { get; set; }
 
         /// <summary>
         /// Calculate week starting date (Monday) for a given date

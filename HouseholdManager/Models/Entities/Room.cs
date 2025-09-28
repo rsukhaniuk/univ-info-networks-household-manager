@@ -41,18 +41,20 @@ namespace HouseholdManager.Models.Entities
         /// <summary>
         /// The household this room belongs to
         /// </summary>
-        [ForeignKey("HouseholdId")]
+        [ForeignKey(nameof(HouseholdId))]
+        [InverseProperty(nameof(Household.Rooms))]
         public virtual Household Household { get; set; } = null!;
 
         /// <summary>
         /// Tasks assigned to this room
         /// </summary>
-        [InverseProperty("Room")]
+        [InverseProperty(nameof(HouseholdTask.Room))]
         public virtual ICollection<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
 
         /// <summary>
         /// Get active tasks for this room
         /// </summary>
+        [NotMapped]
         public IEnumerable<HouseholdTask> ActiveTasks => Tasks.Where(t => t.IsActive);
 
         /// <summary>

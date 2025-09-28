@@ -1,0 +1,344 @@
+﻿@model HouseholdManager.Models.ViewModels.DashboardViewModel
+@using HouseholdManager.Models.Enums
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-tachometer-alt text-primary me-2"></i>Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Welcome back! Here's your household overview.</p>
+                </div>
+
+                @if (Model.HasHouseholds)
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle px-3" type="button" id="householdDropdown" data-bs-toggle="dropdown">
+                            @if (Model.HasCurrentHousehold)
+                            {
+                                <i class="fas fa-home me-2"></i>
+                                @Model.CurrentHousehold!.Name
+                            }
+                            else
+                            {
+                                <i class="fas fa-home me-2"></i> @:Select Household
+                            }
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach (var household in Model.UserHouseholds)
+                            {
+                                <li>
+                                    <form asp-action="SwitchHousehold" method="post" class="d-inline">
+                                        <input type="hidden" name="householdId" value="@household.Id" />
+                                        <button type="submit" class="dropdown-item @(Model.CurrentHousehold?.Id == household.Id ? "active" : "")">
+                                            <i class="fas fa-home me-2"></i>@household.Name
+                                        </button>
+                                    </form>
+                                </li>
+                            }
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-action="SwitchHousehold" method="post" class="d-inline">
+                                    <input type="hidden" name="householdId" value="" />
+                                    <button type="submit" class="dropdown-item text-muted">
+                                        <i class="fas fa-times me-2"></i>Clear Selection
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-5">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="small opacity-75 mb-1">Total Households</div>
+                            <div class="h2 mb-0 fw-bold">@Model.UserStats.TotalHouseholds</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-home fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="small opacity-75 mb-1">Owned Households</div>
+                            <div class="h2 mb-0 fw-bold">@Model.UserStats.OwnedHouseholds</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-crown fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="small opacity-75 mb-1">Active Tasks</div>
+                            <div class="h2 mb-0 fw-bold">@Model.UserStats.ActiveTasks</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-tasks fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="small opacity-75 mb-1">Completed This Week</div>
+                            <div class="h2 mb-0 fw-bold">@Model.UserStats.CompletedTasksThisWeek</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.HasHouseholds)
+    {
+        <!-- Welcome State for New Users -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-home fa-5x text-primary opacity-75"></i>
+                        </div>
+                        <h2 class="card-title mb-3">Welcome to Household Manager!</h2>
+                        <p class="text-muted mb-4 lead">
+                            You're not a member of any households yet. Get started by creating your first household
+                            or joining an existing one with an invite code.
+                        </p>
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="@Url.Action("Upsert", "Household")" class="btn btn-primary btn-lg px-4 me-md-3">
+                                <i class="fas fa-plus me-2"></i>Create Household
+                            </a>
+                            <a href="@Url.Action("Join", "Household")" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-users me-2"></i>Join Household
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!Model.HasCurrentHousehold)
+    {
+        <!-- Household Selection Prompt -->
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <h3 class="card-title mb-3">Select a Household</h3>
+                        <p class="text-muted mb-4">
+                            Choose a household from the dropdown above to view your tasks and manage household activities.
+                        </p>
+                        <a href="@Url.Action("Index", "Household")" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i>Browse All Households
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Main Dashboard Content -->
+        <div class="row g-4">
+            <!-- Left Column - Tasks and Activity -->
+            <div class="col-lg-8">
+                <!-- My Tasks Section -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0">
+                                <i class="fas fa-tasks text-primary me-2"></i>My Tasks
+                            </h4>
+                            <a href="@Url.Action("Index", "Task", new { householdId = Model.CurrentHousehold!.Id })" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>View All
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.HasTasks)
+                        {
+                            <div class="row g-3">
+                                @foreach (var task in Model.UserTasks.Take(6))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="card border h-100">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h6 class="card-title mb-0">@task.Title</h6>
+                                                    @{
+                                                        var priorityClass = task.Priority == TaskPriority.High ? "danger" :
+                                                        task.Priority == TaskPriority.Medium ? "warning" : "secondary";
+                                                    }
+                                                    <span class="badge bg-@priorityClass">@task.Priority</span>
+                                                </div>
+                                                <div class="small text-muted mb-3">
+                                                    <i class="fas fa-door-open me-1"></i>@task.Room.Name
+                                                    <span class="mx-2">•</span>
+                                                    <i class="fas fa-clock me-1"></i>@task.FormattedEstimatedTime
+                                                    @if (task.IsOverdue)
+                                                    {
+                                                        <span class="badge bg-danger ms-2">Overdue</span>
+                                                    }
+                                                </div>
+                                                <div class="d-grid">
+                                                    <a href="@Url.Action("Complete", "Execution", new { taskId = task.Id })" class="btn btn-success btn-sm">
+                                                        <i class="fas fa-check me-1"></i>Mark Complete
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                                <h5 class="text-muted">All caught up!</h5>
+                                <p class="text-muted mb-0">No tasks assigned to you right now.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Overdue Tasks Alert -->
+                @if (Model.HasOverdueTasks)
+                {
+                    <div class="alert alert-danger border-0 shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="alert-heading mb-1">⚠️ Attention Needed</h5>
+                                <p class="mb-0">
+                                    There are <strong>@Model.OverdueTasks.Count overdue tasks</strong> in @Model.CurrentHousehold.Name that need attention.
+                                </p>
+                            </div>
+                            <div class="ms-3">
+                                <a href="@Url.Action("Index", "Task", new { householdId = Model.CurrentHousehold.Id, filter = "overdue" })" class="btn btn-outline-danger">
+                                    <i class="fas fa-eye me-1"></i>View Overdue
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Right Column - Household Info and Activity -->
+            <div class="col-lg-4">
+                <!-- Current Household Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-home me-2"></i>@Model.CurrentHousehold!.Name
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <div class="h3 text-primary mb-0">@Model.CurrentHousehold.Members.Count</div>
+                                    <small class="text-muted">Members</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="h3 text-success mb-0">@Model.CurrentHousehold.Rooms.Count</div>
+                                <small class="text-muted">Rooms</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="@Url.Action("Details", "Household", new { id = Model.CurrentHousehold.Id })" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-2"></i>View Details
+                            </a>
+                            <a href="@Url.Action("Index", "Room", new { householdId = Model.CurrentHousehold.Id })" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-door-open me-2"></i>Manage Rooms
+                            </a>
+                            <a href="@Url.Action("Index", "Task", new { householdId = Model.CurrentHousehold.Id })" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-tasks me-2"></i>All Tasks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock text-info me-2"></i>Recent Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.RecentExecutions.Any())
+                        {
+                            @foreach (var execution in Model.RecentExecutions.Take(5))
+                            {
+                                <div class="d-flex align-items-center py-2 @(execution != Model.RecentExecutions.Last() ? "border-bottom" : "")">
+                                    <div class="me-3">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold">@execution.Task.Title</div>
+                                        <small class="text-muted">@execution.TimeAgo</small>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(execution.PhotoPath))
+                                    {
+                                        <div class="ms-2">
+                                            <i class="fas fa-camera text-info" title="Photo attached"></i>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No recent activity</p>
+                                <small class="text-muted">Complete some tasks to see activity here</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

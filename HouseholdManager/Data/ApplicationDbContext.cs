@@ -22,37 +22,11 @@ namespace HouseholdManager.Data
         {
             base.OnModelCreating(builder);
 
-            // Configure HouseholdTask relationships explicitly
             builder.Entity<HouseholdTask>()
-                .HasOne(ht => ht.Household)
-                .WithMany(h => h.Tasks)
-                .HasForeignKey(ht => ht.HouseholdId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<HouseholdTask>()
-                .HasOne(ht => ht.Room)
-                .WithMany(r => r.Tasks)
-                .HasForeignKey(ht => ht.RoomId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<HouseholdTask>()
-                .HasOne(ht => ht.AssignedUser)
-                .WithMany(u => u.AssignedTasks)
-                .HasForeignKey(ht => ht.AssignedUserId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // Configure denormalized relationships in TaskExecution to avoid conflicts
-            builder.Entity<TaskExecution>()
-                .HasOne(te => te.Household)
-                .WithMany()
-                .HasForeignKey(te => te.HouseholdId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<TaskExecution>()
-                .HasOne(te => te.Room)
-                .WithMany()
-                .HasForeignKey(te => te.RoomId)
-                .OnDelete(DeleteBehavior.NoAction);
+            .HasOne(t => t.Room)
+            .WithMany(r => r.Tasks)
+            .HasForeignKey(t => t.RoomId)
+            .OnDelete(DeleteBehavior.Restrict);
 
             // Only configurations that CAN'T be done with Data Annotations
 
@@ -70,6 +44,31 @@ namespace HouseholdManager.Data
             builder.Entity<ApplicationUser>()
                 .Property(e => e.Role)
                 .HasConversion<string>();
+
+            builder.Entity<HouseholdMember>()
+                .Property(e => e.Role)
+                .HasConversion<string>();
+
+            builder.Entity<HouseholdTask>()
+                .Property(e => e.Type)
+                .HasConversion<string>();
+
+            builder.Entity<HouseholdTask>()
+                .Property(e => e.Priority)
+                .HasConversion<string>();
+
+            builder.Entity<HouseholdTask>()
+                .Property(e => e.ScheduledWeekday)
+                .HasConversion<string>();
+            // Unique invite code constraint
+            builder.Entity<Household>()
+                    .HasIndex(e => e.InviteCode)
+                    .IsUnique();
+
+            // Enum string conversion for better DB readability
+            builder.Entity<ApplicationUser>()
+                    .Property(e => e.Role)
+                    .HasConversion<string>();
 
             builder.Entity<HouseholdMember>()
                 .Property(e => e.Role)

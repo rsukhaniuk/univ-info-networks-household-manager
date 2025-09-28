@@ -1,0 +1,62 @@
+﻿@model HouseholdManager.Models.ViewModels.UpsertHouseholdViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="container py-4">
+    <!-- Header with Back Button and Title -->
+    <div class="d-flex align-items-center mb-4">
+        <a href="@Url.Action("Index", "Household")" class="btn btn-outline-secondary me-3">
+            <i class="fas fa-arrow-left me-1"></i>Back
+        </a>
+        <h1 class="h3 mb-0 flex-grow-1 text-center">@Model.PageTitle</h1>
+        <div style="width: 120px;"></div> <!-- Spacer to center the title -->
+    </div>
+
+
+    <!-- Simple Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form asp-action="Upsert" method="post">
+                        @if (Model.IsEdit)
+                        {
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="IsEdit" />
+                        }
+
+                        <!-- Name Field -->
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Name *</label>
+                            <input asp-for="Name" class="form-control" placeholder="My Family House" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"
+                                      placeholder="Optional description..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-2">
+                            <a href="@Url.Action("Index", "Household")" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn @Model.SubmitClass">
+                                @Model.SubmitText
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
