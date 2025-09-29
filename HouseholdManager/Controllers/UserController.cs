@@ -214,31 +214,31 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        //// GET: User/AdminPanel - System admin only
-        //[Authorize(Policy = "SystemAdmin")]
-        //public async Task<IActionResult> AdminPanel(string? search = null)
-        //{
-        //    try
-        //    {
-        //        var users = string.IsNullOrEmpty(search)
-        //            ? await _userService.GetAllUsersAsync()
-        //            : await _userService.SearchUsersAsync(search);
+        // GET: User/AdminPanel - System admin only
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminPanel(string? search = null)
+        {
+            try
+            {
+                var users = string.IsNullOrEmpty(search)
+                    ? await _userService.GetAllUsersAsync()
+                    : await _userService.SearchUsersAsync(search);
 
-        //        var model = new AdminPanelViewModel
-        //        {
-        //            Users = users,
-        //            SearchQuery = search
-        //        };
+                var model = new AdminPanelViewModel
+                {
+                    Users = users,
+                    SearchQuery = search
+                };
 
-        //        return View(model);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error loading admin panel");
-        //        TempData["Error"] = "An error occurred while loading the admin panel.";
-        //        return RedirectToAction("Dashboard", "Home");
-        //    }
-        //}
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading admin panel");
+                TempData["Error"] = "An error occurred while loading the admin panel.";
+                return RedirectToAction("Dashboard", "Home");
+            }
+        }
 
         // POST: User/SetSystemRole - System admin only
         [HttpPost]
@@ -307,41 +307,6 @@ namespace HouseholdManager.Controllers
                 return RedirectToAction("AdminPanel");
             }
         }
-
-        //// GET: User/ManageMembers - Household members management
-        //public async Task<IActionResult> ManageMembers(Guid householdId)
-        //{
-        //    try
-        //    {
-        //        // Validate user is owner
-        //        var isOwner = await _userService.IsSystemAdminAsync(UserId) ||
-        //                     await _memberService.GetUserRoleAsync(householdId, UserId) == HouseholdRole.Owner;
-
-        //        if (!isOwner)
-        //        {
-        //            TempData["Error"] = "Only household owners can manage members.";
-        //            return RedirectToAction("Details", "Household", new { id = householdId });
-        //        }
-
-        //        var members = await _memberService.GetHouseholdMembersAsync(householdId);
-        //        var taskCounts = await _memberService.GetMemberTaskCountsAsync(householdId);
-
-        //        var model = new ManageMembersViewModel
-        //        {
-        //            HouseholdId = householdId,
-        //            Members = members,
-        //            TaskCounts = taskCounts
-        //        };
-
-        //        return View(model);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error loading member management for household {HouseholdId}", householdId);
-        //        TempData["Error"] = "An error occurred while loading members.";
-        //        return RedirectToAction("Details", "Household", new { id = householdId });
-        //    }
-        //}
 
         // POST: User/PromoteToOwner
         [HttpPost]

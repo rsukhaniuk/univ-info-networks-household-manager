@@ -13,6 +13,8 @@ namespace HouseholdManager.Services.Interfaces
         Task<Household?> GetHouseholdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Household?> GetHouseholdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<Household>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<Household>> GetAllHouseholdsAsync(CancellationToken cancellationToken = default);
+
         Task UpdateHouseholdAsync(Household household, CancellationToken cancellationToken = default);
         Task DeleteHouseholdAsync(Guid id, string requestingUserId, CancellationToken cancellationToken = default);
 

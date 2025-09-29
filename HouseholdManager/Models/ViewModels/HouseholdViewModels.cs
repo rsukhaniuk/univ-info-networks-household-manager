@@ -9,6 +9,7 @@ namespace HouseholdManager.Models.ViewModels
         public IReadOnlyList<Room> Rooms { get; set; } = new List<Room>();
         public IReadOnlyList<HouseholdTask> ActiveTasks { get; set; } = new List<HouseholdTask>();
         public bool IsOwner { get; set; }
+        public Dictionary<string, int> TaskCounts { get; set; } = new Dictionary<string, int>();
     }
 
     /// <summary>

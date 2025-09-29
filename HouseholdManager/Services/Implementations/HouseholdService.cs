@@ -2,6 +2,7 @@
 using HouseholdManager.Models.Enums;
 using HouseholdManager.Repositories.Interfaces;
 using HouseholdManager.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace HouseholdManager.Services.Implementations
 {
@@ -13,14 +14,17 @@ namespace HouseholdManager.Services.Implementations
         private readonly IHouseholdRepository _householdRepository;
         private readonly IHouseholdMemberRepository _memberRepository;
         private readonly ILogger<HouseholdService> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public HouseholdService(
             IHouseholdRepository householdRepository,
             IHouseholdMemberRepository memberRepository,
+            UserManager<ApplicationUser> userManager,
             ILogger<HouseholdService> logger)
         {
             _householdRepository = householdRepository;
             _memberRepository = memberRepository;
+            _userManager = userManager;
             _logger = logger;
         }
 
@@ -60,6 +64,11 @@ namespace HouseholdManager.Services.Implementations
         public async Task<Household?> GetHouseholdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _householdRepository.GetByIdWithMembersAsync(id, cancellationToken);
+        }
+
+        public async Task<IReadOnlyList<Household>> GetAllHouseholdsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _householdRepository.GetAllAsync(cancellationToken);
         }
 
         public async Task<IReadOnlyList<Household>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default)
@@ -201,11 +210,24 @@ namespace HouseholdManager.Services.Implementations
 
         public async Task<bool> IsUserMemberAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user?.IsSystemAdmin == true)
+            {
+                return true;
+            }
+
             return await _memberRepository.IsUserMemberAsync(householdId, userId, cancellationToken);
         }
 
         public async Task<bool> IsUserOwnerAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user?.IsSystemAdmin == true)
+            {
+                return true; 
+            }
+
             var role = await _memberRepository.GetUserRoleAsync(householdId, userId, cancellationToken);
             return role == HouseholdRole.Owner;
         }
@@ -218,6 +240,13 @@ namespace HouseholdManager.Services.Implementations
         // Permission validation
         public async Task ValidateUserAccessAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user?.IsSystemAdmin == true)
+            {
+                return;
+            }
+
             if (!await IsUserMemberAsync(householdId, userId, cancellationToken))
                 throw new UnauthorizedAccessException("User is not a member of this household");
         }
@@ -226,6 +255,7 @@ namespace HouseholdManager.Services.Implementations
         {
             if (!await IsUserOwnerAsync(householdId, userId, cancellationToken))
                 throw new UnauthorizedAccessException("User is not an owner of this household");
+
         }
     }
 }

@@ -2,6 +2,7 @@
 using HouseholdManager.Models.ViewModels;
 using HouseholdManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -14,6 +15,7 @@ namespace HouseholdManager.Controllers
         private readonly IHouseholdMemberService _memberService;
         private readonly IRoomService _roomService;
         private readonly IHouseholdTaskService _taskService;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<HouseholdController> _logger;
 
         public HouseholdController(
@@ -21,12 +23,14 @@ namespace HouseholdManager.Controllers
             IHouseholdMemberService memberService,
             IRoomService roomService,
             IHouseholdTaskService taskService,
+            UserManager<ApplicationUser> userManager,
             ILogger<HouseholdController> logger)
         {
             _householdService = householdService;
             _memberService = memberService;
             _roomService = roomService;
             _taskService = taskService;
+            _userManager = userManager;
             _logger = logger;
         }
 
@@ -37,7 +41,19 @@ namespace HouseholdManager.Controllers
         {
             try
             {
-                var households = await _householdService.GetUserHouseholdsAsync(UserId);
+                var user = await _userManager.GetUserAsync(User);
+
+                IReadOnlyList<Household> households;
+
+                if (user?.IsSystemAdmin == true)
+                {
+                    households = await _householdService.GetAllHouseholdsAsync();
+                }
+                else
+                {
+                    households = await _householdService.GetUserHouseholdsAsync(UserId);
+                }
+
                 return View(households);
             }
             catch (Exception ex)
@@ -220,6 +236,34 @@ namespace HouseholdManager.Controllers
                 _logger.LogError(ex, "Error leaving household {HouseholdId}", id);
                 TempData["Error"] = "An error occurred while leaving the household.";
                 return RedirectToAction("Details", new { id });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveMember(Guid householdId, string userId)
+        {
+            try
+            {
+                await _householdService.RemoveMemberAsync(householdId, userId, UserId);
+                TempData["Success"] = "Member removed successfully.";
+                return RedirectToAction("Details", new { id = householdId });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                TempData["Error"] = "Only household owners can remove members.";
+                return RedirectToAction("Details", new { id = householdId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Details", new { id = householdId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing member from household {HouseholdId}", householdId);
+                TempData["Error"] = "An error occurred while removing the member.";
+                return RedirectToAction("Details", new { id = householdId });
             }
         }
 

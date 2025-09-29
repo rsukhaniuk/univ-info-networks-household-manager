@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HouseholdManager.Models.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace HouseholdManager.Models.ViewModels
 {
@@ -55,5 +56,14 @@ namespace HouseholdManager.Models.ViewModels
         [Display(Name = "Confirm New Password")]
         [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// ViewModel for admin panel
+    /// </summary>
+    public class AdminPanelViewModel
+    {
+        public IReadOnlyList<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+        public string? SearchQuery { get; set; }
     }
 }

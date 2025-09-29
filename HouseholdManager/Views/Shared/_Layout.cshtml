@@ -1,4 +1,13 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using HouseholdManager.Models.Entities
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var isSystemAdmin = currentUser?.IsSystemAdmin ?? false;
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -28,9 +37,23 @@
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Household" asp-action="Index">My Households</a>
-                            </li>
+                            @if (isSystemAdmin)
+                            {
+                                <a class="nav-link" asp-controller="Household" asp-action="Index">
+                                    All Households
+                                </a>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="User" asp-action="AdminPanel">
+                                        <i class="fas fa-users-cog me-1"></i>Admin Panel
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-controller="Household" asp-action="Index">
+                                    My Households
+                                </a>
+                            }
                             @* <li class="nav-item">
                                 <a class="nav-link" href="/Tasks">Tasks</a>
                             </li> *@
