@@ -2,6 +2,7 @@
 using HouseholdManager.Models.Enums;
 using HouseholdManager.Repositories.Interfaces;
 using HouseholdManager.Services.Implementations;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System;
@@ -17,6 +18,7 @@ namespace HouseholdManager.Tests.Services
     {
         private Mock<IHouseholdRepository> _mockHouseholdRepository;
         private Mock<IHouseholdMemberRepository> _mockMemberRepository;
+        private Mock<UserManager<ApplicationUser>> _mockUserManager;
         private Mock<ILogger<HouseholdService>> _mockLogger;
         private HouseholdService _householdService;
 
@@ -27,9 +29,16 @@ namespace HouseholdManager.Tests.Services
             _mockMemberRepository = new Mock<IHouseholdMemberRepository>();
             _mockLogger = new Mock<ILogger<HouseholdService>>();
 
+            // Mock UserManager - потрібен IUserStore
+            var userStoreMock = new Mock<IUserStore<ApplicationUser>>();
+            _mockUserManager = new Mock<UserManager<ApplicationUser>>(
+                userStoreMock.Object,
+                null, null, null, null, null, null, null, null);
+
             _householdService = new HouseholdService(
                 _mockHouseholdRepository.Object,
                 _mockMemberRepository.Object,
+                _mockUserManager.Object,
                 _mockLogger.Object);
         }
 
