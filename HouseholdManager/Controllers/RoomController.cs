@@ -8,6 +8,9 @@ using System.Security.Claims;
 
 namespace HouseholdManager.Controllers
 {
+    /// <summary>
+    /// CRUD operations for rooms within households. Owner only for all modifications. Supports photo upload.
+    /// </summary>
     [Authorize]
     public class RoomController : Controller
     {
@@ -30,7 +33,11 @@ namespace HouseholdManager.Controllers
 
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // List rooms in household
+        /// <summary>
+        /// GET: Room/Index - List rooms in household with task counts
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <returns>View with RoomIndexViewModel</returns>
         public async Task<IActionResult> Index(Guid householdId)
         {
             try
@@ -66,7 +73,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // View room details
+        /// <summary>
+        /// GET: Room/Details - Room details with associated tasks
+        /// </summary>
+        /// <param name="id">Room ID</param>
+        /// <returns>View with RoomDetailsViewModel</returns>
         public async Task<IActionResult> Details(Guid id)
         {
             try
@@ -108,7 +119,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Create/Edit room - GET (Upsert pattern)
+        /// <summary>
+        /// GET: Room/Upsert - Create or edit room form (Upsert pattern)
+        /// </summary>
+        /// <param name="id">Room ID for edit mode, null for create mode</param>
+        /// <param name="householdId">Required for create mode</param>
+        /// <returns>View with UpsertRoomViewModel</returns>
         public async Task<IActionResult> Upsert(Guid? id, Guid? householdId)
         {
             try
@@ -171,7 +187,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Create/Edit room - POST (Upsert pattern)
+        /// <summary>
+        /// POST: Room/Upsert - Save room with optional photo. Validates name uniqueness within household.
+        /// </summary>
+        /// <param name="model">Room data to save</param>
+        /// <param name="photo">Optional room photo file</param>
+        /// <returns>Redirect to Details on success, View with errors on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upsert(UpsertRoomViewModel model, IFormFile? photo)
@@ -282,7 +303,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Upload room photo (separate endpoint for existing rooms)
+        /// <summary>
+        /// POST: Room/UploadPhoto - Upload or replace room photo. Owner only.
+        /// </summary>
+        /// <param name="id">Room ID</param>
+        /// <param name="photo">Photo file to upload</param>
+        /// <returns>Redirect to Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadPhoto(Guid id, IFormFile photo)
@@ -315,7 +341,11 @@ namespace HouseholdManager.Controllers
             return RedirectToAction("Details", new { id });
         }
 
-        // Delete room photo
+        /// <summary>
+        /// POST: Room/DeletePhoto - Remove room photo from filesystem and database. Owner only.
+        /// </summary>
+        /// <param name="id">Room ID</param>
+        /// <returns>Redirect to Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePhoto(Guid id)
@@ -338,7 +368,11 @@ namespace HouseholdManager.Controllers
             return RedirectToAction("Details", new { id });
         }
 
-        // Delete room - GET
+        /// <summary>
+        /// GET: Room/Delete - Delete confirmation page showing room and associated tasks. Owner only.
+        /// </summary>
+        /// <param name="id">Room ID</param>
+        /// <returns>View with room details for confirmation</returns>
         public async Task<IActionResult> Delete(Guid id)
         {
             try
@@ -358,7 +392,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Delete room - POST
+        /// <summary>
+        /// POST: Room/Delete - Delete room permanently. Cascades to photo and associated tasks. Owner only.
+        /// </summary>
+        /// <param name="id">Room ID</param>
+        /// <returns>Redirect to Room/Index for household</returns>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)

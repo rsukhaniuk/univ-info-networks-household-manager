@@ -7,13 +7,22 @@ using System.Security.Claims;
 
 namespace HouseholdManager.Controllers
 {
+    /// <summary>
+    /// Handles task execution (completion) and execution history. Any member can complete, only creator or Owner can delete.
+    /// </summary>
     [Authorize]
     public class ExecutionController : Controller
     {
         private readonly ITaskExecutionService _executionService;
         private readonly IHouseholdTaskService _taskService;
         private readonly ILogger<ExecutionController> _logger;
-
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="executionService"></param>
+        /// <param name="taskService"></param>
+        /// <param name="logger"></param>
         public ExecutionController(
             ITaskExecutionService executionService,
             IHouseholdTaskService taskService,
@@ -23,10 +32,16 @@ namespace HouseholdManager.Controllers
             _taskService = taskService;
             _logger = logger;
         }
-
+       
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // POST: Execution/Complete
+        /// <summary>
+        /// POST: Execution/Complete - Complete task with optional notes and photo. Regular tasks can only be completed once per week.
+        /// </summary>
+        /// <param name="taskId">Task ID</param>
+        /// <param name="notes">Optional completion notes</param>
+        /// <param name="photo">Optional completion photo</param>
+        /// <returns>Redirect to Task/Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Complete(Guid taskId, string? notes, IFormFile? photo)
@@ -56,7 +71,13 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // GET: Execution/History - Full execution history for a task
+        /// <summary>
+        /// GET: Execution/History - Paginated execution history for task
+        /// </summary>
+        /// <param name="taskId">Task ID</param>
+        /// <param name="page">Current page (default 1)</param>
+        /// <param name="pageSize">Items per page (default 20)</param>
+        /// <returns>View with ExecutionHistoryViewModel</returns>
         public async Task<IActionResult> History(Guid taskId, int page = 1, int pageSize = 20)
         {
             try
@@ -101,7 +122,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // GET: Execution/Details
+        /// <summary>
+        /// GET: Execution/Details - View single execution with task info, notes, photo, and user
+        /// </summary>
+        /// <param name="id">Execution ID</param>
+        /// <returns>View with TaskExecution entity</returns>
         public async Task<IActionResult> Details(Guid id)
         {
             try
@@ -127,7 +152,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Execution/Delete
+        /// <summary>
+        /// POST: Execution/Delete - Delete execution. Only creator or household Owner can delete. Deletes photo from filesystem.
+        /// </summary>
+        /// <param name="id">Execution ID</param>
+        /// <returns>Redirect to Task/Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)

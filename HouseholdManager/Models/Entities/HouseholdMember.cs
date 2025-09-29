@@ -11,6 +11,9 @@ namespace HouseholdManager.Models.Entities
     [Table("HouseholdMembers")]
     public class HouseholdMember
     {
+        /// <summary>
+        /// Identifier for the household member record
+        /// </summary>
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>

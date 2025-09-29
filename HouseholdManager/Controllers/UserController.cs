@@ -9,6 +9,9 @@ using System.Security.Claims;
 
 namespace HouseholdManager.Controllers
 {
+    /// <summary>
+    /// User profile management and system admin panel. Profile section for all users, Admin panel for SystemAdmin only.
+    /// </summary>
     [Authorize]
     public class UserController : Controller
     {
@@ -18,6 +21,14 @@ namespace HouseholdManager.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<UserController> _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userService"></param>
+        /// <param name="memberService"></param>
+        /// <param name="userManager"></param>
+        /// <param name="signInManager"></param>
+        /// <param name="logger"></param>
         public UserController(
             IUserService userService,
             IHouseholdMemberService memberService,
@@ -34,7 +45,10 @@ namespace HouseholdManager.Controllers
 
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // GET: User/Profile
+        /// <summary>
+        /// GET: User/Profile - View user profile with statistics (households, tasks, completions)
+        /// </summary>
+        /// <returns>View with UserProfileViewModel</returns>
         public async Task<IActionResult> Profile()
         {
             try
@@ -70,7 +84,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/Profile
+
+        /// <summary>
+        /// POST: User/Profile - Update user profile (FirstName, LastName, Email). Email change syncs UserName.
+        /// </summary>
+        /// <param name="model">Updated profile data</param>
+        /// <returns>Redirect to Profile on success, View with errors on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Profile(UserProfileViewModel model)
@@ -112,7 +131,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/ChangePassword
+        /// <summary>
+        /// POST: User/ChangePassword - Change password with current password validation
+        /// </summary>
+        /// <param name="model">Password change data</param>
+        /// <returns>Redirect to Profile with success/error message</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
@@ -150,13 +173,20 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // GET: User/DeleteAccount
+        /// <summary>
+        /// GET: User/DeleteAccount - Account deletion confirmation page with warning
+        /// </summary>
+        /// <returns>Delete account confirmation view</returns>
         public IActionResult DeleteAccount()
         {
             return View();
         }
 
-        // POST: User/DeleteAccount
+        /// <summary>
+        /// POST: User/DeleteAccount - Delete user account permanently after password confirmation. Signs out user.
+        /// </summary>
+        /// <param name="confirmPassword">Password for confirmation</param>
+        /// <returns>Redirect to Home/Index on success, View with error on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccountConfirmed(string confirmPassword)
@@ -215,7 +245,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // GET: User/AdminPanel - System admin only
+        /// <summary>
+        /// GET: User/AdminPanel - System admin panel to list and search all users. SystemAdmin only.
+        /// </summary>
+        /// <param name="search">Optional search query</param>
+        /// <returns>View with AdminPanelViewModel</returns>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminPanel(string? search = null)
         {
@@ -241,7 +275,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/SetSystemRole - System admin only
+        /// <summary>
+        /// POST: User/SetSystemRole - Change user's SystemRole (User/SystemAdmin). Cannot change own role. SystemAdmin only.
+        /// </summary>
+        /// <param name="userId">Target user ID</param>
+        /// <param name="role">New system role</param>
+        /// <returns>Redirect to AdminPanel</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "SystemAdmin")]
@@ -275,7 +314,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/DeleteUser - System admin only
+        /// <summary>
+        /// POST: User/DeleteUser - Admin deletes user account. Cannot delete self. SystemAdmin only.
+        /// </summary>
+        /// <param name="userId">User ID to delete</param>
+        /// <returns>Redirect to AdminPanel</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "SystemAdmin")]
@@ -309,7 +352,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/PromoteToOwner
+        /// <summary>
+        /// POST: User/PromoteToOwner - Promote member to owner in household
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="userId">User ID to promote</param>
+        /// <returns>Redirect to ManageMembers</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PromoteToOwner(Guid householdId, string userId)
@@ -333,7 +381,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/DemoteFromOwner
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="householdId"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DemoteFromOwner(Guid householdId, string userId)
@@ -362,7 +415,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: User/RemoveMember
+        /// <summary>
+        /// POST: User/DemoteFromOwner - Demote owner to member in household. Cannot demote last Owner.
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="userId">User ID to demote</param>
+        /// <returns>Redirect to ManageMembers</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(Guid householdId, string userId)

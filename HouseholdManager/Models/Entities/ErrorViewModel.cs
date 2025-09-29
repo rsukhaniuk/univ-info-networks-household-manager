@@ -1,5 +1,8 @@
 namespace HouseholdManager.Models.Entities
 {
+    /// <summary>
+    /// Error view model
+    /// </summary>
     public class ErrorViewModel
     {
         public string? RequestId { get; set; }

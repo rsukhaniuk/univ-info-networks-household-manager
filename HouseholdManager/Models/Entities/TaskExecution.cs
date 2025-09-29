@@ -9,6 +9,9 @@ namespace HouseholdManager.Models.Entities
     [Table("TaskExecutions")]
     public class TaskExecution
     {
+        /// <summary>
+        /// Identifier for the task execution
+        /// </summary>
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
@@ -29,6 +32,9 @@ namespace HouseholdManager.Models.Entities
         /// </summary>
         public DateTime CompletedAt { get; set; }
 
+        /// <summary>
+        /// Notes about the task execution (optional)
+        /// </summary>
         [StringLength(1000)]
         public string? Notes { get; set; }
 

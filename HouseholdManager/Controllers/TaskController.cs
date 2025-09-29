@@ -11,6 +11,9 @@ using System.Security.Claims;
 
 namespace HouseholdManager.Controllers
 {
+    /// <summary>
+    /// CRUD and management for household tasks. Owner for management, Member for viewing and completing assigned tasks.
+    /// </summary>
     [Authorize]
     public class TaskController : Controller
     {
@@ -23,6 +26,17 @@ namespace HouseholdManager.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<TaskController> _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="taskService"></param>
+        /// <param name="householdService"></param>
+        /// <param name="roomService"></param>
+        /// <param name="memberService"></param>
+        /// <param name="executionService"></param>
+        /// <param name="assignmentService"></param>
+        /// <param name="userManager"></param>
+        /// <param name="logger"></param>
         public TaskController(
             IHouseholdTaskService taskService,
             IHouseholdService householdService,
@@ -45,7 +59,16 @@ namespace HouseholdManager.Controllers
 
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // GET: Task/Index - List tasks with filters
+        /// <summary>
+        /// GET: Task/Index - List and filter tasks by room, priority, assignee, status, or search query
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="roomId">Optional room filter</param>
+        /// <param name="priority">Optional priority filter</param>
+        /// <param name="assigneeId">Optional assignee filter ("unassigned" for unassigned tasks)</param>
+        /// <param name="search">Optional search in title/description</param>
+        /// <param name="status">Optional status filter ("active"/"inactive")</param>
+        /// <returns>View with TaskIndexViewModel and filter dropdowns</returns>
         public async Task<IActionResult> Index(Guid householdId, Guid? roomId = null,
             TaskPriority? priority = null, string? assigneeId = null, string? search = null, string? status = null)
         {
@@ -128,7 +151,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // GET: Task/Details - View task with inline execution form
+        /// <summary>
+        /// GET: Task/Details - Task details with inline completion form and last 5 executions
+        /// </summary>
+        /// <param name="id">Task ID</param>
+        /// <returns>View with TaskDetailsViewModel including canComplete flag</returns>
         public async Task<IActionResult> Details(Guid id)
         {
             try
@@ -179,7 +206,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // GET: Task/Upsert - Create or Edit task
+        /// <summary>
+        /// GET: Task/Upsert - Create or edit task form with room and member dropdowns
+        /// </summary>
+        /// <param name="id">Task ID for edit mode, null for create mode</param>
+        /// <param name="householdId">Required for create mode</param>
+        /// <returns>View with TaskUpsertViewModel</returns>
         public async Task<IActionResult> Upsert(Guid? id, Guid? householdId)
         {
             try
@@ -250,7 +282,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Task/Upsert
+        /// <summary>
+        /// POST: Task/Upsert - Save task with custom validation (OneTime requires DueDate, Regular requires ScheduledWeekday)
+        /// </summary>
+        /// <param name="model">Task data to save</param>
+        /// <returns>Redirect to Details on success, View with errors on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upsert(TaskUpsertViewModel model)
@@ -351,7 +387,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Task/Delete
+        /// <summary>
+        /// POST: Task/Delete - Delete task permanently. SystemAdmin can always delete, otherwise must be Owner.
+        /// </summary>
+        /// <param name="id">Task ID</param>
+        /// <returns>Redirect to Task/Index for household</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
@@ -389,7 +429,15 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Task/ReassignNext
+        /// <summary>
+        /// POST: Task/ReassignNext - Rotate task to next member using round-robin algorithm. Owner only.
+        /// Not currently used.
+        /// </summary>
+        /// <param name="id">Task ID</param>
+        /// <returns>Redirect to Details</returns>
+        /// <remarks>
+        /// TODO: Requires additional testing and validation
+        /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReassignNext(Guid id)
@@ -416,7 +464,15 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Task/AutoAssign
+        /// <summary>
+        /// POST: Task/AutoAssign - Auto-assign all unassigned tasks using fair distribution algorithm. Owner only.
+        /// Not currently used.
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <returns>Redirect to Task/Index with assignment count</returns>
+        /// <remarks>
+        /// TODO: Requires additional testing and validation
+        /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AutoAssign(Guid householdId)
@@ -443,7 +499,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Helper method
+        /// <summary>
+        /// Helper method to populate room and member dropdown lists for Upsert view
+        /// </summary>
+        /// <param name="model">ViewModel to populate</param>
+        /// <param name="householdId">Household ID</param>
+        /// <returns>Task</returns>
         private async Task PopulateUpsertViewModel(TaskUpsertViewModel model, Guid householdId)
         {
             var household = await _householdService.GetHouseholdAsync(householdId);
@@ -459,6 +520,11 @@ namespace HouseholdManager.Controllers
             }).ToList();
         }
 
+        /// <summary>
+        /// POST: Task/Activate - Activate task (sets IsActive=true). Owner only.
+        /// </summary>
+        /// <param name="id">Task ID</param>
+        /// <returns>Redirect to Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Activate(Guid id)
@@ -482,7 +548,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Task/Deactivate
+        /// <summary>
+        /// POST: Task/Deactivate - Deactivate task (sets IsActive=false). Owner only.
+        /// </summary>
+        /// <param name="id">Task ID</param>
+        /// <returns>Redirect to Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deactivate(Guid id)

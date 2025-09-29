@@ -9,12 +9,21 @@ namespace HouseholdManager.Models.Entities
     [Table("Households")]
     public class Household
     {
+        /// <summary>
+        /// Identifier for the household
+        /// </summary>
         public Guid Id { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// Name of the household
+        /// </summary>
         [Required]
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Description or notes about the household
+        /// </summary>
         [StringLength(500)]
         public string? Description { get; set; }
 
@@ -24,6 +33,9 @@ namespace HouseholdManager.Models.Entities
         [Required]
         public Guid InviteCode { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// Date and time when the household was created (UTC)
+        /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

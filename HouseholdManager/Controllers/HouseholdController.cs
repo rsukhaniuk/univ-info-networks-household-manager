@@ -8,6 +8,9 @@ using System.Security.Claims;
 
 namespace HouseholdManager.Controllers
 {
+    /// <summary>
+    /// CRUD operations for households and membership management. Owner for management, Member for viewing.
+    /// </summary>
     [Authorize]
     public class HouseholdController : Controller
     {
@@ -18,6 +21,15 @@ namespace HouseholdManager.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<HouseholdController> _logger;
 
+        /// <summary>
+        /// Constructor with dependency injection
+        /// </summary>
+        /// <param name="householdService"></param>
+        /// <param name="memberService"></param>
+        /// <param name="roomService"></param>
+        /// <param name="taskService"></param>
+        /// <param name="userManager"></param>
+        /// <param name="logger"></param>
         public HouseholdController(
             IHouseholdService householdService,
             IHouseholdMemberService memberService,
@@ -36,7 +48,10 @@ namespace HouseholdManager.Controllers
 
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // List user's households
+        /// <summary>
+        /// GET: Household/Index - List user's households. SystemAdmin sees all, regular users see only their memberships.
+        /// </summary>
+        /// <returns>View with list of households</returns>
         public async Task<IActionResult> Index()
         {
             try
@@ -64,7 +79,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // View household details
+        /// <summary>
+        /// GET: Household/Details - Household overview with members, rooms, and active tasks
+        /// </summary>
+        /// <param name="id">Household ID</param>
+        /// <returns>View with HouseholdDetailsViewModel</returns>
         public async Task<IActionResult> Details(Guid id)
         {
             try
@@ -98,6 +117,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
+        /// <summary>
+        /// GET: Household/Upsert - Create or edit household form (Upsert pattern)
+        /// </summary>
+        /// <param name="id">Household ID for edit mode, null for create mode</param>
+        /// <returns>View with UpsertHouseholdViewModel</returns>
         public async Task<IActionResult> Upsert(Guid? id)
         {
             try
@@ -133,7 +157,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // POST: Household/Upsert
+        /// <summary>
+        /// POST: Household/Upsert - Save household. Create auto-adds creator as Owner, edit updates Name/Description.
+        /// </summary>
+        /// <param name="model">Household data to save</param>
+        /// <returns>Redirect to Details on success, View with errors on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upsert(UpsertHouseholdViewModel model)
@@ -177,13 +205,21 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Join household - GET
+
+        /// <summary>
+        /// GET: Household/Join - Display join household form
+        /// </summary>
+        /// <returns>View with JoinHouseholdViewModel</returns>
         public IActionResult Join()
         {
             return View(new JoinHouseholdViewModel());
         }
 
-        // Join household - POST
+        /// <summary>
+        /// POST: Household/Join - Join household using Guid invite code
+        /// </summary>
+        /// <param name="model">Model containing invite code</param>
+        /// <returns>Redirect to Details on success, View with errors on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Join(JoinHouseholdViewModel model)
@@ -215,7 +251,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Leave household
+        /// <summary>
+        /// POST: Household/Leave - Leave household. Cannot leave if last Owner.
+        /// </summary>
+        /// <param name="id">Household ID</param>
+        /// <returns>Redirect to Index on success, Details with error on failure</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Leave(Guid id)
@@ -239,6 +279,12 @@ namespace HouseholdManager.Controllers
             }
         }
 
+        /// <summary>
+        /// POST: Household/RemoveMember - Owner removes member from household. Cannot remove last Owner.
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="userId">User ID to remove</param>
+        /// <returns>Redirect to Details</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(Guid householdId, string userId)
@@ -267,6 +313,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
+        /// <summary>
+        /// POST: Household/RegenerateInviteCode - Generate new unique invite code. Owner only.
+        /// </summary>
+        /// <param name="id">Household ID</param>
+        /// <returns>Redirect to Details with new code</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegenerateInviteCode(Guid id)
@@ -290,7 +341,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Delete household - GET
+        /// <summary>
+        /// GET: Household/Delete - Delete confirmation page. Owner only.
+        /// </summary>
+        /// <param name="id">Household ID</param>
+        /// <returns>View with household details for confirmation</returns>
         public async Task<IActionResult> Delete(Guid id)
         {
             try
@@ -310,7 +365,11 @@ namespace HouseholdManager.Controllers
             }
         }
 
-        // Delete household - POST
+        /// <summary>
+        /// POST: Household/Delete - Delete household permanently. Cascades to rooms, tasks, executions, memberships.
+        /// </summary>
+        /// <param name="id">Household ID</param>
+        /// <returns>Redirect to Index on success</returns>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)

@@ -10,18 +10,33 @@ namespace HouseholdManager.Models.Entities
     [Table("HouseholdTasks")]
     public class HouseholdTask : IValidatableObject
     {
+        /// <summary>
+        /// Identifier for the household task
+        /// </summary>
         public Guid Id { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// Title of the task
+        /// </summary>
         [Required]
         [StringLength(200)]
         public string Title { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Description or details about the task
+        /// </summary>
         [StringLength(1000)]
         public string? Description { get; set; }
 
+        /// <summary>
+        /// Type of the task 
+        /// </summary>
         [Required]
         public TaskType Type { get; set; }
 
+        /// <summary>
+        /// Priority of the task (Low, Medium, High)
+        /// </summary>
         [Required]
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
 
@@ -59,8 +74,14 @@ namespace HouseholdManager.Models.Entities
         [StringLength(450)]
         public string? AssignedUserId { get; set; }
 
+        /// <summary>
+        /// Active status of the task
+        /// </summary>
         public bool IsActive { get; set; } = true;
 
+        /// <summary>
+        /// Creation timestamp (UTC)
+        /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>

@@ -5,11 +5,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HouseholdManager.Models.Entities
 {
+    /// <summary>
+    /// Application user extending IdentityUser with additional properties
+    /// </summary>
     public class ApplicationUser : IdentityUser
     {
+        /// <summary>
+        /// First name of the user
+        /// </summary>
         [StringLength(50)]
         public string? FirstName { get; set; }
 
+        /// <summary>
+        /// Last name of the user
+        /// </summary>
         [StringLength(50)]
         public string? LastName { get; set; }
 

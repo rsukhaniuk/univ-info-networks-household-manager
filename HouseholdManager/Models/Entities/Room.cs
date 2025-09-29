@@ -8,12 +8,21 @@ namespace HouseholdManager.Models.Entities
     /// </summary>
     public class Room
     {
+        /// <summary>
+        /// Identifier for the room
+        /// </summary>
         public Guid Id { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// Name of the room
+        /// </summary>
         [Required]
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Description or notes about the room
+        /// </summary>
         [StringLength(500)]
         public string? Description { get; set; }
 
@@ -24,7 +33,7 @@ namespace HouseholdManager.Models.Entities
         public string? PhotoPath { get; set; }
 
         /// <summary>
-        /// Cleaning priority (1 = low, 10 = high)
+        /// Not used currently - Priority of the room for task assignment (1-10)
         /// </summary>
         [Range(1, 10)]
         public int Priority { get; set; } = 5;
