@@ -22,5 +22,7 @@ namespace HouseholdManager.Repositories.Interfaces
         Task RemoveMemberAsync(Guid householdId, string userId, CancellationToken cancellationToken = default);
         Task<bool> IsUserMemberAsync(Guid householdId, string userId, CancellationToken cancellationToken = default);
         Task<HouseholdRole?> GetUserRoleAsync(Guid householdId, string userId, CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<Household>> GetAllWithMembersAsync(CancellationToken cancellationToken = default);
     }
 }

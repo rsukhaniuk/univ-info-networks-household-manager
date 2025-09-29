@@ -15,6 +15,15 @@ namespace HouseholdManager.Repositories.Implementations
         {
         }
 
+        public async Task<IReadOnlyList<Household>> GetAllWithMembersAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(h => h.Members)
+                    .ThenInclude(m => m.User)
+                .OrderByDescending(h => h.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
+
         // Essential queries with relations
         public async Task<Household?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
         {

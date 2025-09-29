@@ -33,6 +33,8 @@ namespace HouseholdManager.Models.ViewModels
         public int OwnedHouseholds { get; set; }
         public int ActiveTasks { get; set; }
         public int CompletedTasksThisWeek { get; set; }
+
+        public bool IsSystemAdmin { get; set; }
     }
 
     /// <summary>

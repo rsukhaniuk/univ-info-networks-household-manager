@@ -68,7 +68,7 @@ namespace HouseholdManager.Services.Implementations
 
         public async Task<IReadOnlyList<Household>> GetAllHouseholdsAsync(CancellationToken cancellationToken = default)
         {
-            return await _householdRepository.GetAllAsync(cancellationToken);
+            return await _householdRepository.GetAllWithMembersAsync(cancellationToken);
         }
 
         public async Task<IReadOnlyList<Household>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default)

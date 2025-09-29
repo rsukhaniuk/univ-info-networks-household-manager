@@ -56,7 +56,8 @@ namespace HouseholdManager.Controllers
                     TotalHouseholds = stats.TotalHouseholds,
                     OwnedHouseholds = stats.OwnedHouseholds,
                     ActiveTasks = stats.ActiveTasks,
-                    CompletedTasksThisWeek = stats.CompletedTasksThisWeek
+                    CompletedTasksThisWeek = stats.CompletedTasksThisWeek,
+                    IsSystemAdmin = user.IsSystemAdmin
                 };
 
                 return View(model);

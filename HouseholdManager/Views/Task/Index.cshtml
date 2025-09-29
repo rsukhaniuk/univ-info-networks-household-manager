@@ -435,7 +435,7 @@
                                                     </button>
                                                 </form>
                                             }
-                                            else if (isAssignedToCurrentUser)
+                                            else if (isAssignedToCurrentUser && task.IsActive)
                                             {
                                                 <!-- Member Assignee Actions -->
                                                 <a asp-action="Details" asp-route-id="@task.Id"
