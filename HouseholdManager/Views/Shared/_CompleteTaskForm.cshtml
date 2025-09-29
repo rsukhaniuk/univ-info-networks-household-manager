@@ -1,0 +1,204 @@
+﻿@model HouseholdManager.Models.Entities.HouseholdTask
+@using HouseholdManager.Models.Enums
+
+@{
+    // This partial expects these ViewData parameters:
+    // - IsCompletedThisWeek (bool)
+    // - CanComplete (bool)
+    var isCompletedThisWeek = ViewData["IsCompletedThisWeek"] as bool? ?? false;
+    var canComplete = ViewData["CanComplete"] as bool? ?? false;
+}
+
+<!-- Complete Task Form Card -->
+@if (canComplete)
+{
+    <div class="card shadow-sm mb-4" id="completeForm">
+        <div class="card-header @(isCompletedThisWeek ? "bg-secondary" : "bg-success") text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                @if (isCompletedThisWeek && Model.Type == TaskType.Regular)
+                {
+                    <text>Already Completed This Week</text>
+                }
+                else
+                {
+                    <text>Mark as Completed</text>
+                }
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (isCompletedThisWeek && Model.Type == TaskType.Regular)
+            {
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This task has already been completed this week. You can complete it again next week.
+                </div>
+            }
+            else
+            {
+                <form asp-controller="Execution" asp-action="Complete" method="post"
+                      enctype="multipart/form-data" id="completeTaskForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="taskId" value="@Model.Id" />
+
+                    <!-- Notes Field -->
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-comment me-1"></i>
+                            Notes (Optional)
+                        </label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                          placeholder="Add any notes about completing this task..."></textarea>
+                        <div class="form-text">
+                            Provide details about what you did, any issues encountered, etc.
+                        </div>
+                    </div>
+
+                    <!-- Photo Upload Field -->
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">
+                            <i class="fas fa-camera me-1"></i>
+                            Photo (Optional)
+                        </label>
+                        <input class="form-control" type="file" id="photo" name="photo"
+                               accept="image/jpeg,image/png,image/gif,image/webp">
+                        <div class="form-text">
+                            Upload a photo showing the completed task (max 5MB, JPG/PNG/GIF/WebP).
+                        </div>
+
+                        <!-- Photo Preview -->
+                        <div id="photoPreview" class="mt-2" style="display:none;">
+                            <label class="form-label text-muted">Preview:</label>
+                            <div class="position-relative" style="max-width: 300px;">
+                                <img id="previewImage" src="" alt="Preview"
+                                     class="img-thumbnail d-block" style="max-height: 200px; width: auto;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2"
+                                        id="removePhoto" title="Remove photo">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="fas fa-check me-2"></i>
+                            <span id="submitText">Complete Task</span>
+                        </button>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loadingState" class="text-center mt-3" style="display:none;">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2">Uploading and completing task...</p>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            $(document).ready(function() {
+                // Photo preview functionality
+                $('#photo').on('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        // Validate file size
+                        const maxSize = 5 * 1024 * 1024; // 5MB
+                        if (file.size > maxSize) {
+                            alert('Photo file size must not exceed 5MB. Please select a smaller file.');
+                            $(this).val('');
+                            $('#photoPreview').hide();
+                            return;
+                        }
+
+                        // Validate file type
+                        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                        if (!allowedTypes.includes(file.type)) {
+                            alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+                            $(this).val('');
+                            $('#photoPreview').hide();
+                            return;
+                        }
+
+                        // Show preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            $('#previewImage').attr('src', e.target.result);
+                            $('#photoPreview').slideDown();
+                        }
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#photoPreview').slideUp();
+                    }
+                });
+
+                // Remove photo button
+                $('#removePhoto').on('click', function() {
+                    $('#photo').val('');
+                    $('#photoPreview').slideUp();
+                });
+
+                // Form submission with validation and loading state
+                $('#completeTaskForm').on('submit', function(e) {
+                    const photoInput = $('#photo')[0];
+
+                    // Validate photo if provided
+                    if (photoInput.files.length > 0) {
+                        const file = photoInput.files[0];
+                        const maxSize = 5 * 1024 * 1024; // 5MB
+
+                        if (file.size > maxSize) {
+                            e.preventDefault();
+                            alert('Photo file size must not exceed 5MB. Please select a smaller file.');
+                            return false;
+                        }
+
+                        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                        if (!allowedTypes.includes(file.type)) {
+                            e.preventDefault();
+                            alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+                            return false;
+                        }
+                    }
+
+                    // Show loading state
+                    $('#submitBtn').prop('disabled', true);
+                    $('#submitText').html('<span class="spinner-border spinner-border-sm me-2"></span>Completing...');
+                    $('#loadingState').slideDown();
+                });
+
+                // Smooth scroll to form when accessed via anchor
+                if (window.location.hash === '#completeForm') {
+                    setTimeout(function() {
+                        $('html, body').animate({
+                            scrollTop: $('#completeForm').offset().top - 20
+                        }, 500);
+                        $('#notes').focus();
+                    }, 100);
+                }
+            });
+
+            // Prevent accidental navigation away when form has content
+            let formModified = false;
+            $('#notes, #photo').on('change', function() {
+                formModified = true;
+            });
+
+            $(window).on('beforeunload', function() {
+                if (formModified && !$('#completeTaskForm').data('submitted')) {
+                    return 'You have unsaved changes. Are you sure you want to leave?';
+                }
+            });
+
+            $('#completeTaskForm').on('submit', function() {
+                $(this).data('submitted', true);
+                formModified = false;
+            });
+        </script>
+    }
+}

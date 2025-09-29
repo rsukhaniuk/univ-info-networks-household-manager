@@ -58,6 +58,12 @@ namespace HouseholdManager.Services.Implementations
             // Create execution with denormalized fields
             var execution = await _executionRepository.CreateExecutionAsync(taskId, userId, notes, photoPath, cancellationToken);
 
+            if (task.Type == Models.Enums.TaskType.OneTime)
+            {
+                task.IsActive = false;
+                await _taskRepository.UpdateAsync(task, cancellationToken);
+            }
+
             _logger.LogInformation("Completed task {TaskId} by user {UserId}", taskId, userId);
             return execution;
         }

@@ -1,0 +1,570 @@
+﻿@model HouseholdManager.Models.ViewModels.TaskDetailsViewModel
+@using HouseholdManager.Models.Enums
+
+@{
+    ViewData["Title"] = $"Task: {Model.Task.Title}";
+    var priorityBadge = Model.Task.Priority switch
+    {
+        TaskPriority.Low => "bg-success",
+        TaskPriority.Medium => "bg-warning text-dark",
+        TaskPriority.High => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Index" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>My Households
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Details" asp-route-id="@Model.Task.HouseholdId" class="text-decoration-none">
+                    @Model.Task.Household.Name
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="Index" asp-route-householdId="@Model.Task.HouseholdId" class="text-decoration-none">
+                    Tasks
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Task.Title</li>
+        </ol>
+    </nav>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div class="flex-grow-1">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-tasks text-primary me-2"></i>
+                        @Model.Task.Title
+                        @if (Model.IsSystemAdmin)
+                        {
+                            <span class="badge bg-danger ms-2">System Admin</span>
+                        }
+                    </h1>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge @priorityBadge">
+                            <i class="fas fa-exclamation-circle me-1"></i>@Model.Task.Priority Priority
+                        </span>
+                        @if (Model.Task.IsActive)
+                        {
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-pause me-1"></i>Inactive
+                            </span>
+                        }
+                        @if (Model.Task.IsOverdue)
+                        {
+                            <span class="badge bg-danger">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Overdue
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap">
+                    <a asp-action="Index" asp-route-householdId="@Model.Task.HouseholdId"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Back to Tasks
+                    </a>
+
+                    @if (Model.IsOwner || Model.IsSystemAdmin)
+                    {
+                        <a asp-action="Upsert" asp-route-id="@Model.Task.Id" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i>
+                            Edit
+                        </a>
+
+                        @if (Model.IsOwner && Model.Task.IsActive)
+                        {
+                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#assignModal">
+                                <i class="fas fa-user-plus me-1"></i>
+                                Assign
+                            </button>
+
+                            <form asp-action="Deactivate" asp-route-id="@Model.Task.Id" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-secondary">
+                                    <i class="fas fa-pause me-1"></i>
+                                    Deactivate
+                                </button>
+                            </form>
+                        }
+                        else if (Model.IsOwner && !Model.Task.IsActive)
+                        {
+                            <form asp-action="Activate" asp-route-id="@Model.Task.Id" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-play me-1"></i>
+                                    Activate
+                                </button>
+                            </form>
+                        }
+
+                        <form asp-action="Delete" asp-route-id="@Model.Task.Id" method="post" style="display:inline;"
+                              onsubmit="return confirm('Are you sure you want to delete this task? This action cannot be undone.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>
+                                Delete
+                            </button>
+                        </form>
+                    }
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Task Details Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Task Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th style="width: 35%;">
+                                    <i class="fas fa-door-open text-muted me-2"></i>
+                                    Room
+                                </th>
+                                <td>
+                                    <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.Task.RoomId"
+                                       class="text-decoration-none">
+                                        @Model.Task.Room.Name
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-user text-muted me-2"></i>
+                                    Assigned To
+                                </th>
+                                <td>
+                                    @if (Model.Task.AssignedUser != null)
+                                    {
+                                        <span>
+                                            @(Model.Task.AssignedUser.FullName ?? Model.Task.AssignedUser.Email ?? "User")
+                                            @if (Model.IsAssignedToCurrentUser)
+                                            {
+                                                <span class="badge bg-primary ms-1">You</span>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            <i class="fas fa-user-slash me-1"></i>
+                                            Unassigned
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-layer-group text-muted me-2"></i>
+                                    Task Type
+                                </th>
+                                <td>
+                                    @if (Model.Task.Type == TaskType.Regular)
+                                    {
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-repeat me-1"></i>Regular
+                                        </span>
+                                        @if (Model.Task.ScheduledWeekday.HasValue)
+                                        {
+                                            <span class="ms-2">
+                                                <i class="fas fa-calendar-week me-1"></i>
+                                                @Model.Task.ScheduledWeekday.Value.ToString()
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-calendar-day me-1"></i>One-Time
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-clock text-muted me-2"></i>
+                                    @if (Model.Task.Type == TaskType.Regular)
+                                    {
+                                        <text>Estimated Time</text>
+                                    }
+                                    else
+                                    {
+                                        <text>Due Date</text>
+                                    }
+                                </th>
+                                <td>
+                                    @if (Model.Task.Type == TaskType.Regular)
+                                    {
+                                        <span>@Model.Task.FormattedEstimatedTime</span>
+                                    }
+                                    else if (Model.Task.DueDate.HasValue)
+                                    {
+                                        <span class="@(Model.Task.IsOverdue ? "text-danger fw-bold" : "")">
+                                            @Model.Task.DueDate.Value.ToString("MMMM dd, yyyy HH:mm")
+                                            @if (Model.Task.IsOverdue)
+                                            {
+                                                <i class="fas fa-exclamation-triangle text-danger ms-1"></i>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No due date set</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-calendar-plus text-muted me-2"></i>
+                                    Created
+                                </th>
+                                <td>@Model.Task.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</td>
+                            </tr>
+                            @if (Model.IsCompletedThisWeek && Model.Task.Type == TaskType.Regular)
+                            {
+                                <tr>
+                                    <th>
+                                        <i class="fas fa-check-double text-muted me-2"></i>
+                                        Status
+                                    </th>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Completed This Week
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    @if (!string.IsNullOrEmpty(Model.Task.Description))
+                    {
+                        <hr />
+                        <div>
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-align-left me-2"></i>
+                                Description
+                            </h6>
+                            <p class="mb-0">@Model.Task.Description</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Execution History Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Execution History
+                        <span class="badge bg-secondary ms-2">@Model.Executions.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Executions.Any())
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-history fa-2x mb-2"></i>
+                            <p class="mb-0">No execution history yet. Complete this task to see history here.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var execution in Model.Executions)
+                            {
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex align-items-start">
+                                        @if (!string.IsNullOrEmpty(execution.PhotoPath))
+                                        {
+                                            <img src="~/@execution.PhotoPath" alt="Execution photo"
+                                                 class="rounded me-3"
+                                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
+                                                 data-bs-toggle="modal"
+                                                 data-bs-target="#photoModal"
+                                                 data-photo-url="~/@execution.PhotoPath">
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                                 style="width: 80px; height: 80px; min-width: 80px;">
+                                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                                            </div>
+                                        }
+
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h6 class="mb-0">
+                                                    @(execution.User.FullName ?? execution.User.Email ?? "User")
+                                                </h6>
+                                                <small class="text-muted">
+                                                    @execution.TimeAgo
+                                                </small>
+                                            </div>
+                                            <small class="text-muted d-block mb-2">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                @execution.CompletedAt.ToString("MMMM dd, yyyy HH:mm")
+                                            </small>
+                                            @if (!string.IsNullOrEmpty(execution.Notes))
+                                            {
+                                                <p class="mb-0 text-muted small">
+                                                    <i class="fas fa-comment me-1"></i>
+                                                    @execution.Notes
+                                                </p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (Model.Executions.Count >= 5)
+                        {
+                            <div class="text-center mt-3">
+                                <a asp-controller="Execution" asp-action="History" asp-route-taskId="@Model.Task.Id"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-history me-1"></i>
+                                    View Full History
+                                </a>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Complete Task Form -->
+            @if (Model.CanComplete && !Model.IsCompletedThisWeek && Model.Task.IsActive)
+            {
+                <div class="card shadow-sm mb-4" id="completeForm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Complete Task
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Execution" asp-action="Complete" method="post" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="taskId" value="@Model.Task.Id" />
+
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">
+                                    <i class="fas fa-comment me-1"></i>
+                                    Notes (Optional)
+                                </label>
+                                <textarea name="notes" id="notes" class="form-control" rows="3"
+                                      placeholder="Add any notes about completing this task..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="photo" class="form-label">
+                                    <i class="fas fa-camera me-1"></i>
+                                    Photo (Optional)
+                                </label>
+                                <input type="file" name="photo" id="photo" class="form-control"
+                                       accept="image/jpeg,image/png,image/gif,image/webp">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Upload a photo showing the completed task (max 5MB)
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-check me-2"></i>
+                                    Complete Task
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+
+            <!-- Related Links Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>
+                        Related
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.Task.RoomId"
+                           class="btn btn-outline-primary">
+                            <i class="fas fa-door-open me-2"></i>
+                            View Room Details
+                        </a>
+
+                        <a asp-controller="Household" asp-action="Details" asp-route-id="@Model.Task.HouseholdId"
+                           class="btn btn-outline-info">
+                            <i class="fas fa-home me-2"></i>
+                            View Household
+                        </a>
+
+                        @if (Model.IsOwner || Model.IsSystemAdmin)
+                        {
+                            <hr class="my-2" />
+
+                            <a asp-action="Upsert" asp-route-householdId="@Model.Task.HouseholdId"
+                               class="btn btn-outline-success">
+                                <i class="fas fa-plus me-2"></i>
+                                Create New Task
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Photo Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="photoModalLabel">
+                    <i class="fas fa-image me-2"></i>
+                    Execution Photo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Full size photo" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Task Modal -->
+@if (Model.IsOwner)
+{
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="assignModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Assign Task
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="Assign" asp-route-id="@Model.Task.Id" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="assignUserId" class="form-label">
+                                <i class="fas fa-user me-1"></i>
+                                Select Member
+                            </label>
+                            <select name="userId" id="assignUserId" class="form-select" required>
+                                <option value="">-- Select Member --</option>
+                                @foreach (var member in Model.HouseholdMembers)
+                                {
+                                    <option value="@member.UserId" selected="@(member.UserId == Model.Task.AssignedUserId)">
+                                        @(member.User.FullName ?? member.User.Email ?? member.UserId)
+                                        @if (member.UserId == Model.Task.AssignedUserId)
+                                        {
+                                            <text> (Current)</text>
+                                        }
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Task.AssignedUserId))
+                        {
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Currently assigned to: <strong>@(Model.Task.AssignedUser?.FullName ?? Model.Task.AssignedUser?.Email ?? "User")</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                This task is currently <strong>unassigned</strong>.
+                            </div>
+                        }
+                    </div>
+
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check me-1"></i>
+                            Assign Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Photo modal functionality
+            $('img[data-bs-toggle="modal"]').on('click', function() {
+                const photoUrl = $(this).attr('src');
+                $('#modalImage').attr('src', photoUrl);
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert-dismissible').alert('close');
+            }, 5000);
+        });
+    </script>
+}

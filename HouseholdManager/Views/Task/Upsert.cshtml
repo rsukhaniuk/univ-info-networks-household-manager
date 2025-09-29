@@ -1,0 +1,265 @@
+﻿@model HouseholdManager.Models.ViewModels.TaskUpsertViewModel
+@using HouseholdManager.Models.Enums
+
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Index" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>My Households
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Household" asp-action="Details" asp-route-id="@Model.HouseholdId" class="text-decoration-none">
+                    @Model.HouseholdName
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="Index" asp-route-householdId="@Model.HouseholdId" class="text-decoration-none">
+                    Tasks
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.PageTitle</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <h1 class="h3 mb-1">
+                <i class="@Model.SubmitIcon me-2"></i>
+                @Model.PageTitle
+            </h1>
+            <p class="text-muted">
+                @if (Model.IsEdit)
+                {
+                    <text>Update task details and settings</text>
+                }
+                else
+                {
+                    <text>Create a new task for @Model.HouseholdName</text>
+                }
+            </p>
+        </div>
+    </div>
+
+    <!-- Validation Summary -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+            {
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            }
+        </div>
+    </div>
+
+    <!-- Upsert Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <form asp-action="Upsert" method="post" id="taskForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="HouseholdId" />
+                <input type="hidden" asp-for="IsEdit" />
+                @if (Model.IsEdit && Model.RowVersion != null)
+                {
+                    <input type="hidden" asp-for="RowVersion" />
+                }
+
+                <!-- Basic Information Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Basic Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">
+                                <i class="fas fa-tasks me-1"></i>
+                                Task Title <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Title" class="form-control form-control-lg"
+                                   placeholder="e.g., Clean kitchen, Take out trash, Vacuum living room"
+                                   maxlength="200" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">
+                                <i class="fas fa-align-left me-1"></i>
+                                Description
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="3"
+                                      placeholder="Provide additional details about this task..."
+                                      maxlength="1000"></textarea>
+                            <div class="form-text">Optional. Add any specific instructions or notes.</div>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <!-- Room -->
+                        <div class="mb-3">
+                            <label asp-for="RoomId" class="form-label">
+                                <i class="fas fa-door-open me-1"></i>
+                                Room <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="RoomId" asp-items="Model.Rooms" class="form-select">
+                                <option value="">-- Select Room --</option>
+                            </select>
+                            <span asp-validation-for="RoomId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Type & Scheduling Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            Scheduling
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Hidden Task Type - Always OneTime -->
+                        <input type="hidden" asp-for="Type" value="@((int)TaskType.OneTime)" />
+
+                        <!-- Due Date (for One-Time tasks) -->
+                        <div class="mb-3">
+                            <label asp-for="DueDate" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Due Date <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="DueDate" type="datetime-local" class="form-control" required />
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select when this task should be completed
+                            </div>
+                            <span asp-validation-for="DueDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Settings Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cog me-2"></i>
+                            Task Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Priority -->
+                        <div class="mb-3">
+                            <label asp-for="Priority" class="form-label">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                Priority <span class="text-danger">*</span>
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" asp-for="Priority" value="@((int)TaskPriority.Low)"
+                                       class="btn-check" id="priorityLow" autocomplete="off">
+                                <label class="btn btn-outline-success" for="priorityLow">
+                                    <i class="fas fa-arrow-down me-1"></i>
+                                    Low
+                                </label>
+
+                                <input type="radio" asp-for="Priority" value="@((int)TaskPriority.Medium)"
+                                       class="btn-check" id="priorityMedium" autocomplete="off" checked>
+                                <label class="btn btn-outline-warning" for="priorityMedium">
+                                    <i class="fas fa-minus me-1"></i>
+                                    Medium
+                                </label>
+
+                                <input type="radio" asp-for="Priority" value="@((int)TaskPriority.High)"
+                                       class="btn-check" id="priorityHigh" autocomplete="off">
+                                <label class="btn btn-outline-danger" for="priorityHigh">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    High
+                                </label>
+                            </div>
+                            <span asp-validation-for="Priority" class="text-danger"></span>
+                        </div>
+
+                        <!-- Assigned User -->
+                        <div class="mb-3">
+                            <label asp-for="AssignedUserId" class="form-label">
+                                <i class="fas fa-user me-1"></i>
+                                Assign To <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="AssignedUserId" asp-items="Model.Members" class="form-select" required>
+                                <option value="">-- Select Member --</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Choose who will be responsible for this task.
+                            </div>
+                            <span asp-validation-for="AssignedUserId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Active Status -->
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" checked />
+                            <label asp-for="IsActive" class="form-check-label">
+                                <i class="fas fa-toggle-on me-1"></i>
+                                Task is Active
+                            </label>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Inactive tasks won't appear in schedules or calendars.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" asp-route-householdId="@Model.HouseholdId"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Cancel
+                            </a>
+
+                            <button type="submit" class="btn @Model.SubmitClass btn-lg">
+                                <i class="@Model.SubmitIcon me-1"></i>
+                                @Model.SubmitText
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function() {
+            // Set minimum due date to today
+            const today = new Date().toISOString().slice(0, 16);
+            $('#DueDate').attr('min', today);
+
+            // Form validation
+            $('#taskForm').on('submit', function(e) {
+                if (!$('#DueDate').val()) {
+                    e.preventDefault();
+                    alert('Please select a due date for this task.');
+                    $('#DueDate').focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+}

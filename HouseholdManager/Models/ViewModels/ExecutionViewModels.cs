@@ -1,0 +1,17 @@
+﻿using HouseholdManager.Models.Entities;
+
+namespace HouseholdManager.Models.ViewModels
+{
+    public class ExecutionHistoryViewModel
+    {
+        public HouseholdTask Task { get; set; } = null!;
+        public IReadOnlyList<TaskExecution> Executions { get; set; } = new List<TaskExecution>();
+        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; }
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; }
+
+        public bool HasPreviousPage => CurrentPage > 1;
+        public bool HasNextPage => CurrentPage < TotalPages;
+    }
+}
