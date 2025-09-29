@@ -177,7 +177,12 @@ namespace HouseholdManager.Controllers
 
             try
             {
-                var member = await _householdService.JoinHouseholdAsync(model.InviteCode, UserId);
+                if (!model.InviteCode.HasValue)
+                {
+                    ModelState.AddModelError("InviteCode", "Please enter an invite code.");
+                    return View(model);
+                }
+                var member = await _householdService.JoinHouseholdAsync(model.InviteCode.Value, UserId);
                 TempData["Success"] = "Successfully joined the household!";
                 return RedirectToAction("Details", new { id = member.HouseholdId });
             }

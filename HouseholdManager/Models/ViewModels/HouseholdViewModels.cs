@@ -72,6 +72,6 @@ namespace HouseholdManager.Models.ViewModels
         /// </summary>
         [Required(ErrorMessage = "Please enter an invite code")]
         [Display(Name = "Invite Code")]
-        public Guid InviteCode { get; set; }
+        public Guid? InviteCode { get; set; }
     }
 }

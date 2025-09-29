@@ -29,6 +29,27 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultUI();
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SystemAdmin", policy =>
+        policy.RequireAssertion(context =>
+        {
+            if (context.User.Identity?.IsAuthenticated != true)
+                return false;
+
+            var userManager = context.Resource as UserManager<ApplicationUser>;
+            if (userManager == null)
+                return false;
+
+            var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return false;
+
+            var user = userManager.FindByIdAsync(userId).GetAwaiter().GetResult();
+            return user?.Role == SystemRole.SystemAdmin;
+        }));
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 

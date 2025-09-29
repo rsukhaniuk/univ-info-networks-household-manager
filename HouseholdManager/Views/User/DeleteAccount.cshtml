@@ -1,0 +1,64 @@
+﻿@{
+    ViewData["Title"] = "Delete Account";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Delete Account
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-warning me-2"></i>Warning: This action is permanent!
+                        </h5>
+                        <hr>
+                        <p class="mb-2"><strong>Deleting your account will:</strong></p>
+                        <ul class="mb-0">
+                            <li>Permanently remove all your personal data</li>
+                            <li>Remove you from all households you're a member of</li>
+                            <li>Remove all your task assignments</li>
+                        </ul>
+                    </div>
+
+                    <form asp-action="DeleteAccountConfirmed" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label for="confirmPassword" class="form-label fw-bold">
+                                Confirm Your Password
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="password"
+                                   name="confirmPassword"
+                                   id="confirmPassword"
+                                   class="form-control"
+                                   required
+                                   placeholder="Enter your password to confirm">
+                            <div class="form-text">
+                                Enter your current password to confirm account deletion.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg"
+                                    onclick="return confirm('Are you absolutely sure you want to delete your account? This action cannot be undone!');">
+                                <i class="fas fa-trash me-2"></i>
+                                Yes, Delete My Account Permanently
+                            </button>
+                            <a asp-action="Profile" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Cancel and Go Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
