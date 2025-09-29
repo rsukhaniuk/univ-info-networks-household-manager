@@ -2,7 +2,7 @@
 A web application for managing household chores and distributing responsibilities among residents.
 
 ## 📋 Overview
-Household Manager is an ASP.NET Core MVC application designed to help families and roommates organize their living spaces, assign tasks, and track completion of household chores. The system supports multiple households, role-based permissions, and automated task assignment.
+Household Manager is an ASP.NET Core MVC application designed to help families and roommates organize their living spaces, assign tasks, and track completion of household chores. The system supports multiple households, role-based permissions, and task assignment.
 
 ## ✨ Features
 
