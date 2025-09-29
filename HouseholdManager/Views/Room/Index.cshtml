@@ -9,10 +9,6 @@
     var isSystemAdmin = currentUser?.IsSystemAdmin ?? false;
 }
 
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-
 <div class="container">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
@@ -139,7 +135,6 @@
                                     <th><i class="fas fa-image me-1"></i>Photo</th>
                                     <th><i class="fas fa-door-open me-1"></i>Name</th>
                                     <th><i class="fas fa-align-left me-1"></i>Description</th>
-                                    <th><i class="fas fa-star me-1"></i>Priority</th>
                                     <th><i class="fas fa-tasks me-1"></i>Tasks</th>
                                     <th data-orderable="false"><i class="fas fa-cogs me-1"></i>Actions</th>
                                 </tr>
@@ -196,24 +191,6 @@
                                             {
                                                 <span class="text-muted">No description</span>
                                             }
-                                        </td>
-
-                                        <!-- Priority -->
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                @for (int i = 1; i <= 10; i++)
-                                                {
-                                                    @if (i <= room.Priority)
-                                                    {
-                                                        <i class="fas fa-star text-warning"></i>
-                                                    }
-                                                    else
-                                                    {
-                                                        <i class="far fa-star text-muted"></i>
-                                                    }
-                                                }
-                                                <span class="ms-2 text-muted">(@room.Priority/10)</span>
-                                            </div>
                                         </td>
 
                                         <!-- Tasks Count -->
@@ -317,12 +294,6 @@
 </div>
 
 @section Scripts {
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-
     <script>
         $(document).ready(function() {
             // Initialize DataTable
@@ -351,11 +322,7 @@
                         searchable: false
                     },
                     {
-                        targets: 3, // Priority column
-                        type: 'num'
-                    },
-                    {
-                        targets: 4, // Tasks column
+                        targets: 3, // Tasks column (було 4, стало 3 після видалення Priority)
                         type: 'num'
                     }
                 ]

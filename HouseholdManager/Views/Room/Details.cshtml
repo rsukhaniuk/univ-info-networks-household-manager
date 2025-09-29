@@ -85,26 +85,6 @@
                                     <div class="row g-3">
                                         <div class="col-sm-6">
                                             <div class="d-flex align-items-center">
-                                                <i class="fas fa-star text-warning me-2"></i>
-                                                <span class="fw-semibold">Priority:</span>
-                                                <div class="ms-2">
-                                                    @for (int i = 1; i <= 10; i++)
-                                                    {
-                                                        @if (i <= Model.Room.Priority)
-                                                        {
-                                                            <i class="fas fa-star text-warning"></i>
-                                                        }
-                                                        else
-                                                        {
-                                                            <i class="far fa-star text-muted"></i>
-                                                        }
-                                                    }
-                                                    <span class="ms-1 text-muted">(@Model.Room.Priority/10)</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <div class="d-flex align-items-center">
                                                 <i class="fas fa-tasks text-info me-2"></i>
                                                 <span class="fw-semibold">Active Tasks:</span>
                                                 <span class="badge bg-info ms-2">@Model.Room.ActiveTaskCount</span>

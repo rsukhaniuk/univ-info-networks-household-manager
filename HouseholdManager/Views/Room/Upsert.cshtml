@@ -102,31 +102,6 @@
                             </div>
                         </div>
 
-                        <!-- Priority -->
-                        <div class="mb-4">
-                            <label asp-for="Priority" class="form-label fw-semibold">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                Cleaning Priority <span class="text-danger">*</span>
-                            </label>
-                            <div class="row align-items-center">
-                                <div class="col-8">
-                                    <input asp-for="Priority" type="range" class="form-range"
-                                           min="1" max="10" step="1" id="priorityRange" />
-                                </div>
-                                <div class="col-4">
-                                    <div class="d-flex align-items-center">
-                                        <span id="priorityValue" class="badge bg-warning text-dark me-2">@Model.Priority</span>
-                                        <div id="priorityStars"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <span asp-validation-for="Priority" class="text-danger small"></span>
-                            <div class="form-text">
-                                <i class="fas fa-info-circle me-1"></i>
-                                1 = Low priority (rarely cleaned), 10 = High priority (frequently cleaned)
-                            </div>
-                        </div>
-
                         <!-- Photo Section -->
                         <div class="mb-4">
                             <label class="form-label fw-semibold">
@@ -216,61 +191,6 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Help Card -->
-            <div class="card border-0 mt-4" style="background-color: #f8f9fa;">
-                <div class="card-body p-4">
-                    <h6 class="card-title">
-                        <i class="fas fa-lightbulb text-warning me-2"></i>Tips for Room Management
-                    </h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <i class="fas fa-tag text-success"></i>
-                                </div>
-                                <div>
-                                    <strong>Naming:</strong>
-                                    <p class="small text-muted mb-0">Use clear, specific names like "Master Bedroom" instead of just "Bedroom"</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <i class="fas fa-star text-warning"></i>
-                                </div>
-                                <div>
-                                    <strong>Priority:</strong>
-                                    <p class="small text-muted mb-0">High priority for guest areas, lower for storage rooms</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <i class="fas fa-camera text-info"></i>
-                                </div>
-                                <div>
-                                    <strong>Photos:</strong>
-                                    <p class="small text-muted mb-0">@(Model.IsEdit ? "Replace photos anytime by uploading new ones" : "Add photos to help identify rooms quickly")</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <i class="fas fa-tasks text-primary"></i>
-                                </div>
-                                <div>
-                                    <strong>Tasks:</strong>
-                                    <p class="small text-muted mb-0">Create room-specific cleaning tasks after @(Model.IsEdit ? "updating" : "adding") the room</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -279,35 +199,6 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Priority range slider functionality
-            const priorityRange = document.getElementById('priorityRange');
-            const priorityValue = document.getElementById('priorityValue');
-            const priorityStars = document.getElementById('priorityStars');
-
-            function updatePriority() {
-                const value = priorityRange.value;
-                priorityValue.textContent = value;
-
-                // Update stars visual
-                let starsHtml = '';
-                for (let i = 1; i <= 10; i++) {
-                    if (i <= value) {
-                        starsHtml += '<i class="fas fa-star text-warning"></i>';
-                    } else {
-                        starsHtml += '<i class="far fa-star text-muted"></i>';
-                    }
-                }
-                priorityStars.innerHTML = starsHtml;
-            }
-
-            // Initialize priority display
-            updatePriority();
-
-            // Update priority on range change
-            priorityRange.addEventListener('input', updatePriority);
-        });
-
         // Photo preview functionality
         function previewPhoto(input) {
             const file = input.files[0];
