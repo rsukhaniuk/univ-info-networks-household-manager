@@ -18,9 +18,10 @@ namespace HouseholdManager.Repositories.Implementations
         public async Task<IReadOnlyList<Room>> GetByHouseholdIdAsync(Guid householdId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(r => r.HouseholdId == householdId)
-                .OrderBy(r => r.Name)
-                .ToListAsync(cancellationToken);
+             .Include(r => r.Tasks.Where(t => t.IsActive)) 
+             .Where(r => r.HouseholdId == householdId)
+             .OrderBy(r => r.Name)
+             .ToListAsync(cancellationToken);
         }
 
         public async Task<Room?> GetByIdWithTasksAsync(Guid id, CancellationToken cancellationToken = default)

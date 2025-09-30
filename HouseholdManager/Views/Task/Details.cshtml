@@ -48,7 +48,7 @@
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
+            <i class="fas fa-triangle-exclamatio me-2"></i>
             @TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -86,7 +86,7 @@
                         @if (Model.Task.IsOverdue)
                         {
                             <span class="badge bg-danger">
-                                <i class="fas fa-exclamation-triangle me-1"></i>Overdue
+                                <i class="fas fa-triangle-exclamatio me-1"></i>Overdue
                             </span>
                         }
                     </div>
@@ -246,10 +246,10 @@
                                     else if (Model.Task.DueDate.HasValue)
                                     {
                                         <span class="@(Model.Task.IsOverdue ? "text-danger fw-bold" : "")">
-                                            @Model.Task.DueDate.Value.ToString("MMMM dd, yyyy HH:mm")
+                                            @Model.Task.DueDate.Value.ToLocalDateTimeString()
                                             @if (Model.Task.IsOverdue)
                                             {
-                                                <i class="fas fa-exclamation-triangle text-danger ms-1"></i>
+                                                <i class="fas  text-danger ms-1"></i>
                                             }
                                         </span>
                                     }
@@ -264,7 +264,7 @@
                                     <i class="fas fa-calendar-plus text-muted me-2"></i>
                                     Created
                                 </th>
-                                <td>@Model.Task.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</td>
+                                <td>@Model.Task.CreatedAt.ToLocalDateTimeString()</td>
                             </tr>
                             @if (Model.IsCompletedThisWeek && Model.Task.Type == TaskType.Regular)
                             {
@@ -350,7 +350,7 @@
                                             </div>
                                             <small class="text-muted d-block mb-2">
                                                 <i class="fas fa-calendar me-1"></i>
-                                                @execution.CompletedAt.ToString("MMMM dd, yyyy HH:mm")
+                                                @execution.CompletedAt.ToLocalDateTimeString()
                                             </small>
                                             @if (!string.IsNullOrEmpty(execution.Notes))
                                             {
@@ -533,7 +533,7 @@
                         else
                         {
                             <div class="alert alert-warning mb-0">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <i class="fas fa-triangle-exclamatio me-2"></i>
                                 This task is currently <strong>unassigned</strong>.
                             </div>
                         }

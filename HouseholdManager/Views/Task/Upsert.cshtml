@@ -132,15 +132,23 @@
                         <input type="hidden" asp-for="Type" value="@((int)TaskType.OneTime)" />
 
                         <!-- Due Date (for One-Time tasks) -->
+                        <!-- Due Date (for One-Time tasks) -->
                         <div class="mb-3">
                             <label asp-for="DueDate" class="form-label">
                                 <i class="fas fa-calendar-alt me-1"></i>
-                                Due Date <span class="text-danger">*</span>
+                                Due Date & Time <span class="text-danger">*</span>
                             </label>
-                            <input asp-for="DueDate" type="datetime-local" class="form-control" required />
+
+                            <input asp-for="DueDate"
+                                   type="text"
+                                   id="dueDatePicker"
+                                   class="form-control form-control-lg"
+                                   placeholder="Select date and time..."
+                                   required />
+
                             <div class="form-text">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Select when this task should be completed
+                                Click to select date and time (24-hour format)
                             </div>
                             <span asp-validation-for="DueDate" class="text-danger"></span>
                         </div>
@@ -246,17 +254,96 @@
     }
 
     <script>
-        $(document).ready(function() {
-            // Set minimum due date to today
-            const today = new Date().toISOString().slice(0, 16);
-            $('#DueDate').attr('min', today);
+        document.addEventListener('DOMContentLoaded', function() {
+            const dueDateInput = document.getElementById('dueDatePicker');
+            const errorContainer = dueDateInput.parentElement.querySelector('.text-danger');
 
-            // Form validation
-            $('#taskForm').on('submit', function(e) {
-                if (!$('#DueDate').val()) {
+            const picker = flatpickr(dueDateInput, {
+                enableTime: true,
+                time_24hr: true,
+                dateFormat: "Y-m-d H:i",
+                altInput: false,
+                minDate: new Date(),
+                allowInput: true,
+                @if (Model.DueDate.HasValue)
+                {
+                        <text>
+                        defaultDate: "@Model.DueDate.Value.ToString("yyyy-MM-dd HH:mm")",
+                        </text>
+                }
+                else
+                {
+                        <text>
+                        defaultDate: new Date(new Date().setHours(9, 0, 0, 0)),
+                        </text>
+                }
+                locale: {
+                    firstDayOfWeek: 1
+                },
+                onClose: function(selectedDates, dateStr, instance) {
+                    validateDate();
+                }
+            });
+
+            function formatDateForMessage(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+
+            function validateDate() {
+                if (errorContainer) {
+                    errorContainer.textContent = '';
+                }
+
+                if (!dueDateInput.value) {
+                    return;
+                }
+
+                const selectedDate = picker.selectedDates[0];
+                if (selectedDate && selectedDate < new Date()) {
+                    const minDate = formatDateForMessage(new Date());
+                    if (errorContainer) {
+                        errorContainer.textContent = `Please enter a value greater than or equal to ${minDate}.`;
+                    }
+                    dueDateInput.classList.add('is-invalid');
+                } else {
+                    dueDateInput.classList.remove('is-invalid');
+                }
+            }
+
+            // Валідація при blur
+            dueDateInput.addEventListener('blur', function() {
+                validateDate();
+            });
+
+            document.getElementById('taskForm').addEventListener('submit', function(e) {
+                if (errorContainer) {
+                    errorContainer.textContent = '';
+                }
+                dueDateInput.classList.remove('is-invalid');
+
+                if (!dueDateInput.value) {
                     e.preventDefault();
-                    alert('Please select a due date for this task.');
-                    $('#DueDate').focus();
+                    if (errorContainer) {
+                        errorContainer.textContent = 'Please select a due date for this task.';
+                    }
+                    dueDateInput.classList.add('is-invalid');
+                    dueDateInput.focus();
+                    return false;
+                }
+
+                const selectedDate = picker.selectedDates[0];
+                if (selectedDate && selectedDate < new Date()) {
+                    e.preventDefault();
+                    const minDate = formatDateForMessage(new Date());
+                    if (errorContainer) {
+                        errorContainer.textContent = `Please enter a value greater than or equal to ${minDate}.`;
+                    }
+                    dueDateInput.classList.add('is-invalid');
                     return false;
                 }
             });

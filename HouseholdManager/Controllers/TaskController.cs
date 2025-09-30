@@ -212,7 +212,7 @@ namespace HouseholdManager.Controllers
         /// <param name="id">Task ID for edit mode, null for create mode</param>
         /// <param name="householdId">Required for create mode</param>
         /// <returns>View with TaskUpsertViewModel</returns>
-        public async Task<IActionResult> Upsert(Guid? id, Guid? householdId)
+        public async Task<IActionResult> Upsert(Guid? id, Guid? householdId, Guid? roomId)
         {
             try
             {
@@ -239,10 +239,10 @@ namespace HouseholdManager.Controllers
                         RoomId = task.RoomId,
                         AssignedUserId = task.AssignedUserId,
                         IsActive = task.IsActive,
-                        DueDate = task.DueDate,
+                        DueDate = task.DueDate?.ToLocalTime(),
                         ScheduledWeekday = task.ScheduledWeekday,
                         RowVersion = task.RowVersion,
-                        IsEdit = true
+                        IsEdit = true,
                     };
 
                     await PopulateUpsertViewModel(model, task.HouseholdId);
@@ -333,7 +333,7 @@ namespace HouseholdManager.Controllers
                     task.RoomId = model.RoomId;
                     task.AssignedUserId = string.IsNullOrEmpty(model.AssignedUserId) ? null : model.AssignedUserId;
                     task.IsActive = model.IsActive;
-                    task.DueDate = model.DueDate;
+                    task.DueDate = model.DueDate?.ToUniversalTime();
                     task.ScheduledWeekday = model.ScheduledWeekday;
 
                     await _taskService.UpdateTaskAsync(task, UserId);
@@ -357,7 +357,7 @@ namespace HouseholdManager.Controllers
                         RoomId = model.RoomId,
                         AssignedUserId = string.IsNullOrEmpty(model.AssignedUserId) ? null : model.AssignedUserId,
                         IsActive = model.IsActive,
-                        DueDate = model.DueDate,
+                        DueDate = model.DueDate?.ToUniversalTime(),
                         ScheduledWeekday = model.ScheduledWeekday
                     };
 

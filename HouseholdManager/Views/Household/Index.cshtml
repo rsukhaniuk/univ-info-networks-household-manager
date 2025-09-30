@@ -174,11 +174,11 @@
                                         <!-- Created Date -->
                                         <td data-order="@household.CreatedAt.ToString("yyyy-MM-dd")">
                                             <span class="text-muted">
-                                                @household.CreatedAt.ToString("MMM dd, yyyy")
+                                                @household.CreatedAt.ToLocalDateShort()
                                             </span>
                                             <br>
                                             <small class="text-muted">
-                                                @household.CreatedAt.ToString("HH:mm")
+                                                @household.CreatedAt.ToLocalTimeString()
                                             </small>
                                         </td>
 

@@ -2,9 +2,7 @@
 @using HouseholdManager.Models.Enums
 
 @{
-    // This partial expects these ViewData parameters:
-    // - IsCompletedThisWeek (bool)
-    // - CanComplete (bool)
+
     var isCompletedThisWeek = ViewData["IsCompletedThisWeek"] as bool? ?? false;
     var canComplete = ViewData["CanComplete"] as bool? ?? false;
 }
