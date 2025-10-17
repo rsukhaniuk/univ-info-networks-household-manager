@@ -263,24 +263,25 @@
                 time_24hr: true,
                 dateFormat: "Y-m-d H:i",
                 altInput: false,
+                altFormat: "F j, Y \\a\\t H:i",
                 minDate: new Date(),
-                allowInput: true,
+                // allowInput: true,
                 @if (Model.DueDate.HasValue)
                 {
-                        <text>
-                        defaultDate: "@Model.DueDate.Value.ToString("yyyy-MM-dd HH:mm")",
-                        </text>
+                            <text>
+                            defaultDate: "@Model.DueDate.Value.ToString("yyyy-MM-dd HH:mm")",
+                            </text>
                 }
                 else
                 {
-                        <text>
-                        defaultDate: new Date(new Date().setHours(9, 0, 0, 0)),
-                        </text>
+                            <text>
+                            defaultDate: new Date(new Date().setHours(9, 0, 0, 0)),
+                            </text>
                 }
                 locale: {
                     firstDayOfWeek: 1
                 },
-                onClose: function(selectedDates, dateStr, instance) {
+                onChange: function(selectedDates, dateStr, instance) {
                     validateDate();
                 }
             });
@@ -307,15 +308,14 @@
                 if (selectedDate && selectedDate < new Date()) {
                     const minDate = formatDateForMessage(new Date());
                     if (errorContainer) {
-                        errorContainer.textContent = `Please enter a value greater than or equal to ${minDate}.`;
+                        errorContainer.textContent = `Please enter a value greater than ${minDate}.`;
                     }
                     dueDateInput.classList.add('is-invalid');
                 } else {
-                    dueDateInput.classList.remove('is-invalid');
+                    dueDa   teInput.classList.remove('is-invalid');
                 }
             }
 
-            // Валідація при blur
             dueDateInput.addEventListener('blur', function() {
                 validateDate();
             });

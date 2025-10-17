@@ -273,7 +273,7 @@
                                     _ => "bg-secondary"
                                 };
 
-                                var isOverdue = task.IsOverdue;
+                                var isOverdue = task.IsActive && task.IsOverdue;
                                 var isAssignedToCurrentUser = task.AssignedUserId == currentUser?.Id;
 
                                 <tr class="@(isOverdue ? "table-danger" : "") @(isAssignedToCurrentUser ? "table-primary" : "")">
@@ -291,7 +291,7 @@
                                                 <i class="fas fa-pause"></i> Inactive
                                             </span>
                                         }
-                                        @if (isOverdue)
+                                        @if (task.IsActive && isOverdue)
                                         {
                                             <br />
                                             <span class="badge bg-danger mt-1">
