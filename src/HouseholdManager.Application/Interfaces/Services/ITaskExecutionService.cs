@@ -1,4 +1,5 @@
 ﻿using HouseholdManager.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace HouseholdManager.Application.Interfaces.Services
 {

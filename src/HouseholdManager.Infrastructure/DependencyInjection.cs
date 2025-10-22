@@ -1,4 +1,5 @@
 ﻿using HouseholdManager.Application.Interfaces.Repositories;
+using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Infrastructure.Data;
 using HouseholdManager.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;

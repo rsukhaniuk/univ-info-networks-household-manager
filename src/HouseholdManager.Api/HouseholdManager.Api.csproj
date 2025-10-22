@@ -17,4 +17,10 @@
     <Folder Include="Configuration\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\HouseholdManager.Application\HouseholdManager.Application.csproj" />
+    <ProjectReference Include="..\HouseholdManager.Domain\HouseholdManager.Domain.csproj" />
+    <ProjectReference Include="..\HouseholdManager.Infrastructure\HouseholdManager.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

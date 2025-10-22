@@ -25,7 +25,6 @@
     <Folder Include="DTOs\Task\" />
     <Folder Include="DTOs\Room\" />
     <Folder Include="Mapping\" />
-    <Folder Include="Services\" />
     <Folder Include="Validators\Household\" />
     <Folder Include="Validators\Execution\" />
     <Folder Include="Validators\Task\" />

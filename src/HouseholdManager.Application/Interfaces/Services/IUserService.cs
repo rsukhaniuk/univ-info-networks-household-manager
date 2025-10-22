@@ -13,7 +13,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         // Profile management
         Task<ApplicationUser?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
         Task<ApplicationUser?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
-        Task UpdateUserProfileAsync(string userId, string? firstName, string? lastName, string? email, CancellationToken cancellationToken = default);
+        //Task UpdateUserProfileAsync(string userId, string? firstName, string? lastName, string? email, CancellationToken cancellationToken = default);
 
         // Current household management
         Task SetCurrentHouseholdAsync(string userId, Guid? householdId, CancellationToken cancellationToken = default);
@@ -25,14 +25,14 @@ namespace HouseholdManager.Application.Interfaces.Services
         Task<IReadOnlyList<ApplicationUser>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken = default);
 
         // System admin operations
-        Task<bool> CreateUserAsync(ApplicationUser user, string password, string requestingUserId, CancellationToken cancellationToken = default);
-        Task UpdateUserAsync(ApplicationUser user, string requestingUserId, CancellationToken cancellationToken = default);
-        Task DeleteUserAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default);
-        Task SetSystemRoleAsync(string userId, SystemRole role, string requestingUserId, CancellationToken cancellationToken = default);
+        //Task<bool> CreateUserAsync(ApplicationUser user, string password, string requestingUserId, CancellationToken cancellationToken = default);
+        //Task UpdateUserAsync(ApplicationUser user, string requestingUserId, CancellationToken cancellationToken = default);
+        //Task DeleteUserAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default);
+        //Task SetSystemRoleAsync(string userId, SystemRole role, string requestingUserId, CancellationToken cancellationToken = default);
 
         // User statistics
-        Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default);
-        Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default);
+        //Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default);
+        //Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default);
 
         // Validation helpers
         Task ValidateUserAccessAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default);
