@@ -3,6 +3,7 @@ using HouseholdManager.Domain.Enums;
 using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
 using Microsoft.Extensions.Logging;
+using HouseholdManager.Application.DTOs.Common;
 
 namespace HouseholdManager.Services.Implementations
 {
@@ -87,52 +88,52 @@ namespace HouseholdManager.Services.Implementations
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
         }
 
-        //// User statistics - THESE WORK (don't need UserManager)
-        //public async Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default)
-        //{
-        //    var memberships = await _memberRepository.GetByUserIdAsync(userId, cancellationToken);
-        //    var householdIds = memberships.Select(m => m.HouseholdId).ToList();
+        // User statistics - THESE WORK (don't need UserManager)
+        public async Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            var memberships = await _memberRepository.GetByUserIdAsync(userId, cancellationToken);
+            var householdIds = memberships.Select(m => m.HouseholdId).ToList();
 
-        //    var stats = new UserDashboardStats
-        //    {
-        //        TotalHouseholds = memberships.Count,
-        //        OwnedHouseholds = memberships.Count(m => m.Role == HouseholdRole.Owner)
-        //    };
+            var stats = new UserDashboardStats
+            {
+                TotalHouseholds = memberships.Count,
+                OwnedHouseholds = memberships.Count(m => m.Role == HouseholdRole.Owner)
+            };
 
-        //    if (householdIds.Any())
-        //    {
-        //        // Get tasks across all households
-        //        var userTasks = await _taskRepository.GetByAssignedUserIdAsync(userId, cancellationToken);
-        //        stats.ActiveTasks = userTasks.Count;
+            if (householdIds.Any())
+            {
+                // Get tasks across all households
+                var userTasks = await _taskRepository.GetByAssignedUserIdAsync(userId, cancellationToken);
+                stats.ActiveTasks = userTasks.Count;
 
-        //        // Get executions this week across all households
-        //        var thisWeekExecutions = new List<TaskExecution>();
-        //        foreach (var householdId in householdIds)
-        //        {
-        //            var executions = await _executionRepository.GetUserExecutionsThisWeekAsync(userId, householdId, cancellationToken);
-        //            thisWeekExecutions.AddRange(executions);
-        //        }
+                // Get executions this week across all households
+                var thisWeekExecutions = new List<TaskExecution>();
+                foreach (var householdId in householdIds)
+                {
+                    var executions = await _executionRepository.GetUserExecutionsThisWeekAsync(userId, householdId, cancellationToken);
+                    thisWeekExecutions.AddRange(executions);
+                }
 
-        //        stats.CompletedTasksThisWeek = thisWeekExecutions.Count;
-        //        stats.LastActivity = thisWeekExecutions.OrderByDescending(e => e.CompletedAt).FirstOrDefault()?.CompletedAt;
-        //    }
+                stats.CompletedTasksThisWeek = thisWeekExecutions.Count;
+                stats.LastActivity = thisWeekExecutions.OrderByDescending(e => e.CompletedAt).FirstOrDefault()?.CompletedAt;
+            }
 
-        //    return stats;
-        //}
+            return stats;
+        }
 
-        //public async Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default)
-        //{
-        //    var stats = await GetUserDashboardStatsAsync(userId, cancellationToken);
+        public async Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            var stats = await GetUserDashboardStatsAsync(userId, cancellationToken);
 
-        //    return new Dictionary<string, object>
-        //    {
-        //        ["totalHouseholds"] = stats.TotalHouseholds,
-        //        ["ownedHouseholds"] = stats.OwnedHouseholds,
-        //        ["activeTasks"] = stats.ActiveTasks,
-        //        ["completedThisWeek"] = stats.CompletedTasksThisWeek,
-        //        ["lastActivity"] = stats.LastActivity?.ToString("yyyy-MM-dd HH:mm") ?? "Never"
-        //    };
-        //}
+            return new Dictionary<string, object>
+            {
+                ["totalHouseholds"] = stats.TotalHouseholds,
+                ["ownedHouseholds"] = stats.OwnedHouseholds,
+                ["activeTasks"] = stats.ActiveTasks,
+                ["completedThisWeek"] = stats.CompletedTasksThisWeek,
+                ["lastActivity"] = stats.LastActivity?.ToString("yyyy-MM-dd HH:mm") ?? "Never"
+            };
+        }
 
         // Validation helpers
         public async Task ValidateUserAccessAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default)

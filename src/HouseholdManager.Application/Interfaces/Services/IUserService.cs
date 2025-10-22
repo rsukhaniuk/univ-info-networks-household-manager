@@ -1,4 +1,5 @@
 ﻿//using HouseholdManager.Application.DTOs;
+using HouseholdManager.Application.DTOs.Common;
 using HouseholdManager.Domain.Entities;
 using HouseholdManager.Domain.Enums;
 
@@ -31,8 +32,8 @@ namespace HouseholdManager.Application.Interfaces.Services
         //Task SetSystemRoleAsync(string userId, SystemRole role, string requestingUserId, CancellationToken cancellationToken = default);
 
         // User statistics
-        //Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default);
-        //Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default);
+        Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default);
+        Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default);
 
         // Validation helpers
         Task ValidateUserAccessAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default);

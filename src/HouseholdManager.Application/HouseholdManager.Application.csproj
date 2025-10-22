@@ -18,12 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Common\" />
-    <Folder Include="DTOs\Household\" />
-    <Folder Include="DTOs\Execution\" />
-    <Folder Include="DTOs\User\" />
-    <Folder Include="DTOs\Task\" />
-    <Folder Include="DTOs\Room\" />
     <Folder Include="Mapping\" />
     <Folder Include="Validators\Household\" />
     <Folder Include="Validators\Execution\" />
