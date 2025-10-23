@@ -1,4 +1,5 @@
-﻿using HouseholdManager.Domain.Entities;
+﻿using HouseholdManager.Application.DTOs.Execution;
+using HouseholdManager.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 
 namespace HouseholdManager.Application.Interfaces.Services
@@ -19,7 +20,11 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="photo">Optional photo of completed task</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Created TaskExecution entity</returns>
-        Task<TaskExecution> CompleteTaskAsync(Guid taskId, string userId, string? notes = null, IFormFile? photo = null, CancellationToken cancellationToken = default);
+        Task<ExecutionDto> CompleteTaskAsync(
+            CompleteTaskRequest request,
+            string userId,
+            IFormFile? photo = null,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a single execution by ID without relations
@@ -27,7 +32,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="id">Execution ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>TaskExecution entity or null</returns>
-        Task<TaskExecution?> GetExecutionAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<ExecutionDto?> GetExecutionAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a single execution by ID with Task and User navigation properties loaded
@@ -35,7 +40,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="id">Execution ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>TaskExecution entity with relations or null</returns>
-        Task<TaskExecution?> GetExecutionWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<ExecutionDto?> GetExecutionWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Updates execution notes and photo. Only creator or household Owner can update.
@@ -44,7 +49,11 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="requestingUserId">ID of user making the request</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task</returns>
-        Task UpdateExecutionAsync(TaskExecution execution, string requestingUserId, CancellationToken cancellationToken = default);
+        Task<ExecutionDto> UpdateExecutionAsync(
+              Guid id,
+              UpdateExecutionRequest request,
+              string requestingUserId,
+              CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes an execution. Only creator or household Owner can delete. Deletes photo from filesystem.
@@ -62,7 +71,9 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="taskId">Task ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of task executions</returns>
-        Task<IReadOnlyList<TaskExecution>> GetTaskExecutionsAsync(Guid taskId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ExecutionDto>> GetTaskExecutionsAsync(
+            Guid taskId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all executions for a household, ordered by CompletedAt descending
@@ -70,7 +81,9 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="householdId">Household ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of household executions</returns>
-        Task<IReadOnlyList<TaskExecution>> GetHouseholdExecutionsAsync(Guid householdId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ExecutionDto>> GetHouseholdExecutionsAsync(
+            Guid householdId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets executions by a specific user in a household for the current week
@@ -79,7 +92,10 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="householdId">Household ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of user's executions this week</returns>
-        Task<IReadOnlyList<TaskExecution>> GetUserExecutionsAsync(string userId, Guid householdId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ExecutionDto>> GetUserExecutionsAsync(
+            string userId,
+            Guid householdId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets executions for a specific week. If weekStarting is null, returns current week (Monday-Sunday).
@@ -91,7 +107,10 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <remarks>
         /// TODO: Requires additional testing and validation
         /// </remarks> 
-        Task<IReadOnlyList<TaskExecution>> GetWeeklyExecutionsAsync(Guid householdId, DateTime? weekStarting = null, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ExecutionDto>> GetWeeklyExecutionsAsync(
+            Guid householdId,
+            DateTime? weekStarting = null,
+            CancellationToken cancellationToken = default);
 
         // Status checking
         /// <summary>
@@ -114,7 +133,9 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <remarks>
         /// TODO: Requires additional testing and validation
         /// </remarks>
-        Task<TaskExecution?> GetLatestExecutionForTaskAsync(Guid taskId, CancellationToken cancellationToken = default);
+        Task<ExecutionDto?> GetLatestExecutionForTaskAsync(
+            Guid taskId,
+            CancellationToken cancellationToken = default);
 
         // Photo management
         /// <summary>

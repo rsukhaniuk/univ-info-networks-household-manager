@@ -1,5 +1,6 @@
 ﻿//using HouseholdManager.Application.DTOs;
 using HouseholdManager.Application.DTOs.Common;
+using HouseholdManager.Application.DTOs.User;
 using HouseholdManager.Domain.Entities;
 using HouseholdManager.Domain.Enums;
 
@@ -12,18 +13,25 @@ namespace HouseholdManager.Application.Interfaces.Services
     public interface IUserService
     {
         // Profile management
-        Task<ApplicationUser?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
-        Task<ApplicationUser?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task<UserDto?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
+        Task<UserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
         //Task UpdateUserProfileAsync(string userId, string? firstName, string? lastName, string? email, CancellationToken cancellationToken = default);
 
         // Current household management
-        Task SetCurrentHouseholdAsync(string userId, Guid? householdId, CancellationToken cancellationToken = default);
+        Task SetCurrentHouseholdAsync(
+            string userId,
+            SetCurrentHouseholdRequest request,
+            CancellationToken cancellationToken = default);
         Task<Guid?> GetCurrentHouseholdIdAsync(string userId, CancellationToken cancellationToken = default);
 
         // User listings (for admin/owner panels)
-        Task<IReadOnlyList<ApplicationUser>> GetAllUsersAsync(CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<ApplicationUser>> GetHouseholdUsersAsync(Guid householdId, CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<ApplicationUser>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<UserDto>> GetHouseholdUsersAsync(
+            Guid householdId,
+            CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<UserDto>> SearchUsersAsync(
+            string searchTerm,
+            CancellationToken cancellationToken = default);
 
         // System admin operations
         //Task<bool> CreateUserAsync(ApplicationUser user, string password, string requestingUserId, CancellationToken cancellationToken = default);
@@ -39,6 +47,12 @@ namespace HouseholdManager.Application.Interfaces.Services
         Task ValidateUserAccessAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default);
         Task ValidateSystemAdminAccessAsync(string requestingUserId, CancellationToken cancellationToken = default);
         Task<bool> IsSystemAdminAsync(string userId, CancellationToken cancellationToken = default);
+
+        Task<UserProfileDto> GetUserProfileAsync(string userId, CancellationToken cancellationToken = default);
+        Task<UserDto> UpdateProfileAsync(
+            string userId,
+            UpdateProfileRequest request,
+            CancellationToken cancellationToken = default);
     }
 
 }

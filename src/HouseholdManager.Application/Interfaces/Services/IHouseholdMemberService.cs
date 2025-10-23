@@ -1,4 +1,5 @@
-﻿using HouseholdManager.Domain.Entities;
+﻿using HouseholdManager.Application.DTOs.Household;
+using HouseholdManager.Domain.Entities;
 using HouseholdManager.Domain.Enums;
 
 namespace HouseholdManager.Application.Interfaces.Services
@@ -15,7 +16,9 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="householdId">Household ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of household members</returns>
-        Task<IReadOnlyList<HouseholdMember>> GetHouseholdMembersAsync(Guid householdId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<HouseholdMemberDto>> GetHouseholdMembersAsync(
+            Guid householdId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all household memberships for a specific user
@@ -23,7 +26,9 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="userId">User ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of user's household memberships</returns>
-        Task<IReadOnlyList<HouseholdMember>> GetUserMembershipsAsync(string userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<HouseholdMemberDto>> GetUserMembershipsAsync(
+            string userId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a specific member record for a user in a household
@@ -32,7 +37,10 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="userId">User ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>HouseholdMember entity or null if not found</returns>
-        Task<HouseholdMember?> GetMemberAsync(Guid householdId, string userId, CancellationToken cancellationToken = default);
+        Task<HouseholdMemberDto?> GetMemberAsync(
+            Guid householdId,
+            string userId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all members with a specific role in a household
@@ -41,7 +49,10 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="role">Role to filter by (Owner or Member)</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of members with specified role</returns>
-        Task<IReadOnlyList<HouseholdMember>> GetMembersByRoleAsync(Guid householdId, HouseholdRole role, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<HouseholdMemberDto>> GetMembersByRoleAsync(
+            Guid householdId,
+            HouseholdRole role,
+            CancellationToken cancellationToken = default);
 
         // Role management
         /// <summary>

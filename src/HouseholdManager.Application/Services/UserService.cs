@@ -1,9 +1,11 @@
-﻿using HouseholdManager.Domain.Entities;
-using HouseholdManager.Domain.Enums;
+﻿using AutoMapper;
+using HouseholdManager.Application.DTOs.Common;
+using HouseholdManager.Application.DTOs.User;
 using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
+using HouseholdManager.Domain.Entities;
+using HouseholdManager.Domain.Enums;
 using Microsoft.Extensions.Logging;
-using HouseholdManager.Application.DTOs.Common;
 
 namespace HouseholdManager.Services.Implementations
 {
@@ -18,49 +20,74 @@ namespace HouseholdManager.Services.Implementations
         private readonly ITaskRepository _taskRepository;
         private readonly IExecutionRepository _executionRepository;
         private readonly ILogger<UserService> _logger;
+        private readonly IMapper _mapper;
 
         public UserService(
             IHouseholdMemberRepository memberRepository,
             ITaskRepository taskRepository,
             IExecutionRepository executionRepository,
+            IMapper mapper,
             ILogger<UserService> logger)
         {
             _memberRepository = memberRepository;
             _taskRepository = taskRepository;
             _executionRepository = executionRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
         // Profile management
         // TODO: These methods will use IUserRepository when implemented
-        public async Task<ApplicationUser?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<UserDto?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
+            // TODO: Implement with IUserRepository when Auth0 is integrated
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            // return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
-        public async Task<ApplicationUser?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<UserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
+            // TODO: Implement with IUserRepository when Auth0 is integrated
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+            // return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
         // NOTE: Password management is handled by Auth0
         // ChangePasswordAsync has been removed - users change passwords through Auth0
 
         // Current household management
-        public async Task SetCurrentHouseholdAsync(string userId, Guid? householdId, CancellationToken cancellationToken = default)
+        public async Task SetCurrentHouseholdAsync(
+            string userId,
+            SetCurrentHouseholdRequest request,
+            CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
+            // TODO: Implement with IUserRepository when Auth0 is integrated
+
             // Validate user is member of the household if setting one
-            if (householdId.HasValue)
+            if (request.HouseholdId.HasValue)
             {
-                var isMember = await _memberRepository.IsUserMemberAsync(householdId.Value, userId, cancellationToken);
+                var isMember = await _memberRepository.IsUserMemberAsync(
+                    request.HouseholdId.Value, userId, cancellationToken);
                 if (!isMember)
                     throw new InvalidOperationException("User is not a member of the specified household");
             }
 
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            // if (user == null) throw new NotFoundException("User", userId);
+            //
+            // user.CurrentHouseholdId = request.HouseholdId;
+            // await _userRepository.UpdateAsync(user, cancellationToken);
+            // _logger.LogInformation("Set current household {HouseholdId} for user {UserId}", 
+            //     request.HouseholdId, userId);
         }
 
         public async Task<Guid?> GetCurrentHouseholdIdAsync(string userId, CancellationToken cancellationToken = default)
@@ -70,22 +97,38 @@ namespace HouseholdManager.Services.Implementations
         }
 
         // User listings
-        public async Task<IReadOnlyList<ApplicationUser>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
+            // TODO: Implement with IUserRepository when Auth0 is integrated
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var users = await _userRepository.GetAllAsync(cancellationToken);
+            // return _mapper.Map<IReadOnlyList<UserDto>>(users);
         }
 
-        public async Task<IReadOnlyList<ApplicationUser>> GetHouseholdUsersAsync(Guid householdId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<UserDto>> GetHouseholdUsersAsync(
+            Guid householdId,
+            CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
+            // TODO: Implement with IUserRepository when Auth0 is integrated
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var users = await _userRepository.GetHouseholdUsersAsync(householdId, cancellationToken);
+            // return _mapper.Map<IReadOnlyList<UserDto>>(users);
         }
 
-        public async Task<IReadOnlyList<ApplicationUser>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<UserDto>> SearchUsersAsync(
+            string searchTerm,
+            CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
+            // TODO: Implement with IUserRepository when Auth0 is integrated
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var users = await _userRepository.SearchAsync(searchTerm, cancellationToken);
+            // return _mapper.Map<IReadOnlyList<UserDto>>(users);
         }
 
         // User statistics - THESE WORK (don't need UserManager)
@@ -154,6 +197,53 @@ namespace HouseholdManager.Services.Implementations
             // TODO: Implement with IUserRepository
             throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
         }
+
+        public async Task<UserProfileDto> GetUserProfileAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            // TODO: Implement with IUserRepository when Auth0 is integrated
+            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            // if (user == null) throw new NotFoundException("User", userId);
+            //
+            // var dto = new UserProfileDto
+            // {
+            //     User = _mapper.Map<UserDto>(user),
+            //     Stats = await GetUserDashboardStatsAsync(userId, cancellationToken),
+            //     Households = _mapper.Map<List<UserHouseholdDto>>(user.HouseholdMemberships)
+            // };
+            //
+            // // Set IsCurrent flag
+            // foreach (var household in dto.Households)
+            // {
+            //     household.IsCurrent = household.HouseholdId == user.CurrentHouseholdId;
+            // }
+            //
+            // return dto;
+        }
+
+        public async Task<UserDto> UpdateProfileAsync(
+            string userId,
+            UpdateProfileRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            // TODO: Implement with IUserRepository when Auth0 is integrated
+            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+
+            // FUTURE implementation:
+            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            // if (user == null) throw new NotFoundException("User", userId);
+            //
+            // // Update profile fields (FirstName, LastName only)
+            // _mapper.Map(request, user);
+            //
+            // await _userRepository.UpdateAsync(user, cancellationToken);
+            // _logger.LogInformation("Updated profile for user {UserId}", userId);
+            //
+            // return _mapper.Map<UserDto>(user);
+        }
+
 
         // NOTE: System admin operations (CreateUser, UpdateUser, DeleteUser, SetSystemRole)
         // will be handled by Auth0 Management API, not by this service

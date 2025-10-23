@@ -59,6 +59,11 @@ namespace HouseholdManager.Application.DTOs.Household
         public string UserId { get; set; } = string.Empty;
 
         /// <summary>
+        /// Household ID (for user memberships list)
+        /// </summary>
+        public Guid HouseholdId { get; set; }
+
+        /// <summary>
         /// User's display name
         /// </summary>
         public string UserName { get; set; } = string.Empty;

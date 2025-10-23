@@ -40,6 +40,7 @@ namespace HouseholdManager.Application.Mapping
 
             // HouseholdMember → HouseholdMemberDto
             CreateMap<HouseholdMember, HouseholdMemberDto>()
+                .ForMember(dest => dest.HouseholdId, opt => opt.MapFrom(src => src.HouseholdId))
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.FullName))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))

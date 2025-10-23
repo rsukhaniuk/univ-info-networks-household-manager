@@ -87,7 +87,13 @@ namespace HouseholdManager.Application.Services
             var dto = _mapper.Map<TaskDetailsDto>(task);
 
             var members = await _householdMemberService.GetHouseholdMembersAsync(task.HouseholdId, cancellationToken);
-            dto.AvailableAssignees = _mapper.Map<List<TaskAssigneeDto>>(members.Select(m => m.User));
+            dto.AvailableAssignees = members.Select(m => new TaskAssigneeDto
+            {
+                UserId = m.UserId,
+                UserName = m.UserName ?? "Unknown",
+                Email = m.Email,
+                CurrentTaskCount = 0
+            }).ToList();
 
             var counts = await _householdMemberService.GetMemberTaskCountsAsync(task.HouseholdId, cancellationToken);
 
@@ -96,7 +102,7 @@ namespace HouseholdManager.Application.Services
                 assignee.CurrentTaskCount = counts.TryGetValue(assignee.UserId, out var c) ? c : 0;
             }
 
-            dto.Permissions.IsOwner = false; 
+            //dto.Permissions.IsOwner = false; 
             return dto;
         }
 

@@ -1,7 +1,9 @@
-﻿using HouseholdManager.Domain.Entities;
-using HouseholdManager.Domain.Enums;
+﻿using AutoMapper;
+using HouseholdManager.Application.DTOs.Household;
 using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
+using HouseholdManager.Domain.Entities;
+using HouseholdManager.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace HouseholdManager.Application.Services
@@ -15,38 +17,55 @@ namespace HouseholdManager.Application.Services
         private readonly IHouseholdRepository _householdRepository;
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<HouseholdMemberService> _logger;
+        private readonly IMapper _mapper;
 
         public HouseholdMemberService(
             IHouseholdMemberRepository memberRepository,
             IHouseholdRepository householdRepository,
             ITaskRepository taskRepository,
+            IMapper mapper,
             ILogger<HouseholdMemberService> logger)
         {
             _memberRepository = memberRepository;
             _householdRepository = householdRepository;
             _taskRepository = taskRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
         // Member queries
-        public async Task<IReadOnlyList<HouseholdMember>> GetHouseholdMembersAsync(Guid householdId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<HouseholdMemberDto>> GetHouseholdMembersAsync(
+            Guid householdId,
+            CancellationToken cancellationToken = default)
         {
-            return await _memberRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+            var members = await _memberRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+            return _mapper.Map<IReadOnlyList<HouseholdMemberDto>>(members);
         }
 
-        public async Task<IReadOnlyList<HouseholdMember>> GetUserMembershipsAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<HouseholdMemberDto>> GetUserMembershipsAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
         {
-            return await _memberRepository.GetByUserIdAsync(userId, cancellationToken);
+            var memberships = await _memberRepository.GetByUserIdAsync(userId, cancellationToken);
+            return _mapper.Map<IReadOnlyList<HouseholdMemberDto>>(memberships);
         }
 
-        public async Task<HouseholdMember?> GetMemberAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
+        public async Task<HouseholdMemberDto?> GetMemberAsync(
+            Guid householdId,
+            string userId,
+            CancellationToken cancellationToken = default)
         {
-            return await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
+            var member = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
+            return member == null ? null : _mapper.Map<HouseholdMemberDto>(member);
         }
 
-        public async Task<IReadOnlyList<HouseholdMember>> GetMembersByRoleAsync(Guid householdId, HouseholdRole role, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<HouseholdMemberDto>> GetMembersByRoleAsync(
+            Guid householdId,
+            HouseholdRole role,
+            CancellationToken cancellationToken = default)
         {
-            return await _memberRepository.GetMembersByRoleAsync(householdId, role, cancellationToken);
+            var members = await _memberRepository.GetMembersByRoleAsync(householdId, role, cancellationToken);
+            return _mapper.Map<IReadOnlyList<HouseholdMemberDto>>(members);
         }
 
         // Role management
