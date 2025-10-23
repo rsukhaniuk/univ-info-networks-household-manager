@@ -1,8 +1,13 @@
-﻿using HouseholdManager.Domain.Entities;
-using HouseholdManager.Domain.Enums;
+﻿using AutoMapper;
+using HouseholdManager.Application.DTOs.Household;
+using HouseholdManager.Application.DTOs.Room;
+using HouseholdManager.Application.DTOs.Task;
 using HouseholdManager.Application.Interfaces.Repositories;
-using Microsoft.Extensions.Logging;
 using HouseholdManager.Application.Interfaces.Services;
+using HouseholdManager.Domain.Entities;
+using HouseholdManager.Domain.Enums;
+using HouseholdManager.Domain.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace HouseholdManager.Application.Services
 {
@@ -14,26 +19,27 @@ namespace HouseholdManager.Application.Services
         private readonly IHouseholdRepository _householdRepository;
         private readonly IHouseholdMemberRepository _memberRepository;
         private readonly ILogger<HouseholdService> _logger;
+        private readonly IMapper _mapper;
 
         public HouseholdService(
             IHouseholdRepository householdRepository,
             IHouseholdMemberRepository memberRepository,
+            IMapper mapper,
             ILogger<HouseholdService> logger)
         {
             _householdRepository = householdRepository;
             _memberRepository = memberRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
         // Basic CRUD operations
-        public async Task<Household> CreateHouseholdAsync(string name, string? description, string ownerId, CancellationToken cancellationToken = default)
+        public async Task<HouseholdDto> CreateHouseholdAsync(
+            UpsertHouseholdRequest request,
+            string ownerId,
+            CancellationToken cancellationToken = default)
         {
-            var household = new Household
-            {
-                Name = name,
-                Description = description,
-                InviteCode = Guid.NewGuid()
-            };
+            var household = _mapper.Map<Household>(request);
 
             // Create household
             var createdHousehold = await _householdRepository.AddAsync(household, cancellationToken);
@@ -50,33 +56,59 @@ namespace HouseholdManager.Application.Services
             _logger.LogInformation("Created household {HouseholdId} with owner {UserId}",
                 createdHousehold.Id, ownerId);
 
-            return createdHousehold;
+            return _mapper.Map<HouseholdDto>(createdHousehold);
         }
 
-        public async Task<Household?> GetHouseholdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<HouseholdDto?> GetHouseholdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _householdRepository.GetByIdAsync(id, cancellationToken);
+            var household = await _householdRepository.GetByIdAsync(id, cancellationToken);
+            return household == null ? null : _mapper.Map<HouseholdDto>(household);
         }
 
-        public async Task<Household?> GetHouseholdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<HouseholdDetailsDto?> GetHouseholdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _householdRepository.GetByIdWithMembersAsync(id, cancellationToken);
+            var household = await _householdRepository.GetByIdWithMembersAsync(id, cancellationToken);
+            if (household == null) return null;
+
+            var dto = _mapper.Map<HouseholdDetailsDto>(household);
+            dto.IsOwner = false; // Set by controller based on current user
+
+            return dto;
         }
 
-        public async Task<IReadOnlyList<Household>> GetAllHouseholdsAsync(CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<HouseholdDto>> GetAllHouseholdsAsync(CancellationToken cancellationToken = default)
         {
-            return await _householdRepository.GetAllWithMembersAsync(cancellationToken);
+            var households = await _householdRepository.GetAllWithMembersAsync(cancellationToken);
+            return _mapper.Map<IReadOnlyList<HouseholdDto>>(households);
         }
 
-        public async Task<IReadOnlyList<Household>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<HouseholdDto>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default)
         {
-            return await _householdRepository.GetUserHouseholdsAsync(userId, cancellationToken);
+            var households = await _householdRepository.GetUserHouseholdsAsync(userId, cancellationToken);
+            return _mapper.Map<IReadOnlyList<HouseholdDto>>(households);
         }
 
-        public async Task UpdateHouseholdAsync(Household household, CancellationToken cancellationToken = default)
+        public async Task<HouseholdDto> UpdateHouseholdAsync(
+            Guid id,
+            UpsertHouseholdRequest request,
+            string requestingUserId,
+            CancellationToken cancellationToken = default)
         {
+            await ValidateOwnerAccessAsync(id, requestingUserId, cancellationToken);
+
+            var household = await _householdRepository.GetByIdAsync(id, cancellationToken);
+            if (household == null)
+                throw new NotFoundException(nameof(Household), id);
+
+            // Update properties from request
+            household.Name = request.Name;
+            household.Description = request.Description;
+
             await _householdRepository.UpdateAsync(household, cancellationToken);
+
             _logger.LogInformation("Updated household {HouseholdId}", household.Id);
+
+            return _mapper.Map<HouseholdDto>(household);
         }
 
         public async Task DeleteHouseholdAsync(Guid id, string requestingUserId, CancellationToken cancellationToken = default)
@@ -88,9 +120,10 @@ namespace HouseholdManager.Application.Services
         }
 
         // Invite operations
-        public async Task<Household?> GetHouseholdByInviteCodeAsync(Guid inviteCode, CancellationToken cancellationToken = default)
+        public async Task<HouseholdDto?> GetHouseholdByInviteCodeAsync(Guid inviteCode, CancellationToken cancellationToken = default)
         {
-            return await _householdRepository.GetByInviteCodeAsync(inviteCode, cancellationToken);
+            var household = await _householdRepository.GetByInviteCodeAsync(inviteCode, cancellationToken);
+            return household == null ? null : _mapper.Map<HouseholdDto>(household);
         }
 
         public async Task<Guid> RegenerateInviteCodeAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default)
@@ -99,7 +132,7 @@ namespace HouseholdManager.Application.Services
 
             var household = await _householdRepository.GetByIdAsync(householdId, cancellationToken);
             if (household == null)
-                throw new InvalidOperationException("Household not found");
+                throw new NotFoundException(nameof(Household), householdId);
 
             Guid newInviteCode;
             do
@@ -113,18 +146,20 @@ namespace HouseholdManager.Application.Services
             _logger.LogInformation("Regenerated invite code for household {HouseholdId}", householdId);
             return newInviteCode;
         }
-
-        public async Task<HouseholdMember> JoinHouseholdAsync(Guid inviteCode, string userId, CancellationToken cancellationToken = default)
+        public async Task<HouseholdDto> JoinHouseholdAsync(
+            JoinHouseholdRequest request,
+            string userId,
+            CancellationToken cancellationToken = default)
         {
-            var household = await _householdRepository.GetByInviteCodeAsync(inviteCode, cancellationToken);
+            var household = await _householdRepository.GetByInviteCodeAsync(request.InviteCode, cancellationToken);
             if (household == null)
-                throw new InvalidOperationException("Invalid invite code");
+                throw new NotFoundException("Invalid invite code");
 
             // Check if user is already a member
             if (await _memberRepository.IsUserMemberAsync(household.Id, userId, cancellationToken))
-                throw new InvalidOperationException("User is already a member of this household");
+                throw new ValidationException("User is already a member of this household");
 
-            var member = await _memberRepository.AddAsync(new HouseholdMember
+            await _memberRepository.AddAsync(new HouseholdMember
             {
                 HouseholdId = household.Id,
                 UserId = userId,
@@ -133,16 +168,22 @@ namespace HouseholdManager.Application.Services
             }, cancellationToken);
 
             _logger.LogInformation("User {UserId} joined household {HouseholdId}", userId, household.Id);
-            return member;
+
+            return _mapper.Map<HouseholdDto>(household);
         }
 
         // Member management
-        public async Task<HouseholdMember> AddMemberAsync(Guid householdId, string userId, HouseholdRole role, string requestingUserId, CancellationToken cancellationToken = default)
+        public async Task<HouseholdMemberDto> AddMemberAsync(
+            Guid householdId,
+            string userId,
+            HouseholdRole role,
+            string requestingUserId,
+            CancellationToken cancellationToken = default)
         {
             await ValidateOwnerAccessAsync(householdId, requestingUserId, cancellationToken);
 
             if (await _memberRepository.IsUserMemberAsync(householdId, userId, cancellationToken))
-                throw new InvalidOperationException("User is already a member of this household");
+                throw new ValidationException("User is already a member of this household");
 
             var member = await _memberRepository.AddAsync(new HouseholdMember
             {
@@ -155,7 +196,10 @@ namespace HouseholdManager.Application.Services
             _logger.LogInformation("Added user {UserId} as {Role} to household {HouseholdId}",
                 userId, role, householdId);
 
-            return member;
+            // Load navigation properties for mapping
+            member = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
+
+            return _mapper.Map<HouseholdMemberDto>(member);
         }
 
         public async Task RemoveMemberAsync(Guid householdId, string userId, string requestingUserId, CancellationToken cancellationToken = default)
@@ -164,14 +208,14 @@ namespace HouseholdManager.Application.Services
 
             var member = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
             if (member == null)
-                throw new InvalidOperationException("User is not a member of this household");
+                throw new ValidationException("User is not a member of this household");
 
             // Check if this is the last owner
             if (member.Role == HouseholdRole.Owner)
             {
                 var ownerCount = await _memberRepository.GetOwnerCountAsync(householdId, cancellationToken);
                 if (ownerCount <= 1)
-                    throw new InvalidOperationException("Cannot remove the last owner of the household");
+                    throw new ValidationException("Cannot remove the last owner of the household");
             }
 
             await _memberRepository.DeleteAsync(member, cancellationToken);
@@ -183,14 +227,14 @@ namespace HouseholdManager.Application.Services
         {
             var member = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
             if (member == null)
-                throw new InvalidOperationException("User is not a member of this household");
+                throw new ValidationException("User is not a member of this household");
 
             // If user is an owner, check if they're the last owner
             if (member.Role == HouseholdRole.Owner)
             {
                 var ownerCount = await _memberRepository.GetOwnerCountAsync(householdId, cancellationToken);
                 if (ownerCount <= 1)
-                    throw new InvalidOperationException("Cannot leave household as the last owner. Transfer ownership or delete the household first.");
+                    throw new ValidationException("Cannot leave household as the last owner...");
             }
 
             // TODO: Clear current household if this was the user's current household
@@ -228,13 +272,13 @@ namespace HouseholdManager.Application.Services
             // TODO: Skip validation for SystemAdmin when UserRepository is implemented
 
             if (!await IsUserMemberAsync(householdId, userId, cancellationToken))
-                throw new UnauthorizedAccessException("User is not a member of this household");
+                throw new UnauthorizedException("User is not a member of this household");
         }
 
         public async Task ValidateOwnerAccessAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
             if (!await IsUserOwnerAsync(householdId, userId, cancellationToken))
-                throw new UnauthorizedAccessException("User is not an owner of this household");
+                throw new UnauthorizedException("User is not an owner of this household");
         }
     }
 }

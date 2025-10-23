@@ -1,9 +1,11 @@
 ﻿using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +15,12 @@ namespace HouseholdManager.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
+
+            services.AddAutoMapper(cfg =>
+            {
+                cfg.AddMaps(typeof(DependencyInjection).Assembly);
+            });
+
             // Application Services
             services.AddScoped<IFileUploadService, FileUploadService>();
             services.AddScoped<IHouseholdService, HouseholdService>();
@@ -29,7 +37,6 @@ namespace HouseholdManager.Application
             // services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             // TODO: Add AutoMapper when ready
-            // services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             return services;
         }

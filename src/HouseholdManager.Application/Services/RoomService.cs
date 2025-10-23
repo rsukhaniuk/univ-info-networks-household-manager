@@ -1,8 +1,14 @@
-﻿using HouseholdManager.Domain.Entities;
+﻿using AutoMapper;
+using HouseholdManager.Application.DTOs.Execution;
+using HouseholdManager.Application.DTOs.Room;
+using HouseholdManager.Application.DTOs.Task;
 using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
-using Microsoft.Extensions.Logging;
+using HouseholdManager.Domain.Entities;
+using HouseholdManager.Domain.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace HouseholdManager.Application.Services
 {
@@ -15,66 +21,96 @@ namespace HouseholdManager.Application.Services
         private readonly IHouseholdService _householdService;
         private readonly IFileUploadService _fileUploadService;
         private readonly ILogger<RoomService> _logger;
+        private readonly IMapper _mapper;
 
         public RoomService(
             IRoomRepository roomRepository,
             IHouseholdService householdService,
             IFileUploadService fileUploadService,
+            IMapper mapper,
             ILogger<RoomService> logger)
         {
             _roomRepository = roomRepository;
             _householdService = householdService;
             _fileUploadService = fileUploadService;
+            _mapper = mapper;
             _logger = logger;
         }
 
         // Basic CRUD operations
-        public async Task<Room> CreateRoomAsync(Guid householdId, string name, string? description, int priority, string requestingUserId, CancellationToken cancellationToken = default)
+        public async Task<RoomDto> CreateRoomAsync(
+            UpsertRoomRequest request,
+            string requestingUserId,
+            CancellationToken cancellationToken = default)
         {
-            await _householdService.ValidateOwnerAccessAsync(householdId, requestingUserId, cancellationToken);
+            await _householdService.ValidateOwnerAccessAsync(request.HouseholdId, requestingUserId, cancellationToken);
 
-            if (!await IsNameUniqueInHouseholdAsync(name, householdId, null, cancellationToken))
-                throw new InvalidOperationException("Room name must be unique within the household");
+            if (!await IsNameUniqueInHouseholdAsync(request.Name, request.HouseholdId, null, cancellationToken))
+                throw new ValidationException("Name", "Room name must be unique within the household");
 
-            var room = new Room
-            {
-                HouseholdId = householdId,
-                Name = name,
-                Description = description,
-                Priority = priority,
-                CreatedAt = DateTime.UtcNow
-            };
+            var room = _mapper.Map<Room>(request);
+            room.CreatedAt = DateTime.UtcNow;
 
             var createdRoom = await _roomRepository.AddAsync(room, cancellationToken);
-            _logger.LogInformation("Created room {RoomId} in household {HouseholdId}", createdRoom.Id, householdId);
 
-            return createdRoom;
+            _logger.LogInformation("Created room {RoomId} in household {HouseholdId}",
+                createdRoom.Id, request.HouseholdId);
+
+            return _mapper.Map<RoomDto>(createdRoom);
         }
 
-        public async Task<Room?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<RoomDto?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _roomRepository.GetByIdAsync(id, cancellationToken);
+            var room = await _roomRepository.GetByIdAsync(id, cancellationToken);
+            return room == null ? null : _mapper.Map<RoomDto>(room);
         }
 
-        public async Task<Room?> GetRoomWithTasksAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<RoomWithTasksDto?> GetRoomWithTasksAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _roomRepository.GetByIdWithTasksAsync(id, cancellationToken);
+            var room = await _roomRepository.GetByIdWithTasksAsync(id, cancellationToken);
+            if (room == null) return null;
+
+            var dto = _mapper.Map<RoomWithTasksDto>(room);
+
+            dto.IsOwner = false; // Set by controller based on current user
+
+            return dto;
         }
 
-        public async Task<IReadOnlyList<Room>> GetHouseholdRoomsAsync(Guid householdId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<RoomDto>> GetHouseholdRoomsAsync(
+            Guid householdId,
+            CancellationToken cancellationToken = default)
         {
-            return await _roomRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+            var rooms = await _roomRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+            return _mapper.Map<IReadOnlyList<RoomDto>>(rooms);
         }
 
-        public async Task UpdateRoomAsync(Room room, string requestingUserId, CancellationToken cancellationToken = default)
+        public async Task<RoomDto> UpdateRoomAsync(
+            Guid id,
+            UpsertRoomRequest request,
+            string requestingUserId,
+            CancellationToken cancellationToken = default)
         {
-            await ValidateRoomOwnerAccessAsync(room.Id, requestingUserId, cancellationToken);
+            await ValidateRoomOwnerAccessAsync(id, requestingUserId, cancellationToken);
 
-            if (!await IsNameUniqueInHouseholdAsync(room.Name, room.HouseholdId, room.Id, cancellationToken))
-                throw new InvalidOperationException("Room name must be unique within the household");
+            var room = await _roomRepository.GetByIdAsync(id, cancellationToken);
+            if (room == null)
+                throw new NotFoundException("Room", id);
+
+            if (!await IsNameUniqueInHouseholdAsync(request.Name, request.HouseholdId, id, cancellationToken))
+                throw new ValidationException("Name", "Room name must be unique within the household");
+
+            // Update properties from request
+            room.Name = request.Name;
+            room.Description = request.Description;
+            room.Priority = request.Priority;
+            room.PhotoPath = request.PhotoPath ?? room.PhotoPath;
 
             await _roomRepository.UpdateAsync(room, cancellationToken);
+
             _logger.LogInformation("Updated room {RoomId}", room.Id);
+
+            return _mapper.Map<RoomDto>(room);
         }
 
         public async Task DeleteRoomAsync(Guid id, string requestingUserId, CancellationToken cancellationToken = default)
@@ -83,7 +119,7 @@ namespace HouseholdManager.Application.Services
 
             var room = await _roomRepository.GetByIdAsync(id, cancellationToken);
             if (room == null)
-                throw new InvalidOperationException("Room not found");
+                throw new NotFoundException("Room", id);
 
             // Delete room photo if exists
             if (!string.IsNullOrEmpty(room.PhotoPath))
@@ -102,7 +138,7 @@ namespace HouseholdManager.Application.Services
 
             var room = await _roomRepository.GetByIdAsync(roomId, cancellationToken);
             if (room == null)
-                throw new InvalidOperationException("Room not found");
+                throw new NotFoundException("Room", roomId);
 
             // Delete old photo if exists
             if (!string.IsNullOrEmpty(room.PhotoPath))
@@ -127,7 +163,7 @@ namespace HouseholdManager.Application.Services
 
             var room = await _roomRepository.GetByIdAsync(roomId, cancellationToken);
             if (room == null)
-                throw new InvalidOperationException("Room not found");
+                throw new NotFoundException("Room", roomId);
 
             if (!string.IsNullOrEmpty(room.PhotoPath))
             {
@@ -149,7 +185,7 @@ namespace HouseholdManager.Application.Services
         {
             var room = await _roomRepository.GetByIdAsync(roomId, cancellationToken);
             if (room == null)
-                throw new InvalidOperationException("Room not found");
+                throw new NotFoundException("Room", roomId);
 
             await _householdService.ValidateUserAccessAsync(room.HouseholdId, userId, cancellationToken);
         }
@@ -158,7 +194,7 @@ namespace HouseholdManager.Application.Services
         {
             var room = await _roomRepository.GetByIdAsync(roomId, cancellationToken);
             if (room == null)
-                throw new InvalidOperationException("Room not found");
+                throw new NotFoundException("Room", roomId);
 
             await _householdService.ValidateOwnerAccessAsync(room.HouseholdId, userId, cancellationToken);
         }

@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Mapping\" />
     <Folder Include="Validators\Household\" />
     <Folder Include="Validators\Execution\" />
     <Folder Include="Validators\Task\" />

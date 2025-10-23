@@ -1,4 +1,5 @@
-﻿using HouseholdManager.Domain.Entities;
+﻿using HouseholdManager.Application.DTOs.Task;
+using HouseholdManager.Domain.Entities;
 
 namespace HouseholdManager.Application.Interfaces.Services
 {
@@ -16,7 +17,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="requestingUserId">ID of user making the request</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Created task entity</returns>
-        Task<HouseholdTask> CreateTaskAsync(HouseholdTask task, string requestingUserId, CancellationToken cancellationToken = default);
+        Task<TaskDto> CreateTaskAsync(UpsertTaskRequest request, string requestingUserId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a single task by ID without navigation properties
@@ -24,7 +25,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="id">Task ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task entity or null</returns>
-        Task<HouseholdTask?> GetTaskAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<TaskDto?> GetTaskAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a single task by ID with Household, Room, and AssignedUser navigation properties loaded
@@ -32,7 +33,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="id">Task ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task entity with relations or null</returns>
-        Task<HouseholdTask?> GetTaskWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<TaskDetailsDto?> GetTaskWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all tasks (active and inactive) for a household
@@ -40,7 +41,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="householdId">Household ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of all household tasks</returns>
-        Task<IReadOnlyList<HouseholdTask>> GetHouseholdTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<TaskDto>> GetHouseholdTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets only active tasks (IsActive=true) for a household
@@ -48,7 +49,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="householdId">Household ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of active household tasks</returns>
-        Task<IReadOnlyList<HouseholdTask>> GetActiveHouseholdTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<TaskDto>> GetActiveHouseholdTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Updates an existing task. Validates room belongs to household and requesting user is Owner.
@@ -57,7 +58,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="requestingUserId">ID of user making the request</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task</returns>
-        Task UpdateTaskAsync(HouseholdTask task, string requestingUserId, CancellationToken cancellationToken = default);
+        Task<TaskDto> UpdateTaskAsync(Guid id, UpsertTaskRequest request, string requestingUserId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes a task permanently. Owner only operation.
@@ -75,7 +76,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="roomId">Room ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of room tasks</returns>
-        Task<IReadOnlyList<HouseholdTask>> GetRoomTasksAsync(Guid roomId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<TaskDto>> GetRoomTasksAsync(Guid roomId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all active tasks assigned to a specific user across all their households
@@ -83,7 +84,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="userId">User ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of user's assigned tasks</returns>
-        Task<IReadOnlyList<HouseholdTask>> GetUserTasksAsync(string userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<TaskDto>> GetUserTasksAsync(string userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all overdue OneTime tasks (DueDate in the past) for a household
@@ -91,7 +92,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="householdId">Household ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>List of overdue tasks</returns>
-        Task<IReadOnlyList<HouseholdTask>> GetOverdueTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<TaskDto>> GetOverdueTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all Regular tasks scheduled for a specific weekday in a household
@@ -103,7 +104,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <remarks>
         /// TODO: Requires additional testing and validation
         /// </remarks>
-        Task<IReadOnlyList<HouseholdTask>> GetTasksForWeekdayAsync(Guid householdId, DayOfWeek weekday, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<TaskDto>> GetTasksForWeekdayAsync(Guid householdId, DayOfWeek weekday, CancellationToken cancellationToken = default);
 
         // Assignment operations
         /// <summary>
@@ -114,7 +115,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="requestingUserId">ID of user making the request</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task</returns>
-        Task AssignTaskAsync(Guid taskId, string userId, string requestingUserId, CancellationToken cancellationToken = default);
+        Task<TaskDto> AssignTaskAsync(Guid taskId, AssignTaskRequest request, string requestingUserId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Removes assignment from a task (sets AssignedUserId to null). Owner only.

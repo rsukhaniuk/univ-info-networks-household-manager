@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Applicatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Api", "src\HouseholdManager.Api\HouseholdManager.Api.csproj", "{9F28E361-599B-434B-B75F-B94D68355E71}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Application.Tests", "tests\HouseholdManager.Application.Tests\HouseholdManager.Application.Tests.csproj", "{E753354A-97EF-4268-82B3-EB2009358D24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,9 +49,16 @@ Global
 		{9F28E361-599B-434B-B75F-B94D68355E71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9F28E361-599B-434B-B75F-B94D68355E71}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9F28E361-599B-434B-B75F-B94D68355E71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E753354A-97EF-4268-82B3-EB2009358D24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E753354A-97EF-4268-82B3-EB2009358D24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E753354A-97EF-4268-82B3-EB2009358D24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E753354A-97EF-4268-82B3-EB2009358D24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E753354A-97EF-4268-82B3-EB2009358D24} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {60CB8517-297A-4BC9-B959-DC1711BB20CB}
