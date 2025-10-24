@@ -61,6 +61,7 @@ namespace HouseholdManager.Application.Services
             var task = _mapper.Map<HouseholdTask>(request);
             task.CreatedAt = DateTime.UtcNow;
             task.IsActive = true;
+            task.DueDate = task.DueDate?.ToUniversalTime();
 
             var createdTask = await _taskRepository.AddAsync(task, cancellationToken);
 
@@ -141,6 +142,8 @@ namespace HouseholdManager.Application.Services
 
             // Update properties from request
             _mapper.Map(request, task);
+
+            task.DueDate = task.DueDate?.ToUniversalTime();
 
             await _taskRepository.UpdateAsync(task, cancellationToken);
 
