@@ -17,11 +17,4 @@
     <ProjectReference Include="..\HouseholdManager.Domain\HouseholdManager.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Validators\Household\" />
-    <Folder Include="Validators\Execution\" />
-    <Folder Include="Validators\Task\" />
-    <Folder Include="Validators\Room\" />
-  </ItemGroup>
-
 </Project>

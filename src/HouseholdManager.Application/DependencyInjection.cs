@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using FluentValidation;
 
 namespace HouseholdManager.Application
 {
@@ -34,7 +35,7 @@ namespace HouseholdManager.Application
             // services.AddScoped<IUserService, UserService>();
 
             // TODO: Add FluentValidation validators when ready
-            // services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             // TODO: Add AutoMapper when ready
 
