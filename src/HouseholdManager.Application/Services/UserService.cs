@@ -5,30 +5,34 @@ using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Domain.Entities;
 using HouseholdManager.Domain.Enums;
+using HouseholdManager.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace HouseholdManager.Services.Implementations
 {
     /// <summary>
-    /// Implementation of user service with business logic for profile and admin operations
-    /// NOTE: User management (CRUD) will be handled by Auth0 Management API
-    /// This service focuses on application-specific user data and statistics
+    /// User service with Auth0 integration
+    /// Manages application-specific user data, profile, and statistics
+    /// NOTE: Authentication is handled by Auth0, not this service
     /// </summary>
     public class UserService : IUserService
     {
+        private readonly IUserRepository _userRepository;
         private readonly IHouseholdMemberRepository _memberRepository;
         private readonly ITaskRepository _taskRepository;
         private readonly IExecutionRepository _executionRepository;
-        private readonly ILogger<UserService> _logger;
         private readonly IMapper _mapper;
+        private readonly ILogger<UserService> _logger;
 
         public UserService(
+            IUserRepository userRepository,
             IHouseholdMemberRepository memberRepository,
             ITaskRepository taskRepository,
             IExecutionRepository executionRepository,
             IMapper mapper,
             ILogger<UserService> logger)
         {
+            _userRepository = userRepository;
             _memberRepository = memberRepository;
             _taskRepository = taskRepository;
             _executionRepository = executionRepository;
@@ -36,103 +40,148 @@ namespace HouseholdManager.Services.Implementations
             _logger = logger;
         }
 
-        // Profile management
-        // TODO: These methods will use IUserRepository when implemented
-        public async Task<UserDto?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
-        {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+        #region User Queries
 
-            // FUTURE implementation:
-            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-            // return user == null ? null : _mapper.Map<UserDto>(user);
-        }
-
-        public async Task<UserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
-        {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-
-            // FUTURE implementation:
-            // var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
-            // return user == null ? null : _mapper.Map<UserDto>(user);
-        }
-
-        // NOTE: Password management is handled by Auth0
-        // ChangePasswordAsync has been removed - users change passwords through Auth0
-
-        // Current household management
-        public async Task SetCurrentHouseholdAsync(
+        public async Task<UserDto?> GetUserByIdAsync(
             string userId,
-            SetCurrentHouseholdRequest request,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-
-            // Validate user is member of the household if setting one
-            if (request.HouseholdId.HasValue)
-            {
-                var isMember = await _memberRepository.IsUserMemberAsync(
-                    request.HouseholdId.Value, userId, cancellationToken);
-                if (!isMember)
-                    throw new InvalidOperationException("User is not a member of the specified household");
-            }
-
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-
-            // FUTURE implementation:
-            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-            // if (user == null) throw new NotFoundException("User", userId);
-            //
-            // user.CurrentHouseholdId = request.HouseholdId;
-            // await _userRepository.UpdateAsync(user, cancellationToken);
-            // _logger.LogInformation("Set current household {HouseholdId} for user {UserId}", 
-            //     request.HouseholdId, userId);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
-        public async Task<Guid?> GetCurrentHouseholdIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<UserDto?> GetUserByEmailAsync(
+            string email,
+            CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+            var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+            return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
-        // User listings
-        public async Task<IReadOnlyList<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<UserDto>> GetAllUsersAsync(
+            CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-
-            // FUTURE implementation:
-            // var users = await _userRepository.GetAllAsync(cancellationToken);
-            // return _mapper.Map<IReadOnlyList<UserDto>>(users);
+            var users = await _userRepository.GetAllUsersAsync(cancellationToken);
+            return _mapper.Map<IReadOnlyList<UserDto>>(users);
         }
 
         public async Task<IReadOnlyList<UserDto>> GetHouseholdUsersAsync(
             Guid householdId,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-
-            // FUTURE implementation:
-            // var users = await _userRepository.GetHouseholdUsersAsync(householdId, cancellationToken);
-            // return _mapper.Map<IReadOnlyList<UserDto>>(users);
+            var users = await _userRepository.GetHouseholdUsersAsync(householdId, cancellationToken);
+            return _mapper.Map<IReadOnlyList<UserDto>>(users);
         }
 
         public async Task<IReadOnlyList<UserDto>> SearchUsersAsync(
             string searchTerm,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-
-            // FUTURE implementation:
-            // var users = await _userRepository.SearchAsync(searchTerm, cancellationToken);
-            // return _mapper.Map<IReadOnlyList<UserDto>>(users);
+            var users = await _userRepository.SearchUsersAsync(searchTerm, cancellationToken);
+            return _mapper.Map<IReadOnlyList<UserDto>>(users);
         }
 
-        // User statistics - THESE WORK (don't need UserManager)
-        public async Task<UserDashboardStats> GetUserDashboardStatsAsync(string userId, CancellationToken cancellationToken = default)
+        #endregion
+
+        #region Profile Management
+
+        public async Task<UserProfileDto> GetUserProfileAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+            var dto = new UserProfileDto
+            {
+                User = _mapper.Map<UserDto>(user),
+                Stats = await GetUserDashboardStatsAsync(userId, cancellationToken),
+                Households = _mapper.Map<List<UserHouseholdDto>>(user.HouseholdMemberships)
+            };
+
+            // Set IsCurrent flag
+            foreach (var household in dto.Households)
+            {
+                household.IsCurrent = household.HouseholdId == user.CurrentHouseholdId;
+            }
+
+            return dto;
+        }
+
+        public async Task<UserDto> UpdateProfileAsync(
+            string userId,
+            UpdateProfileRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+            // Update profile fields
+            await _userRepository.UpdateProfileAsync(
+                userId,
+                request.FirstName,
+                request.LastName,
+                cancellationToken);
+
+            // Fetch updated user
+            user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+            _logger.LogInformation("Updated profile for user {UserId}", userId);
+
+            return _mapper.Map<UserDto>(user!);
+        }
+
+        #endregion
+
+        #region Current Household Management
+
+        public async Task SetCurrentHouseholdAsync(
+            string userId,
+            SetCurrentHouseholdRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+            // Validate user is member of the household if setting one
+            if (request.HouseholdId.HasValue)
+            {
+                var isMember = await _memberRepository.IsUserMemberAsync(
+                    request.HouseholdId.Value, userId, cancellationToken);
+
+                if (!isMember)
+                    throw new ForbiddenException(
+                        "You must be a member of the household to set it as current");
+            }
+
+            await _userRepository.SetCurrentHouseholdAsync(
+                userId,
+                request.HouseholdId,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Set current household {HouseholdId} for user {UserId}",
+                request.HouseholdId,
+                userId);
+        }
+
+        public async Task<Guid?> GetCurrentHouseholdIdAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+            return user.CurrentHouseholdId;
+        }
+
+        #endregion
+
+        #region User Statistics
+
+        public async Task<UserDashboardStats> GetUserDashboardStatsAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
         {
             var memberships = await _memberRepository.GetByUserIdAsync(userId, cancellationToken);
             var householdIds = memberships.Select(m => m.HouseholdId).ToList();
@@ -145,26 +194,31 @@ namespace HouseholdManager.Services.Implementations
 
             if (householdIds.Any())
             {
-                // Get tasks across all households
+                // Get active tasks assigned to user
                 var userTasks = await _taskRepository.GetByAssignedUserIdAsync(userId, cancellationToken);
-                stats.ActiveTasks = userTasks.Count;
+                stats.ActiveTasks = userTasks.Count(t => t.IsActive);
 
                 // Get executions this week across all households
                 var thisWeekExecutions = new List<TaskExecution>();
                 foreach (var householdId in householdIds)
                 {
-                    var executions = await _executionRepository.GetUserExecutionsThisWeekAsync(userId, householdId, cancellationToken);
+                    var executions = await _executionRepository
+                        .GetUserExecutionsThisWeekAsync(userId, householdId, cancellationToken);
                     thisWeekExecutions.AddRange(executions);
                 }
 
                 stats.CompletedTasksThisWeek = thisWeekExecutions.Count;
-                stats.LastActivity = thisWeekExecutions.OrderByDescending(e => e.CompletedAt).FirstOrDefault()?.CompletedAt;
+                stats.LastActivity = thisWeekExecutions
+                    .OrderByDescending(e => e.CompletedAt)
+                    .FirstOrDefault()?.CompletedAt;
             }
 
             return stats;
         }
 
-        public async Task<Dictionary<string, object>> GetUserActivitySummaryAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<Dictionary<string, object>> GetUserActivitySummaryAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
         {
             var stats = await GetUserDashboardStatsAsync(userId, cancellationToken);
 
@@ -178,74 +232,109 @@ namespace HouseholdManager.Services.Implementations
             };
         }
 
-        // Validation helpers
-        public async Task ValidateUserAccessAsync(string userId, string requestingUserId, CancellationToken cancellationToken = default)
-        {
-            // Users can access their own profile, system admins can access any profile
-            if (userId != requestingUserId && !await IsSystemAdminAsync(requestingUserId, cancellationToken))
-                throw new UnauthorizedAccessException("Access denied");
-        }
+        #endregion
 
-        public async Task ValidateSystemAdminAccessAsync(string requestingUserId, CancellationToken cancellationToken = default)
-        {
-            if (!await IsSystemAdminAsync(requestingUserId, cancellationToken))
-                throw new UnauthorizedAccessException("System administrator access required");
-        }
+        #region System Admin Operations
 
-        public async Task<bool> IsSystemAdminAsync(string userId, CancellationToken cancellationToken = default)
-        {
-            // TODO: Implement with IUserRepository
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-        }
-
-        public async Task<UserProfileDto> GetUserProfileAsync(string userId, CancellationToken cancellationToken = default)
-        {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
-
-            // FUTURE implementation:
-            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-            // if (user == null) throw new NotFoundException("User", userId);
-            //
-            // var dto = new UserProfileDto
-            // {
-            //     User = _mapper.Map<UserDto>(user),
-            //     Stats = await GetUserDashboardStatsAsync(userId, cancellationToken),
-            //     Households = _mapper.Map<List<UserHouseholdDto>>(user.HouseholdMemberships)
-            // };
-            //
-            // // Set IsCurrent flag
-            // foreach (var household in dto.Households)
-            // {
-            //     household.IsCurrent = household.HouseholdId == user.CurrentHouseholdId;
-            // }
-            //
-            // return dto;
-        }
-
-        public async Task<UserDto> UpdateProfileAsync(
+        public async Task SetSystemRoleAsync(
             string userId,
-            UpdateProfileRequest request,
+            SystemRole role,
+            string requestingUserId,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Implement with IUserRepository when Auth0 is integrated
-            throw new NotImplementedException("Will be implemented with IUserRepository for Auth0 integration");
+            // Only SystemAdmin can change roles
+            await ValidateSystemAdminAccessAsync(requestingUserId, cancellationToken);
 
-            // FUTURE implementation:
-            // var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-            // if (user == null) throw new NotFoundException("User", userId);
-            //
-            // // Update profile fields (FirstName, LastName only)
-            // _mapper.Map(request, user);
-            //
-            // await _userRepository.UpdateAsync(user, cancellationToken);
-            // _logger.LogInformation("Updated profile for user {UserId}", userId);
-            //
-            // return _mapper.Map<UserDto>(user);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+            // Prevent removing the last SystemAdmin
+            if (user.Role == SystemRole.SystemAdmin && role != SystemRole.SystemAdmin)
+            {
+                var adminCount = (await _userRepository.GetAllUsersAsync(cancellationToken))
+                    .Count(u => u.Role == SystemRole.SystemAdmin);
+
+                if (adminCount <= 1)
+                    throw new ValidationException(
+                        "Cannot remove the last system administrator");
+            }
+
+            await _userRepository.SetSystemRoleAsync(userId, role, cancellationToken);
+
+            _logger.LogWarning(
+                "SystemAdmin {RequestingUserId} changed role of user {UserId} to {Role}",
+                requestingUserId,
+                userId,
+                role);
         }
 
+        #endregion
 
-        // NOTE: System admin operations (CreateUser, UpdateUser, DeleteUser, SetSystemRole)
-        // will be handled by Auth0 Management API, not by this service
+        #region User Sync (Auth0 Integration)
+
+        /// <summary>
+        /// Synchronize user from Auth0 to local database
+        /// Called when user logs in or signs up
+        /// </summary>
+        public async Task<UserDto> SyncUserFromAuth0Async(
+            string auth0UserId,
+            string email,
+            string? firstName = null,
+            string? lastName = null,
+            string? profilePictureUrl = null,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.UpsertUserAsync(
+                auth0UserId,
+                email,
+                firstName,
+                lastName,
+                profilePictureUrl,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Synced user from Auth0: {Email} (Auth0 ID: {Auth0Id})",
+                email,
+                auth0UserId);
+
+            return _mapper.Map<UserDto>(user);
+        }
+
+        #endregion
+
+        #region Validation Helpers
+
+        public async Task ValidateUserAccessAsync(
+            string userId,
+            string requestingUserId,
+            CancellationToken cancellationToken = default)
+        {
+            // Users can access their own profile, system admins can access any profile
+            if (userId != requestingUserId &&
+                !await IsSystemAdminAsync(requestingUserId, cancellationToken))
+            {
+                throw new ForbiddenException(
+                    $"You do not have permission to access user '{userId}'");
+            }
+        }
+
+        public async Task ValidateSystemAdminAccessAsync(
+            string requestingUserId,
+            CancellationToken cancellationToken = default)
+        {
+            if (!await IsSystemAdminAsync(requestingUserId, cancellationToken))
+            {
+                throw new ForbiddenException("System administrator access required");
+            }
+        }
+
+        public async Task<bool> IsSystemAdminAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            return await _userRepository.IsSystemAdminAsync(userId, cancellationToken);
+        }
+
+        #endregion
     }
 }

@@ -5,6 +5,8 @@ using HouseholdManager.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.Web.CodeGeneration.Design;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,7 +48,16 @@ namespace HouseholdManager.Infrastructure
         {
             using var scope = serviceProvider.CreateScope();
             var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-            await seeder.SeedAsync();
+            try
+            {
+                await seeder.SeedAsync();
+            }
+            catch (Exception ex)
+            {
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "An error occurred while seeding the database");
+                throw;
+            }
         }
     }
 }

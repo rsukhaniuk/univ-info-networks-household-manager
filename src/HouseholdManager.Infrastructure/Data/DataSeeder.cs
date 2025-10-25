@@ -16,16 +16,16 @@ namespace HouseholdManager.Infrastructure.Data
     /// </summary>
     public class DataSeeder
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<DataSeeder> _logger;
 
         public DataSeeder(
-            ApplicationDbContext dbcontext,
+            ApplicationDbContext context,
             IConfiguration configuration,
             ILogger<DataSeeder> logger)
         {
-            _dbContext = dbcontext;
+            _context = context;
             _configuration = configuration;
             _logger = logger;
         }
@@ -38,10 +38,16 @@ namespace HouseholdManager.Infrastructure.Data
             try
             {
                 // Ensure database is created
-                await _dbContext.Database.EnsureCreatedAsync();
+                await _context.Database.EnsureCreatedAsync();
 
                 // Seed admin user if configured
                 await SeedAdminUserAsync();
+
+                // Optionally seed test data in development
+                if (_configuration.GetValue<bool>("Seeding:EnableTestData"))
+                {
+                    await SeedTestDataAsync();
+                }
 
                 _logger.LogInformation("Database seeding completed successfully");
             }
@@ -57,22 +63,31 @@ namespace HouseholdManager.Infrastructure.Data
         /// </summary>
         private async Task SeedAdminUserAsync()
         {
-            var adminEmail = _configuration["AdminUser:Email"];
             var adminAuth0Id = _configuration["AdminUser:Auth0Id"];
+            var adminEmail = _configuration["AdminUser:Email"];
 
-            if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminAuth0Id))
+            if (string.IsNullOrEmpty(adminAuth0Id))
             {
-                _logger.LogWarning("Admin user configuration is missing. Skipping admin user seeding.");
+                _logger.LogWarning("AdminUser:Auth0Id is not configured. Skipping admin user seeding.");
                 return;
             }
 
-            // Check if admin user already exists
-            var existingAdmin = await _dbContext.Users
-                .FirstOrDefaultAsync(u => u.Email == adminEmail || u.Id == adminAuth0Id);
+            if (string.IsNullOrEmpty(adminEmail))
+            {
+                _logger.LogWarning("AdminUser:Email is not configured. Skipping admin user seeding.");
+                return;
+            }
+
+            // Check if admin user already exists by Auth0 ID
+            var existingAdmin = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == adminAuth0Id);
 
             if (existingAdmin != null)
             {
-                _logger.LogInformation("Admin user already exists. Skipping seeding.");
+                _logger.LogInformation(
+                    "Admin user already exists: {Email} (Auth0 ID: {Auth0Id})",
+                    existingAdmin.Email,
+                    existingAdmin.Id);
                 return;
             }
 
@@ -89,10 +104,150 @@ namespace HouseholdManager.Infrastructure.Data
                 CurrentHouseholdId = null
             };
 
-            _dbContext.Users.Add(adminUser);
-            await _dbContext.SaveChangesAsync();
+            await _context.Users.AddAsync(adminUser);
+            await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Admin user seeded successfully: {Email}", adminEmail);
+            _logger.LogInformation(
+                "✅ System administrator created successfully: {Email} (Auth0 ID: {Auth0Id})",
+                adminEmail,
+                adminAuth0Id);
+        }
+
+        /// <summary>
+        /// Seeds test data for development environment
+        /// </summary>
+        private async Task SeedTestDataAsync()
+        {
+            // Only seed if database is empty
+            if (await _context.Households.AnyAsync())
+            {
+                _logger.LogInformation("Test data already exists. Skipping test data seeding.");
+                return;
+            }
+
+            _logger.LogInformation("Seeding test data for development...");
+
+            // Get admin user
+            var admin = await _context.Users.FirstOrDefaultAsync(u => u.Role == SystemRole.SystemAdmin);
+            if (admin == null)
+            {
+                _logger.LogWarning("No admin user found. Cannot seed test data.");
+                return;
+            }
+
+            // Create test household
+            var household = new Household
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Family Home",
+                Description = "A sample household for testing",
+                InviteCode = Guid.NewGuid(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _context.Households.AddAsync(household);
+
+            // Add admin as household owner
+            var householdMember = new HouseholdMember
+            {
+                Id = Guid.NewGuid(),
+                UserId = admin.Id,
+                HouseholdId = household.Id,
+                Role = HouseholdRole.Owner,
+                JoinedAt = DateTime.UtcNow
+            };
+
+            await _context.HouseholdMembers.AddAsync(householdMember);
+
+            // Create test rooms
+            var kitchen = new Room
+            {
+                Id = Guid.NewGuid(),
+                Name = "Kitchen",
+                Description = "Cooking and dining area",
+                HouseholdId = household.Id,
+                Priority = 8,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var bathroom = new Room
+            {
+                Id = Guid.NewGuid(),
+                Name = "Bathroom",
+                Description = "Main bathroom",
+                HouseholdId = household.Id,
+                Priority = 7,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var livingRoom = new Room
+            {
+                Id = Guid.NewGuid(),
+                Name = "Living Room",
+                Description = "Family gathering space",
+                HouseholdId = household.Id,
+                Priority = 6,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _context.Rooms.AddRangeAsync(kitchen, bathroom, livingRoom);
+
+            // Create test tasks
+            var tasks = new List<HouseholdTask>
+            {
+                new HouseholdTask
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Wash dishes",
+                    Description = "Clean all dirty dishes after meals",
+                    Type = TaskType.Regular,
+                    Priority = TaskPriority.High,
+                    EstimatedMinutes = 20,
+                    ScheduledWeekday = DayOfWeek.Monday,
+                    HouseholdId = household.Id,
+                    RoomId = kitchen.Id,
+                    AssignedUserId = admin.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new HouseholdTask
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Clean bathroom",
+                    Description = "Deep clean bathroom surfaces",
+                    Type = TaskType.Regular,
+                    Priority = TaskPriority.Medium,
+                    EstimatedMinutes = 45,
+                    ScheduledWeekday = DayOfWeek.Saturday,
+                    HouseholdId = household.Id,
+                    RoomId = bathroom.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new HouseholdTask
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Vacuum living room",
+                    Description = "Vacuum carpets and under furniture",
+                    Type = TaskType.Regular,
+                    Priority = TaskPriority.Medium,
+                    EstimatedMinutes = 30,
+                    ScheduledWeekday = DayOfWeek.Wednesday,
+                    HouseholdId = household.Id,
+                    RoomId = livingRoom.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
+
+            await _context.HouseholdTasks.AddRangeAsync(tasks);
+
+            // Save all test data
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Test data seeded: 1 household, 3 rooms, {TaskCount} tasks",
+                tasks.Count);
         }
     }
 }
