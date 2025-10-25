@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
+using Swashbuckle.AspNetCore.Annotations;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Household
@@ -14,6 +16,8 @@ namespace HouseholdManager.Application.DTOs.Household
         /// <summary>
         /// Filter by user ID (households where user is a member)
         /// </summary>
+        [JsonIgnore]
+        [SwaggerIgnore]
         public string? UserId { get; set; }
 
         /// <summary>

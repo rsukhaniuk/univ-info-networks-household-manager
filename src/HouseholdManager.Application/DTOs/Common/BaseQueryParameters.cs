@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Swashbuckle.AspNetCore.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Common
@@ -50,11 +52,15 @@ namespace HouseholdManager.Application.DTOs.Common
         /// <summary>
         /// Indicates if sorting is in ascending order
         /// </summary>
+        [JsonIgnore]
+        [SwaggerIgnore]
         public bool IsAscending => SortOrder?.ToLower() == "asc";
 
         /// <summary>
         /// Calculates the number of items to skip for pagination
         /// </summary>
+        [JsonIgnore]
+        [SwaggerIgnore]
         public int Skip => (Page - 1) * PageSize;
     }
 }
