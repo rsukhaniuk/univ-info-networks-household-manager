@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/src/HouseholdManager.Api/appsettings.json
+/src/HouseholdManager.Api/appsettings.Development.json
+/src/HouseholdManager.Api/appsettings.json
+/src/HouseholdManager.Api/appsettings.Development.json
+/src/HouseholdManager.Api/appsettings.json
+/src/HouseholdManager.Api/appsettings.Development.json
