@@ -572,8 +572,8 @@ namespace HouseholdManager.Api.Controllers
 
             if (string.IsNullOrEmpty(userId))
             {
-                _logger.LogError("User ID not found in JWT claims");
-                throw new UnauthorizedAccessException("User ID not found in authentication token");
+                _logger.LogError("User ID (sub claim) not found in JWT token. This indicates a configuration issue with Auth0.");
+                throw Domain.Exceptions.AuthenticationException.MissingUserIdClaim();
             }
 
             return userId;

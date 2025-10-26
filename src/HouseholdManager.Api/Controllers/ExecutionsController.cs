@@ -17,17 +17,21 @@ namespace HouseholdManager.Api.Controllers
     public class ExecutionsController : ControllerBase
     {
         private readonly ITaskExecutionService _executionService;
+        private readonly ILogger<ExecutionsController> _logger;
 
         /// <summary>
-        /// Initializes a new instance of ExecutionsController
+        /// Initializes a new instance of the <see cref="ExecutionsController"/> class.
         /// </summary>
-        public ExecutionsController(ITaskExecutionService executionService)
+        /// <param name="executionService">The service responsible for managing task executions. This parameter cannot be <see langword="null"/>.</param>
+        /// <param name="logger">The logger instance used to log diagnostic and operational messages. This parameter cannot be <see
+        /// langword="null"/>.</param>
+        public ExecutionsController(
+            ITaskExecutionService executionService,
+            ILogger<ExecutionsController> logger)
         {
             _executionService = executionService;
+            _logger = logger;
         }
-
-        private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new UnauthorizedAccessException("User ID not found in claims");
 
         #region Query Operations
 
@@ -48,7 +52,11 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<ExecutionDto>>> GetExecution(Guid id)
         {
-            await _executionService.ValidateExecutionAccessAsync(id, UserId);
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} fetching execution {ExecutionId}", userId, id);
+
+            await _executionService.ValidateExecutionAccessAsync(id, userId);
 
             var execution = await _executionService.GetExecutionWithRelationsAsync(id);
 
@@ -77,6 +85,10 @@ namespace HouseholdManager.Api.Controllers
             Guid taskId,
             [FromQuery] ExecutionQueryParameters parameters)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} fetching executions for task {TaskId}", userId, taskId);
+
             parameters.TaskId = taskId;
 
             var executions = await _executionService.GetTaskExecutionsAsync(taskId);
@@ -141,6 +153,10 @@ namespace HouseholdManager.Api.Controllers
             Guid householdId,
             [FromQuery] ExecutionQueryParameters parameters)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} fetching executions for household {HouseholdId}", userId, householdId);
+
             parameters.HouseholdId = householdId;
 
             var executions = await _executionService.GetHouseholdExecutionsAsync(householdId);
@@ -223,7 +239,11 @@ namespace HouseholdManager.Api.Controllers
         public async Task<ActionResult<ApiResponse<IReadOnlyList<ExecutionDto>>>> GetMyExecutionsThisWeek(
             Guid householdId)
         {
-            var executions = await _executionService.GetUserExecutionsAsync(UserId, householdId);
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} fetching own executions for household {HouseholdId}", userId, householdId);
+
+            var executions = await _executionService.GetUserExecutionsAsync(userId, householdId);
 
             return Ok(ApiResponse<IReadOnlyList<ExecutionDto>>.SuccessResponse(
                 executions,
@@ -248,6 +268,10 @@ namespace HouseholdManager.Api.Controllers
             Guid householdId,
             [FromQuery] DateTime? weekStarting = null)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} fetching weekly executions for household {HouseholdId}", userId, householdId);
+
             var executions = await _executionService.GetWeeklyExecutionsAsync(
                 householdId,
                 weekStarting);
@@ -275,6 +299,10 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<bool>>> IsTaskCompletedThisWeek(Guid taskId)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} checking if task {TaskId} is completed this week", userId, taskId);
+
             var isCompleted = await _executionService.IsTaskCompletedThisWeekAsync(taskId);
 
             return Ok(ApiResponse<bool>.SuccessResponse(
@@ -301,6 +329,10 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<ExecutionDto>>> GetLatestExecution(Guid taskId)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} fetching latest execution for task {TaskId}", userId, taskId);
+
             var execution = await _executionService.GetLatestExecutionForTaskAsync(taskId);
 
             return Ok(ApiResponse<ExecutionDto>.SuccessResponse(
@@ -339,9 +371,13 @@ namespace HouseholdManager.Api.Controllers
             [FromForm] CompleteTaskRequest request,
             IFormFile? photo = null)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} completing task {TaskId}", userId, request.TaskId);
+
             var execution = await _executionService.CompleteTaskAsync(
                 request,
-                UserId,
+                userId,
                 photo);
 
             return CreatedAtAction(
@@ -376,10 +412,14 @@ namespace HouseholdManager.Api.Controllers
             Guid id,
             [FromBody] UpdateExecutionRequest request)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} updating execution {ExecutionId}", userId, id);
+
             var execution = await _executionService.UpdateExecutionAsync(
                 id,
                 request,
-                UserId);
+                userId);
 
             return Ok(ApiResponse<ExecutionDto>.SuccessResponse(
                 execution,
@@ -403,7 +443,11 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteExecution(Guid id)
         {
-            await _executionService.DeleteExecutionAsync(id, UserId);
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} deleting execution {ExecutionId}", userId, id);
+
+            await _executionService.DeleteExecutionAsync(id, userId);
 
             return NoContent();
         }
@@ -439,6 +483,10 @@ namespace HouseholdManager.Api.Controllers
             Guid id,
             IFormFile photo)
         {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} uploading photo for execution {ExecutionId}", userId, id);
+
             if (photo == null || photo.Length == 0)
             {
                 throw new HouseholdManager.Domain.Exceptions.ValidationException(
@@ -446,7 +494,7 @@ namespace HouseholdManager.Api.Controllers
                     "Photo file is required");
             }
 
-            var photoPath = await _executionService.UploadExecutionPhotoAsync(id, photo, UserId);
+            var photoPath = await _executionService.UploadExecutionPhotoAsync(id, photo, userId);
 
             return Ok(ApiResponse<string>.SuccessResponse(
                 photoPath,
@@ -470,9 +518,35 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeletePhoto(Guid id)
         {
-            await _executionService.DeleteExecutionPhotoAsync(id, UserId);
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} deleting photo for execution {ExecutionId}", userId, id);
+
+            await _executionService.DeleteExecutionPhotoAsync(id, userId);
 
             return NoContent();
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Get current user ID from Auth0 JWT claims
+        /// </summary>
+        /// <returns>User ID string (Auth0 sub claim)</returns>
+        private string GetCurrentUserId()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogError("User ID (sub claim) not found in JWT token. This indicates a configuration issue with Auth0.");
+                throw Domain.Exceptions.AuthenticationException.MissingUserIdClaim();
+            }
+
+            return userId;
         }
 
         #endregion

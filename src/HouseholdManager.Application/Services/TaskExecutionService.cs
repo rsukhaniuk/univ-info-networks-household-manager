@@ -58,7 +58,7 @@ namespace HouseholdManager.Application.Services
             {
                 var isCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(request.TaskId, cancellationToken);
                 if (isCompletedThisWeek)
-                    throw new ValidationException("request.TaskId", "This task has already been completed this week");
+                    throw new ValidationException("TaskId", "This task has already been completed this week");
             }
 
             // Upload photo if provided
@@ -138,7 +138,7 @@ namespace HouseholdManager.Application.Services
             // Only allow deletion by the user who completed it or household owner
             var isOwner = await _householdService.IsUserOwnerAsync(execution.HouseholdId, requestingUserId, cancellationToken);
             if (execution.UserId != requestingUserId && !isOwner)
-                throw new UnauthorizedException("You can only delete your own executions or be a household owner");
+                throw new ForbiddenException("You can only delete your own executions or must be a household owner");
 
             // Delete photo if exists
             if (!string.IsNullOrEmpty(execution.PhotoPath))
@@ -268,7 +268,7 @@ namespace HouseholdManager.Application.Services
             // For editing/deleting, user must be the creator or household owner
             var isOwner = await _householdService.IsUserOwnerAsync(execution.HouseholdId, userId, cancellationToken);
             if (execution.UserId != userId && !isOwner)
-                throw new UnauthorizedAccessException("You can only access your own executions or be a household owner");
+                throw new ForbiddenException("You can only access your own executions or must be a household owner");
         }
     }
 }
