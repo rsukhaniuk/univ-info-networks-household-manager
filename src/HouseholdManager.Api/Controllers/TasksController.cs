@@ -3,7 +3,9 @@ using HouseholdManager.Application.DTOs.Common;
 using HouseholdManager.Application.DTOs.Task;
 using HouseholdManager.Application.Extensions;
 using HouseholdManager.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HouseholdManager.Api.Controllers
 {
@@ -14,6 +16,7 @@ namespace HouseholdManager.Api.Controllers
     [ApiController]
     [Route("api/households/{householdId:guid}/tasks")]
     [Produces("application/json")]
+    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly IHouseholdTaskService _taskService;
@@ -61,13 +64,13 @@ namespace HouseholdManager.Api.Controllers
             // Validate member access
             await _householdService.ValidateUserAccessAsync(householdId, userId, cancellationToken);
 
-            // Get all active tasks (service returns only active by default)
+            // Get all active tasks
             var allTasks = await _taskService.GetActiveHouseholdTasksAsync(householdId, cancellationToken);
 
-            // Apply filters in memory (TODO: move to repository layer)
+            // Apply filters in memory
             var filteredTasks = allTasks.AsEnumerable();
 
-            // Search filter (title or description)
+            // Search filter
             if (!string.IsNullOrWhiteSpace(queryParameters.Search))
             {
                 filteredTasks = filteredTasks.Where(t =>
@@ -81,7 +84,7 @@ namespace HouseholdManager.Api.Controllers
                 filteredTasks = filteredTasks.Where(t => t.RoomId == queryParameters.RoomId.Value);
             }
 
-            // Type filter (Regular or OneTime)
+            // Type filter
             if (queryParameters.Type.HasValue)
             {
                 filteredTasks = filteredTasks.Where(t => t.Type == queryParameters.Type.Value);
@@ -99,7 +102,7 @@ namespace HouseholdManager.Api.Controllers
                 filteredTasks = filteredTasks.Where(t => t.AssignedUserId == queryParameters.AssignedUserId);
             }
 
-            // IsActive filter (if explicitly requested to show inactive)
+            // IsActive filter
             if (queryParameters.IsActive.HasValue)
             {
                 filteredTasks = filteredTasks.Where(t => t.IsActive == queryParameters.IsActive.Value);
@@ -113,7 +116,7 @@ namespace HouseholdManager.Api.Controllers
                     : filteredTasks.Where(t => !t.IsOverdue);
             }
 
-            // Scheduled weekday filter (for Regular tasks)
+            // Scheduled weekday filter
             if (queryParameters.ScheduledWeekday.HasValue)
             {
                 filteredTasks = filteredTasks.Where(t =>
@@ -133,7 +136,7 @@ namespace HouseholdManager.Api.Controllers
                 "createdat" => queryParameters.IsAscending
                     ? filteredTasks.OrderBy(t => t.CreatedAt)
                     : filteredTasks.OrderByDescending(t => t.CreatedAt),
-                _ => queryParameters.IsAscending // Default: Priority (High → Low)
+                _ => queryParameters.IsAscending
                     ? filteredTasks.OrderBy(t => t.Priority)
                     : filteredTasks.OrderByDescending(t => t.Priority)
             };
@@ -178,6 +181,24 @@ namespace HouseholdManager.Api.Controllers
 
             var task = await _taskService.GetTaskWithRelationsAsync(taskId, cancellationToken);
 
+            // Set permissions flags
+            if (task != null)
+            {
+                var isOwner = await _householdService.IsUserOwnerAsync(householdId, userId, cancellationToken);
+                var isAssigned = task.Task.AssignedUserId == userId;
+
+                task.Permissions = new TaskPermissionsDto
+                {
+                    IsOwner = isOwner,
+                    IsSystemAdmin = false, // Set by auth middleware if needed
+                    IsAssignedToCurrentUser = isAssigned,
+                    CanEdit = isOwner,
+                    CanDelete = isOwner,
+                    CanComplete = isOwner || isAssigned,
+                    CanAssign = isOwner
+                };
+            }
+
             return Ok(ApiResponse<TaskDetailsDto>.SuccessResponse(task, "Task details retrieved successfully"));
         }
 
@@ -208,20 +229,15 @@ namespace HouseholdManager.Api.Controllers
         {
             var userId = GetCurrentUserId();
 
-            // Use DateTimeExtensions for DueDate formatting in logs
             var dueDateFormatted = request.DueDate.ToLocalDateShort();
 
             _logger.LogInformation(
                 "User {UserId} creating task '{Title}' in household {HouseholdId}, Room {RoomId}, Type={Type}, DueDate={DueDate}",
                 userId, request.Title, householdId, request.RoomId, request.Type, dueDateFormatted);
 
-            // Validate owner access
-            await _householdService.ValidateOwnerAccessAsync(householdId, userId, cancellationToken);
-
             // Set householdId from route
             request.HouseholdId = householdId;
 
-            // Create task (service handles validation)
             var task = await _taskService.CreateTaskAsync(request, userId, cancellationToken);
 
             return CreatedAtAction(
@@ -259,21 +275,16 @@ namespace HouseholdManager.Api.Controllers
         {
             var userId = GetCurrentUserId();
 
-            // Use DateTimeExtensions for DueDate formatting
             var dueDateFormatted = request.DueDate.ToLocalDateShort();
 
             _logger.LogInformation(
                 "User {UserId} updating task {TaskId}, Title='{Title}', DueDate={DueDate}",
                 userId, taskId, request.Title, dueDateFormatted);
 
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
-
             // Set IDs from route
             request.Id = taskId;
             request.HouseholdId = householdId;
 
-            // Update task (service handles validation)
             var task = await _taskService.UpdateTaskAsync(taskId, request, userId, cancellationToken);
 
             return Ok(ApiResponse<TaskDto>.SuccessResponse(task, "Task updated successfully"));
@@ -302,9 +313,6 @@ namespace HouseholdManager.Api.Controllers
         {
             var userId = GetCurrentUserId();
             _logger.LogInformation("User {UserId} deleting task {TaskId}", userId, taskId);
-
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
 
             await _taskService.DeleteTaskAsync(taskId, userId, cancellationToken);
 
@@ -345,10 +353,6 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} assigning task {TaskId} to user {AssignedUserId}",
                 userId, taskId, request.UserId ?? "unassigned");
 
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
-
-            // Assign task (service validates target user is a member)
             var task = await _taskService.AssignTaskAsync(taskId, request, userId, cancellationToken);
 
             return Ok(ApiResponse<TaskDto>.SuccessResponse(
@@ -382,9 +386,6 @@ namespace HouseholdManager.Api.Controllers
             var userId = GetCurrentUserId();
             _logger.LogInformation("User {UserId} unassigning task {TaskId}", userId, taskId);
 
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
-
             await _taskService.UnassignTaskAsync(taskId, userId, cancellationToken);
 
             var task = await _taskService.GetTaskAsync(taskId, cancellationToken);
@@ -413,9 +414,6 @@ namespace HouseholdManager.Api.Controllers
         {
             var userId = GetCurrentUserId();
             _logger.LogInformation("User {UserId} auto-assigning tasks for household {HouseholdId}", userId, householdId);
-
-            // Validate owner access
-            await _householdService.ValidateOwnerAccessAsync(householdId, userId, cancellationToken);
 
             await _taskService.AutoAssignTasksAsync(householdId, userId, cancellationToken);
 
@@ -446,10 +444,6 @@ namespace HouseholdManager.Api.Controllers
             var userId = GetCurrentUserId();
             _logger.LogInformation("User {UserId} reassigning task {TaskId} to next member", userId, taskId);
 
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
-
-            // Reassign (service handles rotation logic)
             var newAssigneeId = await _taskService.ReassignTaskToNextUserAsync(taskId, userId, cancellationToken);
 
             var task = await _taskService.GetTaskAsync(taskId, cancellationToken);
@@ -486,9 +480,6 @@ namespace HouseholdManager.Api.Controllers
             var userId = GetCurrentUserId();
             _logger.LogInformation("User {UserId} activating task {TaskId}", userId, taskId);
 
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
-
             await _taskService.ActivateTaskAsync(taskId, userId, cancellationToken);
 
             var task = await _taskService.GetTaskAsync(taskId, cancellationToken);
@@ -519,9 +510,6 @@ namespace HouseholdManager.Api.Controllers
         {
             var userId = GetCurrentUserId();
             _logger.LogInformation("User {UserId} deactivating task {TaskId}", userId, taskId);
-
-            // Validate owner access
-            await _taskService.ValidateTaskOwnerAccessAsync(taskId, userId, cancellationToken);
 
             await _taskService.DeactivateTaskAsync(taskId, userId, cancellationToken);
 
@@ -556,19 +544,15 @@ namespace HouseholdManager.Api.Controllers
         {
             var userId = GetCurrentUserId();
 
-            // Use DateTimeExtensions for week start formatting
             var weekStartFormatted = weekStarting.ToLocalDateShort();
 
             _logger.LogInformation(
                 "User {UserId} fetching task calendar for household {HouseholdId}, week starting {WeekStart}",
                 userId, householdId, weekStartFormatted);
 
-            // Validate member access
             await _householdService.ValidateUserAccessAsync(householdId, userId, cancellationToken);
 
-            // Get calendar (service builds the view)
             // TODO: Implement GetTaskCalendarAsync in service
-            // For now, return a placeholder message
             return Ok(ApiResponse<TaskCalendarDto>.SuccessResponse(
                 null,
                 "Calendar view not yet implemented"));
@@ -576,23 +560,23 @@ namespace HouseholdManager.Api.Controllers
         #endregion
 
         #region Helper Methods
-        
 
         /// <summary>
-        /// Extract user ID from request context (X-User-Id header)
+        /// Get current user ID from Auth0 JWT claims
         /// </summary>
-        /// <returns>User ID</returns>
+        /// <returns>User ID string (Auth0 sub claim)</returns>
         private string GetCurrentUserId()
         {
-            var userId = HttpContext.Items["UserId"] as string
-                         ?? Request.Headers["X-User-Id"].FirstOrDefault();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userId))
             {
-                _logger.LogWarning("No user ID found in request context or X-User-Id header");
+                _logger.LogError("User ID not found in JWT claims");
+                throw new UnauthorizedAccessException("User ID not found in authentication token");
             }
 
-            return userId ?? string.Empty;
+            return userId;
         }
 
         #endregion
