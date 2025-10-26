@@ -53,6 +53,14 @@ namespace HouseholdManager.Application.Interfaces.Services
             string userId,
             UpdateProfileRequest request,
             CancellationToken cancellationToken = default);
+
+        Task<UserDto> SyncUserFromAuth0Async(
+            string auth0UserId,
+            string email,
+            string? firstName = null,
+            string? lastName = null,
+            string? profilePictureUrl = null,
+            CancellationToken cancellationToken = default);
     }
 
 }

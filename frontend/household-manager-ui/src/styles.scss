@@ -1,0 +1,460 @@
+/* Import Bootstrap */
+@import 'bootstrap/scss/bootstrap';
+
+/* Import Font Awesome */
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  line-height: 1.6;
+  color: #333;
+  background-color: #f8f9fa;
+}
+
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+
+.card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  transition: all 0.2s ease;
+  border: none;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+  
+  &:hover {
+    background: linear-gradient(135deg, #0b5ed7, #0a58ca);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  }
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #198754, #157347);
+  
+  &:hover {
+    background: linear-gradient(135deg, #157347, #146c43);
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+  }
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545, #bb2d3b);
+  
+  &:hover {
+    background: linear-gradient(135deg, #bb2d3b, #a02834);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  }
+}
+
+.btn-light {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  
+  &:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.btn-outline-primary {
+  border: 2px solid #0d6efd;
+  color: #0d6efd;
+  
+  &:hover {
+    background-color: #0d6efd;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  }
+}
+
+.btn-sm {
+  padding: 0.375rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 2rem;
+  font-size: 1.125rem;
+}
+
+/* ========================================
+   FORMS
+   ======================================== */
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  padding: 0.625rem 1rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    outline: none;
+  }
+
+  &.is-invalid {
+    border-color: #dc3545;
+    
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+    }
+  }
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.invalid-feedback {
+  display: block;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* ========================================
+   NAVBAR
+   ======================================== */
+
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  padding: 1rem 0;
+
+  .navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #0d6efd !important;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #0b5ed7 !important;
+    }
+  }
+
+  .nav-link {
+    font-weight: 500;
+    color: #495057;
+    padding: 0.5rem 1rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #0d6efd !important;
+    }
+
+    &.active {
+      color: #0d6efd !important;
+      font-weight: 600;
+    }
+  }
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.badge {
+  border-radius: 6px;
+  padding: 0.375rem 0.75rem;
+  font-weight: 500;
+}
+
+/* ========================================
+   ALERTS
+   ======================================== */
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  padding: 1rem 1.5rem;
+
+  .alert-heading {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d1e7dd, #badbcc);
+  color: #0f5132;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+  color: #842029;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fff3cd, #ffe69c);
+  color: #664d03;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #cfe2ff, #b6d4fe);
+  color: #084298;
+}
+
+/* ========================================
+   MODALS
+   ======================================== */
+
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+  .modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+
+    .modal-title {
+      font-weight: 600;
+    }
+
+    .btn-close {
+      margin: 0;
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* ========================================
+   DROPDOWNS
+   ======================================== */
+
+.dropdown-menu {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem 0;
+
+  .dropdown-item {
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #f8f9fa;
+      color: #0d6efd;
+    }
+
+    &:active {
+      background-color: #e9ecef;
+    }
+
+    i {
+      width: 20px;
+    }
+  }
+
+  .dropdown-divider {
+    margin: 0.5rem 0;
+  }
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+.table {
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+
+  thead {
+    background-color: #f8f9fa;
+
+    th {
+      font-weight: 600;
+      color: #495057;
+      border-bottom: 2px solid #dee2e6;
+      padding: 1rem;
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #f8f9fa;
+      }
+
+      td {
+        padding: 1rem;
+        vertical-align: middle;
+      }
+    }
+  }
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+
+.shadow-sm {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.shadow {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.rounded-lg {
+  border-radius: 12px !important;
+}
+
+.text-primary {
+  color: #0d6efd !important;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #0d6efd, #6f42c1) !important;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  .btn-lg {
+    padding: 0.625rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+
+  &:hover {
+    background: #555;
+  }
+}

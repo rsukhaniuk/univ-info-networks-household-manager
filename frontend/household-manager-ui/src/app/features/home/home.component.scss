@@ -1,0 +1,91 @@
+.hero-section {
+  background: linear-gradient(135deg, #0d6efd, #6f42c1) !important;
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+
+  .display-1 {
+    font-size: clamp(3rem, 8vw, 8rem);
+    opacity: 0.8;
+  }
+
+  .hero-icon {
+    font-size: 10rem;  // 👈 Фіксований розмір або...
+    font-size: clamp(6rem, 15vw, 12rem);  // 👈 Responsive розмір
+    opacity: 0.75;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .btn {
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+.features-section {
+  .feature-card {
+    transition: all 0.3s ease;
+    border: none;
+
+    &:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15) !important;
+    }
+  }
+
+  .feature-icon {
+    width: 80px;
+    height: 80px;
+    transition: all 0.3s ease;
+
+    i {
+      transition: transform 0.3s ease;
+    }
+  }
+
+  .feature-card:hover .feature-icon i {
+    transform: scale(1.2);
+  }
+}
+
+.cta-section {
+  .btn-primary {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(13, 110, 253, 0.4);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 60vh;
+    
+    .display-4 {
+      font-size: 2rem;
+    }
+
+    .lead {
+      font-size: 1rem;
+    }
+
+    .btn-lg {
+      font-size: 1rem;
+      padding: 10px 20px;
+    }
+  }
+
+  .feature-card {
+    margin-bottom: 1.5rem;
+  }
+
+  
+}

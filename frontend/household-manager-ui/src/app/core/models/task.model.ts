@@ -1,0 +1,92 @@
+export interface TaskDto {
+  id: string;
+  householdId: string;
+  roomId: string;
+  roomName: string;
+  title: string;
+  description?: string;
+  type: TaskType;
+  priority: TaskPriority;
+  estimatedMinutes: number;
+  formattedEstimatedTime: string;
+  dueDate?: Date;
+  scheduledWeekday?: DayOfWeek;
+  assignedUserId?: string;
+  assignedUserName?: string;
+  isActive: boolean;
+  createdAt: Date;
+  isOverdue: boolean;
+  isCompletedThisWeek: boolean;
+  rowVersion?: Uint8Array;
+}
+
+export enum TaskType {
+  Regular = 'Regular',
+  OneTime = 'OneTime'
+}
+
+export enum TaskPriority {
+  Low = 1,
+  Medium = 2,
+  High = 3
+}
+
+export enum DayOfWeek {
+  Sunday = 0,
+  Monday = 1,
+  Tuesday = 2,
+  Wednesday = 3,
+  Thursday = 4,
+  Friday = 5,
+  Saturday = 6
+}
+
+export interface UpsertTaskRequest {
+  id?: string;
+  householdId: string;
+  title: string;
+  description?: string;
+  type: TaskType;
+  priority: TaskPriority;
+  estimatedMinutes: number;
+  roomId: string;
+  assignedUserId?: string;
+  isActive: boolean;
+  dueDate?: Date;
+  scheduledWeekday?: DayOfWeek;
+  rowVersion?: Uint8Array;
+}
+
+export interface AssignTaskRequest {
+  userId?: string;
+}
+
+export interface TaskCalendarDto {
+  weekStarting: Date;
+  weekEnding: Date;
+  tasksByDay: { [day: number]: TaskCalendarItemDto[] };
+  oneTimeTasks: TaskCalendarItemDto[];
+  weeklyStats: WeeklyStatsDto;
+}
+
+export interface TaskCalendarItemDto {
+  id: string;
+  title: string;
+  roomName: string;
+  priority: TaskPriority;
+  estimatedMinutes: number;
+  assignedUserId?: string;
+  assignedUserName?: string;
+  isCompleted: boolean;
+  completedAt?: Date;
+  dueDate?: Date;
+  isOverdue: boolean;
+}
+
+export interface WeeklyStatsDto {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  overdueTasks: number;
+  completionRate: number;
+}

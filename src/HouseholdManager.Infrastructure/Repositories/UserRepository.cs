@@ -85,12 +85,12 @@ namespace HouseholdManager.Infrastructure.Repositories
         // User management (Upsert for Auth0 sync)
 
         public async Task<ApplicationUser> UpsertUserAsync(
-            string userId,
-            string email,
-            string? firstName = null,
-            string? lastName = null,
-            string? profilePictureUrl = null,
-            CancellationToken cancellationToken = default)
+    string userId,
+    string email,
+    string? firstName = null,
+    string? lastName = null,
+    string? profilePictureUrl = null,
+    CancellationToken cancellationToken = default)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -108,18 +108,42 @@ namespace HouseholdManager.Infrastructure.Repositories
                     CreatedAt = DateTime.UtcNow,
                     Role = SystemRole.User
                 };
-
                 await _context.Users.AddAsync(user, cancellationToken);
             }
             else
             {
-                // Update existing user
-                user.Email = email;
-                user.FirstName = firstName ?? user.FirstName;
-                user.LastName = lastName ?? user.LastName;
-                user.ProfilePictureUrl = profilePictureUrl ?? user.ProfilePictureUrl;
+                // Update existing user ONLY if data changed
+                bool hasChanges = false;
 
-                _context.Users.Update(user);
+                if (user.Email != email)
+                {
+                    user.Email = email;
+                    hasChanges = true;
+                }
+
+                if (user.FirstName != firstName)
+                {
+                    user.FirstName = firstName;
+                    hasChanges = true;
+                }
+
+                if (user.LastName != lastName)
+                {
+                    user.LastName = lastName;
+                    hasChanges = true;
+                }
+
+                if (user.ProfilePictureUrl != profilePictureUrl)
+                {
+                    user.ProfilePictureUrl = profilePictureUrl;
+                    hasChanges = true;
+                }
+
+                // Only call Update if something actually changed
+                if (hasChanges)
+                {
+                    _context.Users.Update(user);
+                }
             }
 
             await _context.SaveChangesAsync(cancellationToken);

@@ -203,6 +203,7 @@ app.UseCors("AllowAngular");
 
 // Authentication & Authorization (order matters!)
 app.UseAuthentication();
+app.UseMiddleware<UserSyncMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

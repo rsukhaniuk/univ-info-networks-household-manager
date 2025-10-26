@@ -1,0 +1,112 @@
+<header>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+    <div class="container-fluid">
+      <!-- Brand -->
+      <a class="navbar-brand fw-bold" routerLink="/">
+        <i class="fas fa-home me-2 text-primary"></i>
+        Household Manager
+      </a>
+
+      <!-- Mobile toggle -->
+      <button 
+        class="navbar-toggler" 
+        type="button" 
+        data-bs-toggle="collapse" 
+        data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Navigation -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <!-- Authenticated user links -->
+          @if (isAuthenticated$ | async) {
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+              </a>
+            </li>
+            
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/households" routerLinkActive="active">
+                <i class="fas fa-house-user me-1"></i>
+                @if (isSystemAdmin$ | async) {
+                  All Households
+                } @else {
+                  My Households
+                }
+              </a>
+            </li>
+
+            <!-- Admin panel -->
+            @if (isSystemAdmin$ | async) {
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/admin" routerLinkActive="active">
+                  <i class="fas fa-users-cog me-1"></i>Admin Panel
+                </a>
+              </li>
+            }
+          }
+
+          <!-- Public links -->
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/about" routerLinkActive="active">About</a>
+          </li>
+        </ul>
+
+        <!-- Right side menu -->
+        <ul class="navbar-nav ms-auto">
+          @if (isAuthenticated$ | async) {
+            <!-- User dropdown -->
+            @if (user$ | async; as user) {
+              <li class="nav-item dropdown">
+                <a 
+                  class="nav-link dropdown-toggle d-flex align-items-center" 
+                  href="#" 
+                  id="userDropdown" 
+                  role="button" 
+                  data-bs-toggle="dropdown">
+                  @if (user.picture) {
+                    <img 
+                      [src]="user.picture" 
+                      alt="User avatar" 
+                      class="rounded-circle me-2"
+                      style="width: 32px; height: 32px; object-fit: cover;">
+                  } @else {
+                    <i class="fas fa-user-circle me-2 fs-5"></i>
+                  }
+                  <span>{{ user.name || user.email }}</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item" routerLink="/profile">
+                      <i class="fas fa-user-circle me-2"></i>Profile
+                    </a>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <button class="dropdown-item text-danger" (click)="logout()">
+                      <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            }
+          } @else {
+            <!-- Login/Signup buttons -->
+            <li class="nav-item">
+              <button class="btn btn-link nav-link" (click)="login()">
+                <i class="fas fa-sign-in-alt me-1"></i>Login
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="btn btn-primary ms-2" (click)="signup()">
+                <i class="fas fa-user-plus me-1"></i>Sign Up
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
