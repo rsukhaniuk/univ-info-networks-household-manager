@@ -1,7 +1,9 @@
 ﻿using HouseholdManager.Application.DTOs.Common;
 using HouseholdManager.Application.DTOs.Room;
 using HouseholdManager.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HouseholdManager.Api.Controllers
 {
@@ -11,6 +13,7 @@ namespace HouseholdManager.Api.Controllers
     [ApiController]
     [Route("api/households/{householdId:guid}/rooms")]
     [Produces("application/json")]
+    [Authorize]
     public class RoomsController : ControllerBase
     {
         private readonly IRoomService _roomService;
@@ -66,13 +69,13 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} requesting rooms for household {HouseholdId} with filters: Search={Search}",
                 userId, householdId, queryParameters?.Search);
 
-            // Validate household exists and user has access (throws exceptions if fails)
+            // Validate household exists and user has access
             await _householdService.ValidateUserAccessAsync(householdId, userId, cancellationToken);
 
             // Get all rooms for household
             var rooms = await _roomService.GetHouseholdRoomsAsync(householdId, cancellationToken);
 
-            // Apply filters in controller (TODO: move to service/repository in future)
+            // Apply filters in controller
             var filteredRooms = rooms.AsQueryable();
 
             if (queryParameters != null)
@@ -159,11 +162,17 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} requesting details for room {RoomId} in household {HouseholdId}",
                 userId, id, householdId);
 
-            // Validate room access (throws UnauthorizedException if no access)
+            // Validate room access
             await _roomService.ValidateRoomAccessAsync(id, userId, cancellationToken);
 
-            // Get room with tasks (throws NotFoundException if not found)
+            // Get room with tasks
             var room = await _roomService.GetRoomWithTasksAsync(id, cancellationToken);
+
+            // Set IsOwner flag
+            if (room != null)
+            {
+                room.IsOwner = await _householdService.IsUserOwnerAsync(householdId, userId, cancellationToken);
+            }
 
             return Ok(ApiResponse<RoomWithTasksDto>.SuccessResponse(room));
         }
@@ -204,14 +213,10 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} creating room '{RoomName}' in household {HouseholdId}",
                 userId, request.Name, householdId);
 
-            // Validate owner access (throws ForbiddenException if not owner)
-            await _householdService.ValidateOwnerAccessAsync(householdId, userId, cancellationToken);
-
             // Ensure householdId matches
             request.HouseholdId = householdId;
             request.Id = null; // Ensure no ID on create
 
-            // Service will validate name uniqueness and throw ValidationException if duplicate
             var room = await _roomService.CreateRoomAsync(request, userId, cancellationToken);
 
             _logger.LogInformation(
@@ -254,14 +259,10 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} updating room {RoomId} in household {HouseholdId}",
                 userId, id, householdId);
 
-            // Validate owner access to room (throws ForbiddenException if not owner)
-            await _roomService.ValidateRoomOwnerAccessAsync(id, userId, cancellationToken);
-
             // Ensure IDs match
             request.Id = id;
             request.HouseholdId = householdId;
 
-            // Service will validate name uniqueness and throw ValidationException if duplicate
             var room = await _roomService.UpdateRoomAsync(id, request, userId, cancellationToken);
 
             _logger.LogInformation(
@@ -302,12 +303,9 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} deleting room {RoomId} from household {HouseholdId}",
                 userId, id, householdId);
 
-            // Validate owner access (throws ForbiddenException if not owner)
-            await _roomService.ValidateRoomOwnerAccessAsync(id, userId, cancellationToken);
-
             await _roomService.DeleteRoomAsync(id, userId, cancellationToken);
 
-            return NoContent(); // 204 No Content - standard for DELETE
+            return NoContent();
         }
 
         #endregion
@@ -351,10 +349,6 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} uploading photo for room {RoomId} in household {HouseholdId}",
                 userId, id, householdId);
 
-            // Validate owner access (throws ForbiddenException if not owner)
-            await _roomService.ValidateRoomOwnerAccessAsync(id, userId, cancellationToken);
-
-            // Service validates file and handles upload (throws ValidationException if invalid)
             var photoPath = await _roomService.UploadRoomPhotoAsync(
                 id,
                 photo,
@@ -395,12 +389,9 @@ namespace HouseholdManager.Api.Controllers
                 "User {UserId} deleting photo for room {RoomId} in household {HouseholdId}",
                 userId, id, householdId);
 
-            // Validate owner access (throws ForbiddenException if not owner)
-            await _roomService.ValidateRoomOwnerAccessAsync(id, userId, cancellationToken);
-
             await _roomService.DeleteRoomPhotoAsync(id, userId, cancellationToken);
 
-            return NoContent(); // 204 No Content - standard for DELETE
+            return NoContent();
         }
 
         #endregion
@@ -408,21 +399,18 @@ namespace HouseholdManager.Api.Controllers
         #region Helper Methods
 
         /// <summary>
-        /// Get current user ID from HTTP context
-        /// TODO: Replace with Auth0 JWT claim extraction in Lab 3
+        /// Get current user ID from Auth0 JWT claims
         /// </summary>
-        /// <returns>User ID string</returns>
+        /// <returns>User ID string (Auth0 sub claim)</returns>
         private string GetCurrentUserId()
         {
-            // Temporary implementation - read from header or use default
-            var userId = HttpContext.Request.Headers["X-User-Id"].FirstOrDefault();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userId))
             {
-                // For development/testing - use hardcoded user
-                // TODO: Remove this default in production
-                userId = "test-user-123";
-                _logger.LogWarning("No X-User-Id header provided, using default test user");
+                _logger.LogError("User ID (sub claim) not found in JWT token. This indicates a configuration issue with Auth0.");
+                throw Domain.Exceptions.AuthenticationException.MissingUserIdClaim();
             }
 
             return userId;

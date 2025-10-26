@@ -42,6 +42,7 @@ namespace HouseholdManager.Api.Middleware
 
             var problemDetails = exception switch
             {
+                // 404
                 NotFoundException notFoundEx => new ProblemDetails
                 {
                     Status = StatusCodes.Status404NotFound,
@@ -51,6 +52,7 @@ namespace HouseholdManager.Api.Middleware
                     Instance = context.Request.Path
                 },
 
+                // 422
                 ValidationException validationEx => new ValidationProblemDetails(validationEx.Errors)
                 {
                     Status = StatusCodes.Status422UnprocessableEntity,
@@ -60,6 +62,7 @@ namespace HouseholdManager.Api.Middleware
                     Instance = context.Request.Path
                 },
 
+                // 401 (custom domain level: missing auth context, manual checks)
                 UnauthorizedException unauthorizedEx => new ProblemDetails
                 {
                     Status = StatusCodes.Status401Unauthorized,
@@ -69,6 +72,7 @@ namespace HouseholdManager.Api.Middleware
                     Instance = context.Request.Path
                 },
 
+                // 403
                 ForbiddenException forbiddenEx => new ProblemDetails
                 {
                     Status = StatusCodes.Status403Forbidden,
@@ -78,6 +82,17 @@ namespace HouseholdManager.Api.Middleware
                     Instance = context.Request.Path
                 },
 
+                // 401 (authentication/token/claims failures)
+                AuthenticationException authEx => new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Authentication Failed",
+                    Detail = authEx.Message,
+                    Type = "https://tools.ietf.org/html/rfc7235#section-3.1",
+                    Instance = context.Request.Path
+                },
+
+                // 400 (other domain errors)
                 DomainException domainEx => new ProblemDetails
                 {
                     Status = StatusCodes.Status400BadRequest,
@@ -87,6 +102,7 @@ namespace HouseholdManager.Api.Middleware
                     Instance = context.Request.Path
                 },
 
+                // 500
                 _ => new ProblemDetails
                 {
                     Status = StatusCodes.Status500InternalServerError,
@@ -113,6 +129,16 @@ namespace HouseholdManager.Api.Middleware
             }
 
             context.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
+
+            // For 401, help clients (Swagger, browsers) understand auth scheme
+            if (context.Response.StatusCode == StatusCodes.Status401Unauthorized)
+            {
+                // Provide more specific header for token-related failures
+                var isAuthFailure = exception is AuthenticationException;
+                context.Response.Headers["WWW-Authenticate"] = isAuthFailure
+                    ? "Bearer error=\"invalid_token\", error_description=\"Authentication failed or missing claims\""
+                    : "Bearer";
+            }
 
             var options = new JsonSerializerOptions
             {
