@@ -1,14 +1,14 @@
-﻿using HouseholdManager.Application.Interfaces.Services;
+﻿using AutoMapper;
+using FluentValidation;
+using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
-using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using FluentValidation;
 
 namespace HouseholdManager.Application
 {
@@ -30,14 +30,10 @@ namespace HouseholdManager.Application
             services.AddScoped<ITaskExecutionService, TaskExecutionService>();
             services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
             services.AddScoped<IHouseholdMemberService, HouseholdMemberService>();
+            services.AddScoped<IUserService, UserService>();
 
-            // UserService temporarily commented out until IUserRepository is implemented
-            // services.AddScoped<IUserService, UserService>();
-
-            // TODO: Add FluentValidation validators when ready
+            // FluentValidation validators
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
-            // TODO: Add AutoMapper when ready
 
             return services;
         }

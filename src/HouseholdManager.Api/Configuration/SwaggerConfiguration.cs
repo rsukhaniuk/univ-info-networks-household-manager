@@ -21,18 +21,18 @@ namespace HouseholdManager.Api.Configuration
                 {
                     Title = "Household Manager API",
                     Version = "v1",
-                    Description = @"
-                        REST API for Household Task Management System with Auth0 authentication.
+                    Description = """
+REST API for Household Task Management System with Auth0 authentication.
 
-                        **Authentication:**
-                        1. Click 'Authorize' button below
-                        2. Login with your Auth0 credentials
-                        3. Your JWT token will be automatically added to all requests
+**Authentication**
+1. Click 'Authorize' button below  
+2. Login with your Auth0 credentials  
+3. Your JWT token will be automatically added to all requests  
 
-                        **Roles:**
-                        - **SystemAdmin**: Full system access
-                        - **User**: Access to own households and tasks
-                        ",
+**Roles**
+- **SystemAdmin** – Full system access  
+- **User** – Access to own households and tasks
+""",
                     Contact = new OpenApiContact
                     {
                         Name = "Household Manager Team",
@@ -111,14 +111,17 @@ namespace HouseholdManager.Api.Configuration
                     Scheme = "bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = @"**Manual JWT token entry (for testing)**
+                    Description = """
+**Manual JWT token entry (for testing)**
 
-                        If OAuth2 login doesn't work, you can manually paste your JWT token here.
+If OAuth2 login doesn't work, you can manually paste your JWT token here.
 
-                        1. Get token from Auth0 Dashboard → APIs → Your API → Test tab
-                        2. Enter: `Bearer YOUR_TOKEN_HERE`
+1. Get token from Auth0 Dashboard → APIs → Your API → Test tab  
+2. Enter: `Bearer YOUR_TOKEN_HERE`
 
-                        Example: `Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...`"
+Example:  
+`Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...`
+"""
                 });
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement

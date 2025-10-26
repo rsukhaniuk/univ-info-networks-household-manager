@@ -18,17 +18,20 @@ namespace HouseholdManager.Application.Services
     {
         private readonly IHouseholdRepository _householdRepository;
         private readonly IHouseholdMemberRepository _memberRepository;
+        private readonly IUserRepository _userRepository;
         private readonly ILogger<HouseholdService> _logger;
         private readonly IMapper _mapper;
 
         public HouseholdService(
             IHouseholdRepository householdRepository,
             IHouseholdMemberRepository memberRepository,
+            IUserRepository userRepository,
             IMapper mapper,
             ILogger<HouseholdService> logger)
         {
             _householdRepository = householdRepository;
             _memberRepository = memberRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
             _logger = logger;
         }
@@ -146,6 +149,7 @@ namespace HouseholdManager.Application.Services
             _logger.LogInformation("Regenerated invite code for household {HouseholdId}", householdId);
             return newInviteCode;
         }
+
         public async Task<HouseholdDto> JoinHouseholdAsync(
             JoinHouseholdRequest request,
             string userId,
@@ -208,7 +212,7 @@ namespace HouseholdManager.Application.Services
 
             var member = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
             if (member == null)
-                throw new ValidationException("User is not a member of this household");
+                throw new NotFoundException("User is not a member of this household");
 
             // Check if this is the last owner
             if (member.Role == HouseholdRole.Owner)
@@ -227,18 +231,22 @@ namespace HouseholdManager.Application.Services
         {
             var member = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
             if (member == null)
-                throw new ValidationException("User is not a member of this household");
+                throw new NotFoundException("User is not a member of this household");
 
             // If user is an owner, check if they're the last owner
             if (member.Role == HouseholdRole.Owner)
             {
                 var ownerCount = await _memberRepository.GetOwnerCountAsync(householdId, cancellationToken);
                 if (ownerCount <= 1)
-                    throw new ValidationException("Cannot leave household as the last owner...");
+                    throw new ValidationException("Cannot leave household as the last owner. Transfer ownership or delete the household instead.");
             }
 
-            // TODO: Clear current household if this was the user's current household
-            // This will be implemented when UserRepository is ready
+            // Clear current household if this was the user's current household
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            if (user?.CurrentHouseholdId == householdId)
+            {
+                await _userRepository.SetCurrentHouseholdAsync(userId, null, cancellationToken);
+            }
 
             await _memberRepository.DeleteAsync(member, cancellationToken);
             _logger.LogInformation("User {UserId} left household {HouseholdId}", userId, householdId);
@@ -246,16 +254,18 @@ namespace HouseholdManager.Application.Services
 
         public async Task<bool> IsUserMemberAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
-            // TODO: Check if user is SystemAdmin when UserRepository is implemented
-            // SystemAdmins have access to all households
+            // Check if user is SystemAdmin - they have access to all households
+            if (await _userRepository.IsSystemAdminAsync(userId, cancellationToken))
+                return true;
 
             return await _memberRepository.IsUserMemberAsync(householdId, userId, cancellationToken);
         }
 
         public async Task<bool> IsUserOwnerAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
-            // TODO: Check if user is SystemAdmin when UserRepository is implemented
-            // SystemAdmins have owner access to all households
+            // Check if user is SystemAdmin - they have owner access to all households
+            if (await _userRepository.IsSystemAdminAsync(userId, cancellationToken))
+                return true;
 
             var role = await _memberRepository.GetUserRoleAsync(householdId, userId, cancellationToken);
             return role == HouseholdRole.Owner;
@@ -269,16 +279,42 @@ namespace HouseholdManager.Application.Services
         // Permission validation
         public async Task ValidateUserAccessAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
-            // TODO: Skip validation for SystemAdmin when UserRepository is implemented
+            // First, verify household exists
+            var household = await _householdRepository.GetByIdAsync(householdId, cancellationToken);
+            if (household == null)
+                throw new NotFoundException(nameof(Household), householdId);
 
+            // SystemAdmin always has access
+            var isSystemAdmin = await _userRepository.IsSystemAdminAsync(userId, cancellationToken);
+            if (isSystemAdmin)
+            {
+                _logger.LogInformation("SystemAdmin {UserId} accessing household {HouseholdId}", userId, householdId);
+                return;
+            }
+
+            // Regular users must be members
             if (!await IsUserMemberAsync(householdId, userId, cancellationToken))
-                throw new UnauthorizedException("User is not a member of this household");
+                throw ForbiddenException.ForResource("Household", householdId);
         }
 
         public async Task ValidateOwnerAccessAsync(Guid householdId, string userId, CancellationToken cancellationToken = default)
         {
+            // First, verify household exists
+            var household = await _householdRepository.GetByIdAsync(householdId, cancellationToken);
+            if (household == null)
+                throw new NotFoundException(nameof(Household), householdId);
+
+            // SystemAdmin always has owner-level access
+            var isSystemAdmin = await _userRepository.IsSystemAdminAsync(userId, cancellationToken);
+            if (isSystemAdmin)
+            {
+                _logger.LogInformation("SystemAdmin {UserId} performing owner action on household {HouseholdId}", userId, householdId);
+                return;
+            }
+
+            // Regular users must be owners
             if (!await IsUserOwnerAsync(householdId, userId, cancellationToken))
-                throw new UnauthorizedException("User is not an owner of this household");
+                throw ForbiddenException.ForAction("modify", "household");
         }
     }
 }

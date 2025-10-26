@@ -1,7 +1,10 @@
 ﻿using HouseholdManager.Application.DTOs.Common;
 using HouseholdManager.Application.DTOs.Household;
 using HouseholdManager.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Authentication;
+using System.Security.Claims;
 
 namespace HouseholdManager.Api.Controllers
 {
@@ -11,6 +14,7 @@ namespace HouseholdManager.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
+    [Authorize]
     public class HouseholdsController : ControllerBase
     {
         private readonly IHouseholdService _householdService;
@@ -55,7 +59,6 @@ namespace HouseholdManager.Api.Controllers
             [FromQuery] HouseholdQueryParameters queryParameters,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Replace with Auth0 JWT claim in Lab 3
             var userId = GetCurrentUserId();
 
             _logger.LogInformation(
@@ -75,8 +78,6 @@ namespace HouseholdManager.Api.Controllers
                 queryParameters.UserId = userId;
             }
 
-            // TODO: Service should return PagedResult instead of list
-            // For now, get all and create paged result in controller
             var allHouseholds = await _householdService.GetUserHouseholdsAsync(userId, cancellationToken);
 
             // Apply search filter
@@ -145,11 +146,16 @@ namespace HouseholdManager.Api.Controllers
 
             _logger.LogInformation("User {UserId} requesting household {HouseholdId}", userId, id);
 
-            // Validate access (throws UnauthorizedException if not member)
+            // Validate access
             await _householdService.ValidateUserAccessAsync(id, userId, cancellationToken);
 
-            // Get household (throws NotFoundException if not found)
             var household = await _householdService.GetHouseholdWithMembersAsync(id, cancellationToken);
+
+            // Set IsOwner flag
+            if (household != null)
+            {
+                household.IsOwner = await _householdService.IsUserOwnerAsync(id, userId, cancellationToken);
+            }
 
             return Ok(ApiResponse<HouseholdDetailsDto>.SuccessResponse(household));
         }
@@ -225,9 +231,6 @@ namespace HouseholdManager.Api.Controllers
 
             _logger.LogInformation("User {UserId} updating household {HouseholdId}", userId, id);
 
-            // Validate owner access
-            await _householdService.ValidateOwnerAccessAsync(id, userId, cancellationToken);
-
             var household = await _householdService.UpdateHouseholdAsync(
                 id,
                 request,
@@ -264,12 +267,9 @@ namespace HouseholdManager.Api.Controllers
 
             _logger.LogWarning("User {UserId} deleting household {HouseholdId}", userId, id);
 
-            // Validate owner access
-            await _householdService.ValidateOwnerAccessAsync(id, userId, cancellationToken);
-
             await _householdService.DeleteHouseholdAsync(id, userId, cancellationToken);
 
-            return NoContent(); // 204 No Content - standard for DELETE
+            return NoContent();
         }
 
         #endregion
@@ -293,7 +293,6 @@ namespace HouseholdManager.Api.Controllers
         {
             _logger.LogInformation("Looking up household by invite code: {InviteCode}", inviteCode);
 
-            // Get household (throws NotFoundException if not found)
             var household = await _householdService.GetHouseholdByInviteCodeAsync(
                 inviteCode,
                 cancellationToken);
@@ -367,9 +366,6 @@ namespace HouseholdManager.Api.Controllers
             _logger.LogInformation("User {UserId} regenerating invite code for household {HouseholdId}",
                 userId, id);
 
-            // Validate owner access
-            await _householdService.ValidateOwnerAccessAsync(id, userId, cancellationToken);
-
             var newInviteCode = await _householdService.RegenerateInviteCodeAsync(
                 id,
                 userId,
@@ -412,24 +408,59 @@ namespace HouseholdManager.Api.Controllers
 
         #endregion
 
+        #region Member Management
+
+        /// <summary>
+        /// Remove a member from household (Owner only)
+        /// </summary>
+        /// <param name="id">Household ID (GUID)</param>
+        /// <param name="userId">User ID to remove</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>No content</returns>
+        /// <remarks>
+        /// Only household owners can remove members.
+        /// Cannot remove the last owner - promote another member first.
+        /// </remarks>
+        [HttpDelete("{id:guid}/members/{userId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RemoveMember(
+            Guid id,
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            var requestingUserId = GetCurrentUserId();
+
+            _logger.LogInformation("User {RequestingUserId} removing user {UserId} from household {HouseholdId}",
+                requestingUserId, userId, id);
+
+            await _householdService.RemoveMemberAsync(id, userId, requestingUserId, cancellationToken);
+
+            return NoContent();
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
-        /// Get current user ID from HTTP context
-        /// TODO: Replace with Auth0 JWT claim extraction in Lab 3
+        /// Get current user ID from Auth0 JWT claims
         /// </summary>
-        /// <returns>User ID string</returns>
+        /// <returns>User ID string (Auth0 sub claim)</returns>
         private string GetCurrentUserId()
         {
-            // Temporary implementation - read from header or use default
-            var userId = HttpContext.Request.Headers["X-User-Id"].FirstOrDefault();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userId))
             {
-                // For development/testing - use hardcoded user
-                // TODO: Remove this default in production
-                userId = "test-user-123";
-                _logger.LogWarning("No X-User-Id header provided, using default test user");
+                _logger.LogError("User ID (sub claim) not found in JWT token. This indicates a configuration issue with Auth0.");
+                throw Domain.Exceptions.AuthenticationException.MissingUserIdClaim();
             }
 
             return userId;

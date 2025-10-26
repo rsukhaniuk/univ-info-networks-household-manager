@@ -8,7 +8,7 @@ using HouseholdManager.Domain.Enums;
 using HouseholdManager.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
-namespace HouseholdManager.Services.Implementations
+namespace HouseholdManager.Application.Services
 {
     /// <summary>
     /// User service with Auth0 integration

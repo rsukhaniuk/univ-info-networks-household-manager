@@ -34,6 +34,7 @@ namespace HouseholdManager.Infrastructure
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<IExecutionRepository, ExecutionRepository>();
             services.AddScoped<IHouseholdMemberRepository, HouseholdMemberRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
 
             // Data Seeder
             services.AddScoped<DataSeeder>();
