@@ -1,3 +1,4 @@
+import { BaseQueryParameters } from "./api-response.model";
 import { ExecutionDto } from "./execution.model";
 import { TaskDto } from "./task.model";
 
@@ -38,4 +39,12 @@ export interface UpsertRoomRequest {
   description?: string;
   priority: number;
   photoPath?: string;
+}
+
+export interface RoomQueryParameters extends BaseQueryParameters {
+  householdId?: string;      // Filter by household
+  minPriority?: number;      // Minimum priority
+  maxPriority?: number;      // Maximum priority
+  hasPhoto?: boolean;        // Has photo uploaded
+  hasActiveTasks?: boolean;  // Has active tasks
 }

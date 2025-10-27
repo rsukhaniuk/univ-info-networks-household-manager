@@ -1,0 +1,84 @@
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row justify-content-center mb-4">
+    <div class="col-lg-8 col-xl-6 text-center">
+        <h1 class="h2 mb-1">
+        <i class="fas fa-users text-primary me-2"></i>Join Household
+        </h1>
+        <p class="text-muted mb-0">Enter an invite code to join an existing household</p>
+    </div>
+    </div>
+
+    <!-- Error Message -->
+    @if (error) {
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+            <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+        </div>
+    </div>
+    }
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+        <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <!-- Invite Code Input -->
+            <div class="mb-4">
+                <label for="inviteCode" class="form-label fw-semibold text-center d-block">
+                <i class="fas fa-key text-primary me-2"></i>Invite Code
+                <span class="text-danger">*</span>
+                </label>
+                <input
+                type="text"
+                id="inviteCode"
+                formControlName="inviteCode"
+                class="form-control form-control-lg text-center"
+                [class.is-invalid]="inviteCode?.invalid && inviteCode?.touched"
+                placeholder="Enter invite code"
+                maxlength="36"
+                style="letter-spacing: 2px; font-family: monospace; font-size: 1.2rem;">
+                
+                @if (inviteCode?.invalid && inviteCode?.touched) {
+                <div class="invalid-feedback text-center">
+                    @if (inviteCode?.errors?.['required']) {
+                    Invite code is required
+                    }
+                </div>
+                }
+                
+                <div class="form-text text-center">
+                <i class="fas fa-info-circle me-1"></i>
+                Get this code from the household owner
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="row g-3">
+                <div class="col-sm-6">
+                <a routerLink="/households" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+                </div>
+                <div class="col-sm-6">
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-lg w-100"
+                    [disabled]="isSubmitting || form.invalid">
+                    @if (isSubmitting) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    <i class="fas fa-users me-2"></i>Join Household
+                </button>
+                </div>
+            </div>
+            </form>
+        </div>
+        </div>
+    </div>
+    </div>
+</div>

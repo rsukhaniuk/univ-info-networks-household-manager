@@ -1,0 +1,99 @@
+<div class="container py-4">
+  <!-- Header -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-start mb-2">
+      <a routerLink="/households" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back
+      </a>
+    </div>
+    <div class="text-center">
+      <h1 class="h3 mb-0">{{ pageTitle }}</h1>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (error) {
+    <div class="alert alert-danger alert-dismissible fade show">
+      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+      <button type="button" class="btn-close" (click)="error = null"></button>
+    </div>
+  }
+
+  <!-- Form -->
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <!-- Name Field -->
+            <div class="mb-3">
+              <label for="name" class="form-label">
+                Name <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                class="form-control"
+                [class.is-invalid]="name?.invalid && name?.touched"
+                placeholder="My Family House"
+                maxlength="100">
+              
+              @if (name?.invalid && name?.touched) {
+                <div class="invalid-feedback">
+                  @if (name?.errors?.['required']) {
+                    Name is required
+                  }
+                  @if (name?.errors?.['maxlength']) {
+                    Name cannot exceed 100 characters
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Description Field -->
+            <div class="mb-4">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                id="description"
+                formControlName="description"
+                class="form-control"
+                [class.is-invalid]="description?.invalid && description?.touched"
+                rows="3"
+                placeholder="Optional description..."
+                maxlength="500"></textarea>
+              
+              @if (description?.invalid && description?.touched) {
+                <div class="invalid-feedback">
+                  @if (description?.errors?.['maxlength']) {
+                    Description cannot exceed 500 characters
+                  }
+                </div>
+              }
+              
+              <div class="form-text">
+                {{ description?.value?.length || 0 }} / 500 characters
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2">
+              <a routerLink="/households" class="btn btn-secondary">
+                Cancel
+              </a>
+              <button
+                type="submit"
+                class="btn {{ submitButtonClass }}"
+                [disabled]="isSubmitting || form.invalid">
+                @if (isSubmitting) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                {{ submitButtonText }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

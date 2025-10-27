@@ -144,7 +144,7 @@ namespace HouseholdManager.Api.Middleware
             _syncCache[userId] = DateTime.UtcNow;
 
             _logger.LogInformation(
-                "✅ Successfully synced user {UserId} ({Email}) from Auth0 to database",
+                "Successfully synced user {UserId} ({Email}) from Auth0 to database",
                 userId,
                 email);
         }

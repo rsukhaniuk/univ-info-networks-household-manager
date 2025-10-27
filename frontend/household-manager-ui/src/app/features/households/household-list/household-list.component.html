@@ -1,0 +1,268 @@
+<div class="container">
+  <!-- Header -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-10">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="text-center text-lg-start">
+          <h1 class="h3 mb-1">
+            <i class="fas fa-home text-primary me-2"></i>
+            @if (isSystemAdmin$ | async) {
+              <span>All Households</span>
+              <span class="badge bg-danger ms-2">System Admin</span>
+            } @else {
+              <span>My Households</span>
+            }
+          </h1>
+          <p class="text-muted mb-0">
+            @if (isSystemAdmin$ | async) {
+              System-wide household management
+            } @else {
+              Manage and view your household memberships
+            }
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        @if (!(isSystemAdmin$ | async)) {
+          <div class="btn-group" role="group">
+            <a routerLink="/households/create" class="btn btn-primary btn-lg">
+              <i class="fas fa-plus me-1"></i>Create Household
+            </a>
+            <a routerLink="/households/join" class="btn btn-success btn-lg ms-2">
+              <i class="fas fa-key me-1"></i>Join Household
+            </a>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  @if (successMessage) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fas fa-check-circle me-2"></i>
+      {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = null"></button>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ error }}
+      <button type="button" class="btn-close" (click)="error = null"></button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted mt-3">Loading households...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @else if (households.length === 0 && !searchQuery) {
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow-sm">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-home fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Households Found</h4>
+            <p class="text-muted mb-4">
+              @if (isSystemAdmin$ | async) {
+                No households have been created in the system yet.
+              } @else {
+                You're not a member of any households yet. Create your first household or join an existing one!
+              }
+            </p>
+
+            @if (!(isSystemAdmin$ | async)) {
+              <div class="d-flex justify-content-center gap-2">
+                <a routerLink="/households/create" class="btn btn-primary btn-lg">
+                  <i class="fas fa-plus me-1"></i>Create Household
+                </a>
+                <a routerLink="/households/join" class="btn btn-outline-primary btn-lg">
+                  <i class="fas fa-key me-1"></i>Join Household
+                </a>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Households Table -->
+  @else {
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <!-- Search Bar -->
+            <div class="mb-3">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Search households..."
+                [value]="searchQuery"
+                (input)="onSearch($any($event.target).value)">
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th (click)="onSort('name')" style="cursor: pointer;">
+                      <i class="fas fa-home me-1"></i>Household
+                      @if (sortBy === 'name') {
+                        <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                      }
+                    </th>
+                    <th (click)="onSort('memberCount')" style="cursor: pointer;">
+                      <i class="fas fa-users me-1"></i>Members
+                      @if (sortBy === 'memberCount') {
+                        <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                      }
+                    </th>
+                    <th (click)="onSort('createdAt')" style="cursor: pointer;">
+                      <i class="fas fa-calendar me-1"></i>Created
+                      @if (sortBy === 'createdAt') {
+                        <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                      }
+                    </th>
+                    <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (household of filteredHouseholds; track household.id) {
+                    <tr>
+                      <!-- Household Name -->
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                               style="width: 40px; height: 40px;">
+                            <i class="fas fa-home text-white"></i>
+                          </div>
+                          <div>
+                            <h6 class="mb-0">
+                              <a [routerLink]="['/households', household.id]" class="text-decoration-none">
+                                {{ household.name }}
+                              </a>
+                            </h6>
+                            @if (household.description) {
+                              <small class="text-muted">{{ household.description }}</small>
+                            }
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Member Count -->
+                      <td>
+                        <span class="badge bg-info rounded-pill">
+                          {{ household.memberCount }}
+                        </span>
+                      </td>
+
+                      <!-- Created Date -->
+                      <td>
+                        <span class="text-muted">
+                          {{ household.createdAt | date:'short' }}
+                        </span>
+                      </td>
+
+                      <!-- Actions -->
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <a [routerLink]="['/households', household.id]"
+                             class="btn btn-outline-primary"
+                             title="View Details">
+                            <i class="fas fa-eye"></i>
+                          </a>
+
+                          <a [routerLink]="['/households', household.id, 'edit']"
+                             class="btn btn-outline-warning"
+                             title="Edit">
+                            <i class="fas fa-edit"></i>
+                          </a>
+
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-danger"
+                            (click)="openDeleteModal(household)"
+                            title="Delete">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1) {
+              <nav>
+                <ul class="pagination justify-content-center">
+                  <li class="page-item" [class.disabled]="currentPage === 1">
+                    <button class="page-link" (click)="onPageChange(currentPage - 1)">
+                      Previous
+                    </button>
+                  </li>
+                  @for (page of [].constructor(totalPages); track $index; let i = $index) {
+                    <li class="page-item" [class.active]="currentPage === i + 1">
+                      <button class="page-link" (click)="onPageChange(i + 1)">
+                        {{ i + 1 }}
+                      </button>
+                    </li>
+                  }
+                  <li class="page-item" [class.disabled]="currentPage === totalPages">
+                    <button class="page-link" (click)="onPageChange(currentPage + 1)">
+                      Next
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Delete Modal -->
+@if (deleteModalHousehold) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>Delete Household
+          </h5>
+          <button type="button" class="btn-close" (click)="deleteModalHousehold = null"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete <strong>{{ deleteModalHousehold.name }}</strong>?</p>
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone.
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" (click)="deleteModalHousehold = null">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+            <i class="fas fa-trash me-1"></i>Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

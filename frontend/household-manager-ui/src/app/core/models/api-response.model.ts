@@ -16,3 +16,11 @@ export interface PagedResult<T> {
   hasNextPage: boolean;
 }
 
+export interface BaseQueryParameters {
+  page?: number;             // Page number (default: 1)
+  pageSize?: number;         // Page size (default: 20, max: 100)
+  sortBy?: string;           // Sort field
+  sortOrder?: 'asc' | 'desc'; // Sort direction (default: 'desc')
+  search?: string;           // Search term
+}
+

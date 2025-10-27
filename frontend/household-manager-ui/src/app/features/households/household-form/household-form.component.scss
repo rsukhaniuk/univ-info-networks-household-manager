@@ -1,0 +1,99 @@
+@use '../shared-styles' as *;
+
+.container {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+// Header
+.form-header {
+  margin-bottom: 2rem;
+
+  .back-button-container {
+    margin-bottom: 1rem;
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &:hover {
+        transform: translateX(-3px);
+      }
+    }
+  }
+
+  .form-title {
+    text-align: center;
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+}
+
+// Form card
+.form-card {
+  .card-body {
+    padding: 2rem;
+  }
+}
+
+// Form groups
+.form-group {
+  margin-bottom: 1.5rem;
+
+  textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .character-counter {
+    text-align: right;
+    color: $text-muted;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+
+    &.near-limit {
+      color: $warning-color;
+    }
+
+    &.at-limit {
+      color: $danger-color;
+      font-weight: 600;
+    }
+  }
+}
+
+// Form actions
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 2rem;
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 576px) {
+  .form-card .card-body {
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

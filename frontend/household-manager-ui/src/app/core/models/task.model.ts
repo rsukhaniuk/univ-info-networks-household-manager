@@ -1,3 +1,5 @@
+import { BaseQueryParameters } from "./api-response.model";
+
 export interface TaskDto {
   id: string;
   householdId: string;
@@ -89,4 +91,15 @@ export interface WeeklyStatsDto {
   pendingTasks: number;
   overdueTasks: number;
   completionRate: number;
+}
+
+export interface TaskQueryParameters extends BaseQueryParameters {
+  householdId?: string;      // Filter by household
+  roomId?: string;           // Filter by room
+  type?: TaskType;           // Filter by type (Regular/OneTime)
+  priority?: TaskPriority;   // Filter by priority
+  assignedUserId?: string;   // Filter by assigned user
+  isActive?: boolean;        // Filter by active status
+  isOverdue?: boolean;       // Show only overdue tasks
+  scheduledWeekday?: DayOfWeek; // Filter by weekday
 }

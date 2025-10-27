@@ -1,3 +1,4 @@
+import { BaseQueryParameters } from "./api-response.model";
 import { RoomDto } from "./room.model";
 import { TaskDto } from "./task.model";
 
@@ -46,4 +47,11 @@ export interface UpsertHouseholdRequest {
 
 export interface JoinHouseholdRequest {
   inviteCode: string;
+}
+
+export interface HouseholdQueryParameters extends BaseQueryParameters {
+  userId?: string;           // Filter by user membership
+  ownedByUser?: boolean;     // Show only owned households
+  minMembers?: number;       // Minimum member count
+  maxMembers?: number;       // Maximum member count
 }
