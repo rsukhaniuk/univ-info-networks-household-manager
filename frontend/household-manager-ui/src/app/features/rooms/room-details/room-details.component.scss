@@ -1,0 +1,141 @@
+@import '../rooms-shared.scss';
+
+// ========================================
+// COMPONENT-SPECIFIC STYLES
+// ========================================
+
+// Room header layout
+.room-header {
+  .room-info {
+    display: flex;
+    align-items: start;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  .room-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+}
+
+// Action buttons sidebar
+.action-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    .btn {
+      flex: 1;
+      min-width: calc(50% - 0.25rem);
+    }
+  }
+}
+
+// Tasks section
+.tasks-section {
+  .task-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .task-row {
+    &.inactive {
+      background-color: #f8f9fa;
+      opacity: 0.7;
+    }
+
+    &.overdue {
+      border-left: 4px solid #dc3545;
+    }
+  }
+}
+
+// Photo modal
+.photo-modal {
+  .current-photo-display {
+    max-height: 300px;
+    width: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  .photo-upload-section {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+}
+
+// Empty state for tasks
+.no-tasks-state {
+  padding: 3rem 1rem;
+  text-align: center;
+
+  i {
+    font-size: 4rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+  }
+
+  h5 {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #adb5bd;
+    margin-bottom: 1.5rem;
+  }
+}
+
+// Stats badges
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+
+  i {
+    font-size: 1.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  &.stat-primary {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+  }
+
+  &.stat-success {
+    background-color: #d1e7dd;
+    color: #198754;
+  }
+
+  &.stat-warning {
+    background-color: #fff3cd;
+    color: #ffc107;
+  }
+
+  &.stat-danger {
+    background-color: #f8d7da;
+    color: #dc3545;
+  }
+}

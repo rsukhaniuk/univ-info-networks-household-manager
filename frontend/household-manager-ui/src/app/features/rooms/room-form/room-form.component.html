@@ -1,0 +1,224 @@
+<div class="container py-4">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a routerLink="/households" class="text-decoration-none">
+          <i class="fas fa-home me-1"></i>My Households
+        </a>
+      </li>
+      @if (household) {
+        <li class="breadcrumb-item">
+          <a [routerLink]="['/households', household.id]" class="text-decoration-none">
+            {{ household.name }}
+          </a>
+        </li>
+        <li class="breadcrumb-item">
+          <a [routerLink]="['/rooms']" 
+             [queryParams]="{householdId: householdId}"
+             class="text-decoration-none">
+            Rooms
+          </a>
+        </li>
+      }
+      <li class="breadcrumb-item active">{{ isEditMode ? 'Edit' : 'Create' }}</li>
+    </ol>
+  </nav>
+
+  <!-- Header -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8 col-xl-6">
+      <div class="text-center">
+        <h1 class="h3 mb-1">
+          <i [class]="submitIcon + ' text-success me-2'"></i>
+          {{ pageTitle }}
+        </h1>
+        <p class="text-muted mb-0">
+          @if (isEditMode) {
+            Update room information for {{ household?.name }}
+          } @else {
+            Add a new room to {{ household?.name }}
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (error) {
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-6">
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+          <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Form -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <!-- Room Name -->
+            <div class="mb-4">
+              <label for="name" class="form-label fw-semibold">
+                <i class="fas fa-door-open text-success me-2"></i>
+                Room Name <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                class="form-control form-control-lg"
+                [class.is-invalid]="name?.invalid && name?.touched"
+                placeholder="e.g., Living Room, Kitchen, Master Bedroom"
+                maxlength="100">
+              
+              @if (name?.invalid && name?.touched) {
+                <div class="invalid-feedback">
+                  @if (name?.errors?.['required']) {
+                    Room name is required
+                  }
+                  @if (name?.errors?.['maxlength']) {
+                    Name cannot exceed 100 characters
+                  }
+                </div>
+              }
+              
+              <div class="form-text">
+                <i class="fas fa-info-circle me-1"></i>
+                Choose a descriptive name that's unique within this household
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+              <label for="description" class="form-label fw-semibold">
+                <i class="fas fa-align-left text-info me-2"></i>
+                Description <span class="text-muted">(optional)</span>
+              </label>
+              <textarea
+                id="description"
+                formControlName="description"
+                class="form-control"
+                [class.is-invalid]="description?.invalid && description?.touched"
+                rows="3"
+                placeholder="Add any additional details about this room..."
+                maxlength="500"></textarea>
+              
+              @if (description?.invalid && description?.touched) {
+                <div class="invalid-feedback">
+                  Description cannot exceed 500 characters
+                </div>
+              }
+              
+              <div class="form-text">
+                <i class="fas fa-info-circle me-1"></i>
+                {{ description?.value?.length || 0 }} / 500 characters
+              </div>
+            </div>
+
+            <!-- Priority (Hidden for now, можна розкоментувати) -->
+            <input type="hidden" formControlName="priority">
+
+            <!-- Photo Section -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fas fa-camera text-primary me-2"></i>
+                Room Photo <span class="text-muted">(optional)</span>
+              </label>
+
+              <!-- Current Photo -->
+              @if (isEditMode && currentPhotoUrl && !photoPreviewUrl) {
+                <div class="current-photo-section mb-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge bg-info">
+                      <i class="fas fa-image me-1"></i>Current Photo
+                    </span>
+                    <small class="text-muted">Upload a new photo to replace</small>
+                  </div>
+                  <div class="text-center p-3 bg-light rounded">
+                    <img [src]="currentPhotoUrl" 
+                         [alt]="form.value.name"
+                         class="img-fluid rounded shadow-sm"
+                         style="max-height: 200px; max-width: 100%;">
+                  </div>
+                </div>
+              }
+
+              <!-- Photo Upload -->
+              <div class="photo-upload-section">
+                <input
+                  type="file"
+                  id="photoInput"
+                  class="form-control"
+                  accept="image/*"
+                  (change)="onFileSelected($event)">
+                
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB
+                </div>
+              </div>
+
+              <!-- New Photo Preview -->
+              @if (photoPreviewUrl) {
+                <div class="mt-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge bg-success">
+                      <i class="fas fa-upload me-1"></i>New Photo Selected
+                    </span>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="clearPhotoSelection()">
+                      <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                  </div>
+                  <div class="text-center p-3 bg-light rounded">
+                    <img [src]="photoPreviewUrl"
+                         class="img-fluid rounded shadow-sm"
+                         style="max-height: 200px; max-width: 100%;">
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Actions -->
+            <div class="row g-3 mt-4">
+              <div class="col-sm-6">
+                @if (isEditMode) {
+                  <a [routerLink]="['/rooms', roomId]"
+                     [queryParams]="{householdId: householdId}"
+                     class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-2"></i>Cancel
+                  </a>
+                } @else {
+                  <a [routerLink]="['/rooms']"
+                     [queryParams]="{householdId: householdId}"
+                     class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-2"></i>Cancel
+                  </a>
+                }
+              </div>
+              <div class="col-sm-6">
+                <button
+                  type="submit"
+                  [class]="'btn btn-lg w-100 ' + submitButtonClass"
+                  [disabled]="isSubmitting || form.invalid">
+                  @if (isSubmitting) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                  }
+                  <i [class]="submitIcon + ' me-2'"></i>
+                  {{ submitButtonText }}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

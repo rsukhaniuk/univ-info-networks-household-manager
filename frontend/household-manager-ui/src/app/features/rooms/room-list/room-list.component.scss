@@ -1,0 +1,99 @@
+@import '../rooms-shared.scss';
+
+// ========================================
+// COMPONENT-SPECIFIC STYLES
+// ========================================
+
+// Page header with action button
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h1 {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+// Search input styling
+.search-input {
+  margin-bottom: 1rem;
+
+  input {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+
+    &:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+  }
+}
+
+// Room grid layout (if you want grid view instead of table)
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+
+  .room-grid-item {
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+  }
+}
+
+// Table row hover effect enhancement
+.room-table tbody tr {
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f1f3f5 !important;
+  }
+}
+
+// Action buttons in table
+.action-buttons {
+  .btn-group {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    .btn {
+      &:first-child {
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+      }
+
+      &:last-child {
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+      }
+    }
+  }
+}
+
+// Delete modal specific styling
+#deleteModal {
+  .modal-body {
+    .alert {
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

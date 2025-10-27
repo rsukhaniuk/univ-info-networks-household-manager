@@ -1,0 +1,353 @@
+<div class="container">
+  <!-- Breadcrumb -->
+  @if (roomDetails) {
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/households" class="text-decoration-none">
+            <i class="fas fa-home me-1"></i>My Households
+          </a>
+        </li>
+        <li class="breadcrumb-item">
+          <a [routerLink]="['/households', roomDetails.room.householdId]" class="text-decoration-none">
+            {{ roomDetails.room.householdId }}
+          </a>
+        </li>
+        <li class="breadcrumb-item">
+          <a [routerLink]="['/rooms']" 
+             [queryParams]="{householdId: roomDetails.room.householdId}"
+             class="text-decoration-none">
+            Rooms
+          </a>
+        </li>
+        <li class="breadcrumb-item active">{{ roomDetails.room.name }}</li>
+      </ol>
+    </nav>
+  }
+
+  <!-- Messages -->
+  @if (successMessage) {
+    <div class="alert alert-success alert-dismissible fade show">
+      <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = null"></button>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-danger alert-dismissible fade show">
+      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+      <button type="button" class="btn-close" (click)="error = null"></button>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="text-muted mt-3">Loading room details...</p>
+    </div>
+  }
+
+  <!-- Content -->
+  @else if (roomDetails) {
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <!-- Room Header -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="d-flex align-items-start">
+                  <!-- Photo -->
+                  @if (roomDetails.room.photoUrl) {
+                    <div class="me-4">
+                      <img [src]="roomDetails.room.photoUrl" 
+                           [alt]="roomDetails.room.name"
+                           class="rounded shadow-sm"
+                           style="width: 120px; height: 120px; object-fit: cover;">
+                    </div>
+                  } @else {
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-4 shadow-sm"
+                         style="width: 120px; height: 120px;">
+                      <i class="fas fa-door-open text-muted fa-2x"></i>
+                    </div>
+                  }
+
+                  <!-- Info -->
+                  <div class="flex-grow-1">
+                    <h1 class="h3 mb-2">{{ roomDetails.room.name }}</h1>
+                    
+                    @if (roomDetails.room.description) {
+                      <p class="text-muted mb-3">{{ roomDetails.room.description }}</p>
+                    }
+
+                    <div class="row g-3">
+                      <div class="col-sm-6">
+                        <div class="d-flex align-items-center">
+                          <i class="fas fa-tasks text-info me-2"></i>
+                          <span class="fw-semibold">Active Tasks:</span>
+                          <span class="badge bg-info ms-2">{{ roomDetails.room.activeTaskCount }}</span>
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="d-flex align-items-center text-muted">
+                          <i class="fas fa-calendar me-2"></i>
+                          <span>Created {{ roomDetails.room.createdAt | date:'medium' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                @if (roomDetails.isOwner) {
+                  <div class="d-grid gap-2">
+                    <a [routerLink]="['/rooms', roomId, 'edit']"
+                       [queryParams]="{householdId: householdId}"
+                       class="btn btn-warning">
+                      <i class="fas fa-edit me-1"></i>Edit Room
+                    </a>
+
+                    <button type="button" 
+                            class="btn btn-outline-primary"
+                            (click)="openPhotoModal()">
+                      <i class="fas fa-camera me-1"></i>Manage Photo
+                    </button>
+
+                    <button type="button" 
+                            class="btn btn-outline-danger"
+                            (click)="openDeleteModal()">
+                      <i class="fas fa-trash me-1"></i>Delete Room
+                    </button>
+                  </div>
+                } @else {
+                  <a [routerLink]="['/rooms']"
+                     [queryParams]="{householdId: householdId}"
+                     class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Rooms
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-tasks text-info me-2"></i>
+              Tasks in this Room ({{ roomDetails.activeTasks.length }})
+            </h5>
+            @if (roomDetails.isOwner) {
+              <a [routerLink]="['/tasks/create']"
+                 [queryParams]="{householdId: householdId, roomId: roomId}"
+                 class="btn btn-sm btn-info">
+                <i class="fas fa-plus me-1"></i>Add Task
+              </a>
+            }
+          </div>
+          <div class="card-body">
+            @if (roomDetails.activeTasks.length > 0) {
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Task Name</th>
+                      <th>Type</th>
+                      <th>Priority</th>
+                      <th>Assigned To</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (task of roomDetails.activeTasks; track task.id) {
+                      <tr [class.table-secondary]="!task.isActive">
+                        <td>
+                          <h6 class="mb-0">{{ task.title }}</h6>
+                          @if (task.description) {
+                            <small class="text-muted">{{ task.description }}</small>
+                          }
+                        </td>
+                        <td>
+                          @if (task.type === 'Regular') {
+                            <span class="badge bg-primary">Regular</span>
+                          } @else {
+                            <span class="badge bg-info">One-time</span>
+                          }
+                        </td>
+                        <td>
+                          @switch (task.priority) {
+                            @case (3) {
+                              <span class="badge bg-danger">High</span>
+                            }
+                            @case (2) {
+                              <span class="badge bg-warning text-dark">Medium</span>
+                            }
+                            @case (1) {
+                              <span class="badge bg-success">Low</span>
+                            }
+                          }
+                        </td>
+                        <td>
+                          @if (task.assignedUserName) {
+                            <span>{{ task.assignedUserName }}</span>
+                          } @else {
+                            <span class="text-warning">
+                              <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
+                            </span>
+                          }
+                        </td>
+                        <td>
+                          @if (task.isActive) {
+                            <span class="badge bg-success">Active</span>
+                          } @else {
+                            <span class="badge bg-secondary">Inactive</span>
+                          }
+                        </td>
+                        <td>
+                          <div class="btn-group btn-group-sm">
+                            <a [routerLink]="['/tasks', task.id]"
+                               class="btn btn-outline-primary"
+                               title="View Details">
+                              <i class="fas fa-eye"></i>
+                            </a>
+                            @if (roomDetails.isOwner) {
+                              <a [routerLink]="['/tasks', task.id, 'edit']"
+                                 class="btn btn-outline-warning"
+                                 title="Edit">
+                                <i class="fas fa-edit"></i>
+                              </a>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="text-center py-4">
+                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Tasks Yet</h5>
+                <p class="text-muted mb-4">This room doesn't have any tasks.</p>
+                @if (roomDetails.isOwner) {
+                  <a [routerLink]="['/tasks/create']"
+                     [queryParams]="{householdId: householdId, roomId: roomId}"
+                     class="btn btn-sm btn-info">
+                    <i class="fas fa-plus me-1"></i>Create First Task
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Photo Modal -->
+@if (showPhotoModal && roomDetails) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h5 class="modal-title">
+            <i class="fas fa-camera me-2"></i>Manage Room Photo
+          </h5>
+          <button type="button" class="btn-close" (click)="closePhotoModal()"></button>
+        </div>
+        <div class="modal-body">
+          @if (roomDetails.room.photoUrl) {
+            <div class="text-center mb-4">
+              <img [src]="roomDetails.room.photoUrl"
+                   [alt]="roomDetails.room.name"
+                   class="img-fluid rounded shadow-sm"
+                   style="max-height: 200px;">
+            </div>
+
+            <div class="text-center mb-4">
+              <button type="button" 
+                      class="btn btn-outline-danger"
+                      (click)="deletePhoto()">
+                <i class="fas fa-trash me-1"></i>Delete Current Photo
+              </button>
+            </div>
+
+            <hr>
+          }
+
+          <h6>Upload New Photo</h6>
+          <div class="mb-3">
+            <input type="file" 
+                   class="form-control" 
+                   accept="image/*"
+                   (change)="onPhotoFileSelected($event)">
+            <div class="form-text">
+              <i class="fas fa-info-circle me-1"></i>
+              Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB
+            </div>
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary me-2" (click)="closePhotoModal()">
+              Cancel
+            </button>
+            <button type="button" 
+                    class="btn btn-primary"
+                    [disabled]="!selectedPhotoFile || isUploadingPhoto"
+                    (click)="uploadPhoto()">
+              @if (isUploadingPhoto) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="fas fa-upload me-1"></i>Upload Photo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Modal -->
+@if (showDeleteModal && roomDetails) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>Delete Room
+          </h5>
+          <button type="button" class="btn-close" (click)="closeDeleteModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete <strong>{{ roomDetails.room.name }}</strong>?</p>
+
+          @if (roomDetails.activeTasks.length > 0) {
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Warning:</strong> This room has {{ roomDetails.activeTasks.length }} task(s).
+              Deleting will also delete all tasks and execution history.
+            </div>
+          }
+
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone.
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+            <i class="fas fa-trash me-1"></i>Delete Room
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

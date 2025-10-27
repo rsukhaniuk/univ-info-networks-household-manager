@@ -43,19 +43,19 @@ export const routes: Routes = [
 //     title: 'Dashboard - Household Manager'
 //   },
 
-//   {
-//     path: 'households',
-//     loadChildren: () => 
-//       import('./features/households/households.routes').then(m => m.householdsRoutes),
-//     canActivate: [AuthGuard]
-//   },
+  {
+    path: 'households',
+    loadChildren: () => 
+      import('./features/households/households.routes').then(m => m.householdsRoutes),
+    canActivate: [AuthGuard]
+  },
 
-//   {
-//     path: 'rooms',
-//     loadChildren: () => 
-//       import('./features/rooms/rooms.routes').then(m => m.roomsRoutes),
-//     canActivate: [AuthGuard]
-//   },
+  {
+    path: 'rooms',
+    loadChildren: () => 
+      import('./features/rooms/rooms.routes').then(m => m.roomsRoutes),
+    canActivate: [AuthGuard]
+  },
 
 //   {
 //     path: 'tasks',
