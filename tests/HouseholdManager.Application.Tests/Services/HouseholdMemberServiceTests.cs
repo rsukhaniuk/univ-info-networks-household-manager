@@ -20,6 +20,7 @@ namespace HouseholdManager.Application.Tests.Services
         private Mock<IHouseholdMemberRepository> _mockMemberRepository;
         private Mock<IHouseholdRepository> _mockHouseholdRepository;
         private Mock<ITaskRepository> _mockTaskRepository;
+        private Mock<IUserRepository> _mockUserRepositroy;
         private Mock<ILogger<HouseholdMemberService>> _mockLogger;
         private IMapper _mapper;
         private HouseholdMemberService _memberService;
@@ -30,6 +31,7 @@ namespace HouseholdManager.Application.Tests.Services
             _mockMemberRepository = new Mock<IHouseholdMemberRepository>();
             _mockHouseholdRepository = new Mock<IHouseholdRepository>();
             _mockTaskRepository = new Mock<ITaskRepository>();
+            _mockUserRepositroy = new Mock<IUserRepository>();
             _mockLogger = new Mock<ILogger<HouseholdMemberService>>();
 
             var loggerFactory = LoggerFactory.Create(b => { });
@@ -47,6 +49,7 @@ namespace HouseholdManager.Application.Tests.Services
                 _mockMemberRepository.Object,
                 _mockHouseholdRepository.Object,
                 _mockTaskRepository.Object,
+                _mockUserRepositroy.Object,
                 _mapper,
                 _mockLogger.Object);
         }

@@ -24,7 +24,7 @@ namespace HouseholdManager.Domain.Entities
         /// Foreign key to ApplicationUser
         /// </summary>
         [Required]
-        [StringLength(450)]
+        [StringLength(255)]
         public string UserId { get; set; } = string.Empty;
 
         /// <summary>

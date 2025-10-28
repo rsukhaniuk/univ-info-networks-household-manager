@@ -5,6 +5,7 @@ import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { RoomDto } from '../../../core/models/room.model';
 import { HouseholdDto, HouseholdDetailsDto } from '../../../core/models/household.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-room-list',
@@ -17,12 +18,15 @@ export class RoomListComponent implements OnInit {
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
   private route = inject(ActivatedRoute);
+  private authService = inject(AuthService);
 
   householdId: string = '';
   household: any = null;
   rooms: RoomDto[] = [];
   filteredRooms: RoomDto[] = [];
   isOwner = false;
+  isSystemAdmin = false;
+  canManageRooms = false;
   isLoading = true;
   error: string | null = null;
   successMessage: string | null = null;
@@ -35,13 +39,19 @@ export class RoomListComponent implements OnInit {
   // Modal state
   deleteModalRoom: RoomDto | null = null;
 
-  ngOnInit(): void {
-    this.householdId = this.route.snapshot.queryParamMap.get('householdId') || '';
-    if (this.householdId) {
-      this.loadHousehold();
-      this.loadRooms();
-    }
+ngOnInit(): void {
+  this.householdId = this.route.snapshot.queryParamMap.get('householdId') || '';
+  
+  if (this.householdId) {
+    // Check if SystemAdmin
+    this.authService.isSystemAdmin$().subscribe(isAdmin => {
+      this.isSystemAdmin = isAdmin;
+    });
+
+    this.loadHousehold();
+    this.loadRooms();
   }
+}
 
   private loadHousehold(): void {
     this.householdService.getHouseholdById(this.householdId).subscribe({
@@ -49,6 +59,7 @@ export class RoomListComponent implements OnInit {
         if (response.success && response.data) {
           this.household = response.data.household;
           this.isOwner = response.data.isOwner;
+          this.canManageRooms = this.isOwner || this.isSystemAdmin;
         }
       },
       error: (error) => {

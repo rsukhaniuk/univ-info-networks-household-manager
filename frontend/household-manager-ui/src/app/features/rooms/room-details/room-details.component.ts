@@ -3,22 +3,26 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { RoomService } from '../services/room.service';
 import { RoomWithTasksDto } from '../../../core/models/room.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-room-details',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './room-details.component.html',
-  styleUrl: './room-details.component.scss'
+  styleUrl: './room-details.component.scss',
 })
 export class RoomDetailsComponent implements OnInit {
   private roomService = inject(RoomService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   roomId: string = '';
   householdId: string = '';
   roomDetails: RoomWithTasksDto | null = null;
+  isSystemAdmin = false;
+  canManageRoom = false;
   isLoading = true;
   error: string | null = null;
   successMessage: string | null = null;
@@ -32,8 +36,14 @@ export class RoomDetailsComponent implements OnInit {
   ngOnInit(): void {
     this.roomId = this.route.snapshot.paramMap.get('id') || '';
     this.householdId = this.route.snapshot.queryParamMap.get('householdId') || '';
-    
+
     if (this.roomId && this.householdId) {
+      // Check if SystemAdmin
+      this.authService.isSystemAdmin$().subscribe((isAdmin) => {
+        this.isSystemAdmin = isAdmin;
+        this.updateCanManageRoom();
+      });
+
       this.loadRoom();
     }
   }
@@ -46,14 +56,19 @@ export class RoomDetailsComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.roomDetails = response.data;
+          this.updateCanManageRoom();
         }
         this.isLoading = false;
       },
       error: (error) => {
         this.error = error.message || 'Failed to load room details';
         this.isLoading = false;
-      }
+      },
     });
+  }
+
+  private updateCanManageRoom(): void {
+    this.canManageRoom = (this.roomDetails?.isOwner ?? false) || this.isSystemAdmin;
   }
 
   openPhotoModal(): void {
@@ -100,7 +115,7 @@ export class RoomDetailsComponent implements OnInit {
       error: (error) => {
         this.error = error.message || 'Failed to upload photo';
         this.isUploadingPhoto = false;
-      }
+      },
     });
   }
 
@@ -116,7 +131,7 @@ export class RoomDetailsComponent implements OnInit {
       },
       error: (error) => {
         this.error = error.message || 'Failed to delete photo';
-      }
+      },
     });
   }
 
@@ -132,13 +147,13 @@ export class RoomDetailsComponent implements OnInit {
     this.roomService.deleteRoom(this.householdId, this.roomId).subscribe({
       next: () => {
         this.router.navigate(['/rooms'], {
-          queryParams: { householdId: this.householdId }
+          queryParams: { householdId: this.householdId },
         });
       },
       error: (error) => {
         this.error = error.message || 'Failed to delete room';
         this.closeDeleteModal();
-      }
+      },
     });
   }
 

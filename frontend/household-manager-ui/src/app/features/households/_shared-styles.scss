@@ -1,62 +1,10 @@
-// ==========================================
-// VARIABLES
-// ==========================================
-
-$primary-color: #0d6efd;
-$secondary-color: #6c757d;
-$success-color: #198754;
-$danger-color: #dc3545;
-$warning-color: #ffc107;
-$info-color: #0dcaf0;
-
-$border-color: #e9ecef;
-$text-muted: #6c757d;
-$bg-light: #f8f9fa;
-
-$border-radius: 8px;
-$border-radius-lg: 12px;
-$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-$shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+@use '../../shared/styles' as *;
 
 // ==========================================
-// MIXINS
+// HOUSEHOLD-SPECIFIC COMPONENTS
 // ==========================================
 
-@mixin icon-circle($size: 40px, $bg: $primary-color, $icon-size: 1.2rem) {
-  width: $size;
-  height: $size;
-  background: $bg;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  i {
-    color: white;
-    font-size: $icon-size;
-  }
-}
-
-@mixin card-hover {
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $shadow-md;
-  }
-}
-
-@mixin gradient-bg($color1, $color2) {
-  background: linear-gradient(135deg, $color1, $color2);
-}
-
-// ==========================================
-// SHARED COMPONENTS
-// ==========================================
-
-// Icon Circles
+// Icon Circles (household context)
 .household-icon {
   @include icon-circle(40px, linear-gradient(135deg, $primary-color, #6f42c1));
 }
@@ -76,26 +24,13 @@ $shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
   margin-right: 0.75rem;
 }
 
-// Cards
-.card {
-  border: none;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-sm;
-}
+// ==========================================
+// HOUSEHOLD CARDS
+// ==========================================
 
 .card-header {
-  background-color: $bg-light;
-  border-bottom: 2px solid $border-color;
-  padding: 1rem 1.5rem;
-
   h5 {
-    margin: 0;
-    font-weight: 600;
-    color: #212529;
-
     i {
-      margin-right: 0.5rem;
-
       &.text-primary { color: $primary-color; }
       &.text-success { color: $success-color; }
       &.text-info { color: $info-color; }
@@ -104,7 +39,10 @@ $shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
   }
 }
 
-// Item Lists (Members, Tasks, Rooms)
+// ==========================================
+// ITEM LISTS (Members, Tasks, Rooms)
+// ==========================================
+
 .item-list {
   .item {
     padding: 1rem 0;
@@ -124,7 +62,7 @@ $shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
       h6 {
         margin-bottom: 0.25rem;
         font-weight: 600;
-        color: #212529;
+        color: $text-primary;
       }
 
       small {
@@ -144,198 +82,248 @@ $shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
   }
 }
 
-// Badges
-.badge {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.85rem;
-  border-radius: 6px;
+// ==========================================
+// INVITE CODE DISPLAY (modal specific)
+// ==========================================
 
-  &.bg-info { background-color: $info-color !important; color: #000; }
-  &.bg-warning { background-color: $warning-color !important; color: #000; }
-  &.bg-success { background-color: $success-color !important; }
-  &.bg-danger { background-color: $danger-color !important; }
-  &.bg-secondary { background-color: $secondary-color !important; }
-}
-
-// Empty States
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: $text-muted;
-
-  i {
-    font-size: 3rem;
-    opacity: 0.5;
-    margin-bottom: 1rem;
-    display: block;
-  }
-
-  h4 {
-    color: $text-muted;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-
-  p {
-    margin-bottom: 1.5rem;
-  }
-}
-
-// Forms
-.form-control {
-  border-radius: $border-radius;
+.invite-code-display {
+  background-color: $bg-light;
   border: 2px solid $border-color;
-  padding: 0.75rem 1rem;
-  transition: all 0.2s ease;
-
-  &:focus {
-    border-color: $primary-color;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-  }
-
-  &.is-invalid {
-    border-color: $danger-color;
-  }
-}
-
-.form-label {
-  font-weight: 500;
-  color: #495057;
-  margin-bottom: 0.5rem;
-
-  .text-danger {
-    margin-left: 0.25rem;
-  }
-}
-
-// Buttons
-.btn {
   border-radius: $border-radius;
-  padding: 0.5rem 1rem;
-  transition: all 0.2s ease;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
 
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
+  .invite-code-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
   }
 
-  &.btn-primary {
-    @include gradient-bg($primary-color, #0b5ed7);
-    border: none;
+  code {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $primary-color;
+    font-family: $font-family-monospace;
+    letter-spacing: 2px;
   }
 
-  &.btn-warning {
-    @include gradient-bg($warning-color, #ffb300);
-    color: #000;
-  }
-
-  &.btn-success {
-    @include gradient-bg($success-color, #157347);
-  }
-}
-
-// Action Button Groups
-.btn-group-actions {
-  display: flex;
-  gap: 0.5rem;
-
-  .btn {
-    padding: 0.375rem 0.75rem;
+  .copy-button.copied {
+    background-color: $success-color;
+    border-color: $success-color;
+    color: white;
   }
 }
 
-// Breadcrumb
-.breadcrumb {
-  background-color: transparent;
-  padding: 1rem 0;
-  margin-bottom: 1.5rem;
+// ==========================================
+// QUICK ACTIONS CARD
+// ==========================================
 
-  .breadcrumb-item {
-    a {
-      color: $primary-color;
-      text-decoration: none;
+.quick-actions-card {
+  .actions-grid {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    .btn {
+      flex: 1;
+      min-width: 150px;
+      background-color: $bg-light;
+      border: 2px solid $border-color;
+      color: $text-secondary;
 
       &:hover {
-        text-decoration: underline;
+        background-color: $border-color;
+        border-color: $primary-color;
+        color: $primary-color;
+        box-shadow: $shadow-sm;
+      }
+    }
+  }
+}
+
+// ==========================================
+// ROOM GRID (in household details)
+// ==========================================
+
+.room-grid {
+  .room-item {
+    border: 2px solid $border-color;
+    border-radius: $border-radius;
+    padding: 1.25rem;
+    height: 100%;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: $success-color;
+      box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .room-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.75rem;
+
+      h6 {
+        margin: 0;
+        font-weight: 600;
       }
     }
 
-    &.active {
-      color: $text-muted;
-    }
-
-    + .breadcrumb-item::before {
-      content: "›";
+    .room-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
       color: $text-muted;
     }
   }
 }
 
-// Modals
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+// ==========================================
+// TASK LIST (in household details)
+// ==========================================
+
+.task-list {
+  .task-item {
+    .task-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+
+      h6 {
+        margin: 0 0.5rem 0 0;
+        font-weight: 600;
+      }
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      color: $text-muted;
+      font-size: 0.875rem;
+
+      small {
+        margin-right: 1rem;
+      }
+    }
+
+    .task-status {
+      margin-left: auto;
+      white-space: nowrap;
+    }
+  }
+}
+
+// ==========================================
+// HOUSEHOLD HEADER (details page)
+// ==========================================
+
+.household-header-card {
+  .card-body {
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .household-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    color: $text-muted;
+    font-size: 0.9rem;
+
+    .meta-separator {
+      margin: 0 0.75rem;
+      color: $border-color;
+    }
+  }
+}
+
+// ==========================================
+// HOUSEHOLD LIST (table view)
+// ==========================================
+
+.household-card-inline {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1050;
-  animation: fadeIn 0.2s;
 
-  .modal-content {
-    border-radius: $border-radius-lg;
-    box-shadow: $shadow-lg;
-    animation: slideUp 0.3s;
-  }
+  .household-info {
+    flex: 1;
+    min-width: 0;
 
-  .modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid $border-color;
+    h6 {
+      @include text-truncate;
 
-    &.bg-danger {
-      background-color: $danger-color;
-      color: white;
+      a {
+        color: $text-primary;
+        text-decoration: none;
+
+        &:hover {
+          color: $primary-color;
+        }
+      }
     }
 
-    .modal-title {
-      font-weight: 600;
+    small {
+      display: block;
+      @include text-truncate;
     }
-  }
-
-  .modal-body {
-    padding: 1.5rem;
-  }
-
-  .modal-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid $border-color;
-  }
-}
-
-// Animations
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
   }
 }
 
 // ==========================================
-// RESPONSIVE
+// RESPONSIVE ADJUSTMENTS
 // ==========================================
 
-@media (max-width: 992px) {
+@include media-max-lg {
+  .household-header-card {
+    .action-buttons {
+      margin-top: 1rem;
+      width: 100%;
+    }
+  }
+
+  .quick-actions-card .actions-grid .btn {
+    flex: 1 1 100%;
+  }
+}
+
+@include media-max-md {
+  .household-header-card h1 {
+    font-size: 1.5rem;
+  }
+
+  .task-item,
+  .member-item {
+    flex-wrap: wrap;
+
+    .item-actions,
+    .task-status {
+      width: 100%;
+      text-align: left;
+      margin-top: 0.75rem;
+    }
+  }
+
+  .household-icon-large {
+    width: 50px;
+    height: 50px;
+
+    i {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+@include media-max-sm {
   .household-header {
     text-align: center;
 
@@ -348,31 +336,6 @@ $shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
         width: 100%;
         margin: 0.25rem 0;
       }
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .household-icon-large {
-    width: 50px;
-    height: 50px;
-
-    i {
-      font-size: 1.5rem;
-    }
-  }
-
-  .card-body {
-    padding: 1rem !important;
-  }
-}
-
-@media (max-width: 576px) {
-  .empty-state {
-    padding: 2rem 1rem;
-
-    i {
-      font-size: 2.5rem;
     }
   }
 }

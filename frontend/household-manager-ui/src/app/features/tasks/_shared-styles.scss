@@ -1,0 +1,598 @@
+@use '../../shared/styles' as *;
+
+// ==========================================
+// TASK-SPECIFIC COMPONENTS
+// ==========================================
+
+// Priority Badges
+.priority-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &.priority-low {
+    background-color: $success-color;
+    color: white;
+  }
+
+  &.priority-medium {
+    background-color: $warning-color;
+    color: #000;
+  }
+
+  &.priority-high {
+    background-color: $danger-color;
+    color: white;
+  }
+}
+
+// Task Cards
+.task-card {
+  position: relative;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+  border-radius: $border-radius-lg;
+  background: white;
+  box-shadow: $shadow-sm;
+  padding: 1rem;
+  margin-bottom: 1rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+
+  &.priority-low {
+    border-left-color: $success-color;
+  }
+
+  &.priority-medium {
+    border-left-color: $warning-color;
+  }
+
+  &.priority-high {
+    border-left-color: $danger-color;
+  }
+
+  &.overdue {
+    background-color: rgba(220, 53, 69, 0.05);
+  }
+
+  &.completed {
+    opacity: 0.7;
+
+    &::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 2rem;
+      color: $success-color;
+      opacity: 0.2;
+    }
+  }
+
+  &.assigned-to-me {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-left-color: $primary-color;
+  }
+}
+
+// Task Status Badges
+.task-status {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.status-active {
+    background-color: #d1e7dd;
+    color: #0f5132;
+  }
+
+  &.status-inactive {
+    background-color: #e2e3e5;
+    color: #41464b;
+  }
+
+  &.status-overdue {
+    background-color: #f8d7da;
+    color: #842029;
+  }
+
+  &.status-completed {
+    background-color: #d1e7dd;
+    color: #0f5132;
+  }
+}
+
+// ==========================================
+// PHOTO COMPONENTS
+// ==========================================
+
+.execution-photo-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: $border-radius;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+}
+
+.photo-preview-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+
+  .photo-preview {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow-md;
+  }
+
+  .photo-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background: $danger-color;
+      transform: scale(1.1);
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+// Photo Upload Zone
+.photo-upload-zone {
+  border: 2px dashed $border-color;
+  border-radius: $border-radius-lg;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: $bg-light;
+
+  &:hover {
+    border-color: $primary-color;
+    background-color: #e7f1ff;
+
+    .upload-icon {
+      color: $primary-color;
+      transform: scale(1.1);
+    }
+  }
+
+  &.active {
+    border-color: $success-color;
+    background-color: #d1e7dd;
+  }
+
+  &.error {
+    border-color: $danger-color;
+    background-color: #f8d7da;
+  }
+
+  .upload-icon {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .upload-text {
+    font-size: 1rem;
+    color: $text-secondary;
+    margin-bottom: 0.5rem;
+  }
+
+  .upload-hint {
+    font-size: 0.875rem;
+    color: $text-muted;
+  }
+}
+
+// ==========================================
+// CALENDAR VIEW
+// ==========================================
+
+.calendar-view {
+  .calendar-header {
+  @include hm-gradient-bg($primary-color, #6f42c1);
+    color: white;
+    padding: 1.5rem;
+    border-radius: $border-radius-lg $border-radius-lg 0 0;
+    margin-bottom: 1rem;
+
+    h3 {
+      margin: 0;
+      font-weight: 600;
+    }
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1rem;
+
+    @include media-max-xl {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @include media-max-md {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include media-max-sm {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .calendar-day {
+    border: 2px solid $border-color;
+    border-radius: $border-radius-lg;
+    padding: 1rem;
+    min-height: 150px;
+    transition: all 0.3s ease;
+    background: white;
+
+    &:hover {
+      background-color: $bg-light;
+      box-shadow: $shadow-md;
+      transform: translateY(-2px);
+    }
+
+    .day-header {
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid $border-color;
+      color: $text-secondary;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .day-name {
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .task-count {
+        font-size: 0.75rem;
+        background-color: $border-color;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+      }
+    }
+
+    .day-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .task-item {
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+
+      &:hover {
+        background-color: $bg-light;
+        transform: translateX(3px);
+      }
+
+      &.priority-low {
+        border-left-color: $success-color;
+        background-color: rgba(25, 135, 84, 0.05);
+      }
+
+      &.priority-medium {
+        border-left-color: $warning-color;
+        background-color: rgba(255, 193, 7, 0.05);
+      }
+
+      &.priority-high {
+        border-left-color: $danger-color;
+        background-color: rgba(220, 53, 69, 0.05);
+      }
+
+      .task-title {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+
+      .task-meta {
+        font-size: 0.75rem;
+        color: $text-muted;
+      }
+    }
+
+    &.today {
+      border-color: $primary-color;
+      background: linear-gradient(135deg, #e7f1ff, #ffffff);
+
+      .day-header {
+        color: $primary-color;
+        border-bottom-color: $primary-color;
+      }
+    }
+
+    &.past {
+      opacity: 0.6;
+    }
+  }
+}
+
+// ==========================================
+// WEEKLY STATS
+// ==========================================
+
+.weekly-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  .stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow-sm;
+    text-align: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: $shadow-md;
+    }
+
+    .stat-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: $text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    &.total {
+      .stat-icon { color: $primary-color; }
+      .stat-value { color: $primary-color; }
+    }
+
+    &.completed {
+      .stat-icon { color: $success-color; }
+      .stat-value { color: $success-color; }
+    }
+
+    &.pending {
+      .stat-icon { color: $warning-color; }
+      .stat-value { color: $warning-color; }
+    }
+
+    &.overdue {
+      .stat-icon { color: $danger-color; }
+      .stat-value { color: $danger-color; }
+    }
+  }
+}
+
+// ==========================================
+// FILTER BAR
+// ==========================================
+
+.filter-bar {
+  background: white;
+  padding: 1.5rem;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  margin-bottom: 1.5rem;
+
+  .filter-group {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+
+    @include media-max-md {
+      flex-direction: column;
+      align-items: stretch;
+
+      .filter-item {
+        width: 100%;
+      }
+    }
+  }
+
+  .filter-item {
+    flex: 1;
+    min-width: 150px;
+
+    label {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: $text-secondary;
+    }
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// ==========================================
+// TABLE ENHANCEMENTS (task-specific)
+// ==========================================
+
+.table-hover tbody tr {
+  &.table-primary {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+
+    &:hover {
+      background-color: rgba(13, 110, 253, 0.2) !important;
+    }
+  }
+
+  &.table-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+
+    &:hover {
+      background-color: rgba(220, 53, 69, 0.2) !important;
+    }
+  }
+}
+
+// ==========================================
+// PRIORITY SELECTOR (Form)
+// ==========================================
+
+.priority-selector {
+  .btn-check:checked + .btn {
+    transform: scale(1.05);
+    box-shadow: $shadow-md;
+  }
+
+  .btn {
+    transition: all 0.2s ease;
+  }
+}
+
+// ==========================================
+// RESPONSIVE ADJUSTMENTS
+// ==========================================
+
+@include media-max-md {
+  .task-card {
+    margin-bottom: 1rem;
+  }
+
+  .execution-photo-thumbnail {
+    width: 60px;
+    height: 60px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+
+    .btn {
+      border-radius: $border-radius !important;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .calendar-view .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .weekly-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ==========================================
+// LOADING STATES
+// ==========================================
+
+.skeleton-loader {
+  animation: pulse 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: $border-radius;
+
+  &.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &.skeleton-title {
+    height: 1.5rem;
+    width: 60%;
+    margin-bottom: 1rem;
+  }
+
+  &.skeleton-card {
+    height: 200px;
+    margin-bottom: 1rem;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ==========================================
+// PRINT STYLES
+// ==========================================
+
+@media print {
+  .btn,
+  .filter-bar,
+  .pagination,
+  .card-header,
+  .empty-state,
+  .photo-remove {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid $border-color !important;
+    page-break-inside: avoid;
+  }
+
+  .execution-photo-thumbnail {
+    max-width: 200px;
+    max-height: 200px;
+  }
+}

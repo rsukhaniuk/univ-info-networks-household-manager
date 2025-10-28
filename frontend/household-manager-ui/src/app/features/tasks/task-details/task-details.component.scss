@@ -1,0 +1,32 @@
+@use '../../../shared/styles/index' as *;
+
+/* Complete Task Form - Sticky positioning */
+#completeForm {
+  position: sticky;
+  top: 20px;
+  z-index: 10;
+}
+
+/* Task Details Table */
+.table-borderless {
+  th {
+    font-weight: 600;
+    color: $text-muted;
+    width: 35%;
+    padding: 0.75rem 0;
+  }
+
+  td {
+    padding: 0.75rem 0;
+  }
+}
+
+/* Related Links Card - consistent button alignment */
+.card .d-grid .btn {
+  text-align: left;
+  
+  i {
+    min-width: 20px;
+    display: inline-block;
+  }
+}

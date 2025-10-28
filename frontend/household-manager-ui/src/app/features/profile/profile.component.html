@@ -1,0 +1,333 @@
+<div class="container py-4">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="h2 mb-1">
+        <i class="fas fa-user-circle text-primary me-2"></i>My Profile
+      </h1>
+      <p class="text-muted mb-0">Manage your personal information and preferences</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  @if (successMessage) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = null"></button>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+      <button type="button" class="btn-close" (click)="error = null"></button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted mt-3">Loading profile...</p>
+    </div>
+  }
+
+  <!-- Profile Content -->
+  @else if (profile) {
+    <div class="row">
+      <!-- Left Column - Profile Info -->
+      <div class="col-lg-8">
+        <!-- Auth0 User Info Card (Read-only) -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-shield-alt me-2 text-primary"></i>
+              Auth0 Account Information
+            </h5>
+          </div>
+          <div class="card-body">
+            @if (auth0User$ | async; as auth0User) {
+              <div class="d-flex align-items-center mb-4">
+                @if (auth0User.picture) {
+                  <img [src]="auth0User.picture" 
+                       alt="Profile picture"
+                       class="rounded-circle me-3"
+                       style="width: 80px; height: 80px; object-fit: cover;">
+                } @else {
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                       style="width: 80px; height: 80px;">
+                    <i class="fas fa-user fa-2x"></i>
+                  </div>
+                }
+                <div>
+                  <h5 class="mb-1">{{ auth0User.name || profile.user.fullName || 'No Name' }}</h5>
+                  <p class="text-muted mb-0">
+                    <i class="fas fa-envelope me-1"></i>
+                    {{ auth0User.email || profile.user.email }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Note:</strong> Email and password are managed through Auth0.
+                <a [href]="'https://household-manager-dev.eu.auth0.com/u/login'" 
+                   target="_blank" 
+                   class="alert-link">
+                  Manage account settings <i class="fas fa-external-link-alt ms-1"></i>
+                </a>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Editable Profile Information Card -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-user-edit me-2"></i>Profile Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="firstName" class="form-label">First Name</label>
+                  <input type="text" 
+                         id="firstName" 
+                         formControlName="firstName" 
+                         class="form-control"
+                         [class.is-invalid]="firstName?.invalid && firstName?.touched"
+                         placeholder="Enter your first name">
+                  @if (firstName?.invalid && firstName?.touched) {
+                    <div class="invalid-feedback">
+                      First name cannot exceed 50 characters
+                    </div>
+                  }
+                </div>
+
+                <div class="col-md-6">
+                  <label for="lastName" class="form-label">Last Name</label>
+                  <input type="text" 
+                         id="lastName" 
+                         formControlName="lastName" 
+                         class="form-control"
+                         [class.is-invalid]="lastName?.invalid && lastName?.touched"
+                         placeholder="Enter your last name">
+                  @if (lastName?.invalid && lastName?.touched) {
+                    <div class="invalid-feedback">
+                      Last name cannot exceed 50 characters
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Member Since</label>
+                <input type="text" 
+                       class="form-control" 
+                       [value]="profile.user.createdAt | date:'longDate'" 
+                       disabled 
+                       readonly>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" 
+                        class="btn btn-primary"
+                        [disabled]="isSubmitting || profileForm.invalid || profileForm.pristine">
+                  @if (isSubmitting) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Saving...
+                  } @else {
+                    <i class="fas fa-save me-2"></i>
+                    Save Changes
+                  }
+                </button>
+                <button type="button" 
+                        class="btn btn-outline-secondary"
+                        (click)="profileForm.reset(); loadProfile()"
+                        [disabled]="isSubmitting">
+                  <i class="fas fa-undo me-2"></i>Reset
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- My Households Card -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-home me-2"></i>My Households
+              <span class="badge bg-secondary ms-2">{{ profile.households.length }}</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            @if (profile.households.length === 0) {
+              <div class="text-center py-4 text-muted">
+                <i class="fas fa-home fa-2x mb-2"></i>
+                <p class="mb-3">You're not a member of any households yet</p>
+                <a routerLink="/households/create" class="btn btn-primary">
+                  <i class="fas fa-plus me-1"></i>Create Household
+                </a>
+              </div>
+            } @else {
+              <div class="list-group list-group-flush">
+                @for (household of profile.households; track household.householdId) {
+                  <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                          <a [routerLink]="['/households', household.householdId]" 
+                             class="text-decoration-none">
+                            {{ household.householdName }}
+                          </a>
+                          @if (household.isCurrent) {
+                            <span class="badge bg-success ms-2">Current</span>
+                          }
+                          @if (household.role === 'Owner') {
+                            <span class="badge bg-warning ms-1">
+                              <i class="fas fa-crown me-1"></i>Owner
+                            </span>
+                          }
+                        </h6>
+                        <p class="mb-1 text-muted small">
+                          <i class="fas fa-tasks me-1"></i>
+                          {{ household.activeTaskCount }} active tasks
+                        </p>
+                        <p class="mb-0 text-muted small">
+                          <i class="fas fa-calendar me-1"></i>
+                          Joined {{ household.joinedAt | date:'mediumDate' }}
+                        </p>
+                      </div>
+
+                      <div class="btn-group-vertical btn-group-sm">
+                        @if (!household.isCurrent) {
+                          <button type="button" 
+                                  class="btn btn-outline-primary"
+                                  (click)="setCurrentHousehold(household.householdId)">
+                            <i class="fas fa-check me-1"></i>Set as Current
+                          </button>
+                        } @else {
+                          <button type="button" 
+                                  class="btn btn-outline-secondary"
+                                  (click)="clearCurrentHousehold()">
+                            <i class="fas fa-times me-1"></i>Clear
+                          </button>
+                        }
+                        <a [routerLink]="['/households', household.householdId]" 
+                           class="btn btn-outline-info">
+                          <i class="fas fa-eye me-1"></i>View
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Account Actions Card -->
+        <div class="card shadow-sm border-warning">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-sign-out-alt me-2"></i>Account Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-3">
+              Sign out of your Household Manager account
+            </p>
+            <button type="button" class="btn btn-warning" (click)="logout()">
+              <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Statistics -->
+      <div class="col-lg-4">
+        <!-- Activity Statistics Card -->
+        <div class="card shadow-sm mb-4 sticky-top" style="top: 20px;">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-chart-bar me-2"></i>Activity Statistics
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3 pb-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="fas fa-home me-2"></i>Total Households
+                </span>
+                <strong class="h4 mb-0 text-primary">{{ profile.stats.totalHouseholds }}</strong>
+              </div>
+            </div>
+
+            <div class="mb-3 pb-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="fas fa-crown me-2"></i>Owned Households
+                </span>
+                <strong class="h4 mb-0 text-warning">{{ profile.stats.ownedHouseholds }}</strong>
+              </div>
+            </div>
+
+            <div class="mb-3 pb-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="fas fa-tasks me-2"></i>Active Tasks
+                </span>
+                <strong class="h4 mb-0 text-info">{{ profile.stats.activeTasks }}</strong>
+              </div>
+            </div>
+
+            <div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="fas fa-check-circle me-2"></i>Completed This Week
+                </span>
+                <strong class="h4 mb-0 text-success">{{ profile.stats.completedTasksThisWeek }}</strong>
+              </div>
+            </div>
+
+            @if (profile.stats.lastActivity) {
+              <hr>
+              <div class="text-center">
+                <small class="text-muted">
+                  <i class="fas fa-clock me-1"></i>
+                  Last activity: {{ profile.stats.lastActivity | date:'medium' }}
+                </small>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-bolt me-2"></i>Quick Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a routerLink="/households/create" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create Household
+              </a>
+              <a routerLink="/households/join" class="btn btn-outline-success">
+                <i class="fas fa-key me-2"></i>Join Household
+              </a>
+              <a routerLink="/households" class="btn btn-outline-primary">
+                <i class="fas fa-home me-2"></i>My Households
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

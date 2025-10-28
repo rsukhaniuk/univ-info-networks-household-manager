@@ -1,0 +1,15 @@
+@use '../../../shared/styles/index' as *;
+
+// Pagination spacing override (if needed)
+.pagination {
+  margin-top: 2rem;
+}
+
+// Search container specific spacing
+.search-container {
+  margin-bottom: 1.5rem;
+
+  input {
+    max-width: 500px;
+  }
+}

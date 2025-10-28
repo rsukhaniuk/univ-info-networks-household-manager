@@ -1,0 +1,260 @@
+<div class="container py-4">
+  <!-- Header -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8">
+      <h1 class="h3 mb-1">
+        <i class="fas fa-{{ isEdit ? 'edit' : 'plus' }} me-2"></i>
+        {{ isEdit ? 'Edit Task' : 'Create Task' }}
+      </h1>
+      <p class="text-muted">
+        {{ isEdit ? 'Update task details and settings' : 'Create a new task for your household' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Validation Summary -->
+  @if (error) {
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+          <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Form -->
+  @else {
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <!-- Basic Information Card -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2"></i>Basic Information
+              </h5>
+            </div>
+            <div class="card-body">
+              <!-- Title -->
+              <div class="mb-3">
+                <label for="title" class="form-label">
+                  <i class="fas fa-tasks me-1"></i>Task Title
+                  <span class="text-danger">*</span>
+                </label>
+                <input type="text" 
+                       id="title" 
+                       formControlName="title" 
+                       class="form-control form-control-lg"
+                       [class.is-invalid]="title?.invalid && title?.touched"
+                       placeholder="e.g., Clean kitchen, Take out trash">
+                @if (title?.invalid && title?.touched) {
+                  <div class="invalid-feedback">
+                    @if (title?.errors?.['required']) {
+                      Task title is required
+                    }
+                    @if (title?.errors?.['maxlength']) {
+                      Title cannot exceed 200 characters
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Description -->
+              <div class="mb-3">
+                <label for="description" class="form-label">
+                  <i class="fas fa-align-left me-1"></i>Description
+                </label>
+                <textarea id="description" 
+                          formControlName="description" 
+                          class="form-control" 
+                          rows="3"
+                          [class.is-invalid]="description?.invalid && description?.touched"
+                          placeholder="Provide additional details about this task..."></textarea>
+                <div class="form-text">Optional. Add any specific instructions or notes.</div>
+                @if (description?.invalid && description?.touched) {
+                  <div class="invalid-feedback">
+                    Description cannot exceed 1000 characters
+                  </div>
+                }
+              </div>
+
+              <!-- Room -->
+              <div class="mb-3">
+                <label for="roomId" class="form-label">
+                  <i class="fas fa-door-open me-1"></i>Room
+                  <span class="text-danger">*</span>
+                </label>
+                <select id="roomId" 
+                        formControlName="roomId" 
+                        class="form-select"
+                        [class.is-invalid]="roomId?.invalid && roomId?.touched">
+                  <option value="">-- Select Room --</option>
+                  @for (room of rooms; track room.id) {
+                    <option [value]="room.id">{{ room.name }}</option>
+                  }
+                </select>
+                @if (roomId?.invalid && roomId?.touched) {
+                  <div class="invalid-feedback">Please select a room</div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Scheduling Card -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>Scheduling
+              </h5>
+            </div>
+            <div class="card-body">
+              <!-- ✅ Due Date with Flatpickr -->
+              <div class="mb-3">
+                <label for="dueDate" class="form-label">
+                  <i class="fas fa-calendar-alt me-1"></i>Due Date & Time
+                  <span class="text-danger">*</span>
+                </label>
+                <input type="text" 
+                       id="dueDate" 
+                       formControlName="dueDate" 
+                       class="form-control form-control-lg"
+                       [class.is-invalid]="dueDate?.invalid && dueDate?.touched"
+                       placeholder="Click to select date and time..."
+                       mwlFlatpickr
+                       [options]="flatpickrOptions"
+                       readonly>
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Select date and time for this task (24-hour format)
+                </div>
+                @if (dueDate?.invalid && dueDate?.touched) {
+                  <div class="invalid-feedback">Due date is required</div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Task Settings Card -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-cog me-2"></i>Task Settings
+              </h5>
+            </div>
+            <div class="card-body">
+              <!-- Priority -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fas fa-exclamation-circle me-1"></i>Priority
+                  <span class="text-danger">*</span>
+                </label>
+                <div class="btn-group w-100 priority-selector" role="group">
+                  <input type="radio" 
+                         class="btn-check" 
+                         id="priorityLow" 
+                         [value]="TaskPriority.Low"
+                         formControlName="priority">
+                  <label class="btn btn-outline-success" for="priorityLow">
+                    <i class="fas fa-arrow-down me-1"></i>Low
+                  </label>
+
+                  <input type="radio" 
+                         class="btn-check" 
+                         id="priorityMedium" 
+                         [value]="TaskPriority.Medium"
+                         formControlName="priority">
+                  <label class="btn btn-outline-warning" for="priorityMedium">
+                    <i class="fas fa-minus me-1"></i>Medium
+                  </label>
+
+                  <input type="radio" 
+                         class="btn-check" 
+                         id="priorityHigh" 
+                         [value]="TaskPriority.High"
+                         formControlName="priority">
+                  <label class="btn btn-outline-danger" for="priorityHigh">
+                    <i class="fas fa-arrow-up me-1"></i>High
+                  </label>
+                </div>
+              </div>
+
+              <!-- Assigned User -->
+              <div class="mb-3">
+                <label for="assignedUserId" class="form-label">
+                  <i class="fas fa-user me-1"></i>Assign To
+                  <span class="text-danger">*</span>
+                </label>
+                <select id="assignedUserId" 
+                        formControlName="assignedUserId" 
+                        class="form-select"
+                        [class.is-invalid]="assignedUserId?.invalid && assignedUserId?.touched">
+                  <option value="">-- Select Member --</option>
+                  @for (member of members; track member.userId) {
+                    <option [value]="member.userId">{{ member.userName }}</option>
+                  }
+                </select>
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Choose who will be responsible for this task
+                </div>
+                @if (assignedUserId?.invalid && assignedUserId?.touched) {
+                  <div class="invalid-feedback">Please assign this task to a member</div>
+                }
+              </div>
+
+              <!-- Active Status -->
+              <div class="form-check form-switch">
+                <input type="checkbox" 
+                       id="isActive" 
+                       formControlName="isActive" 
+                       class="form-check-input">
+                <label for="isActive" class="form-check-label">
+                  <i class="fas fa-toggle-on me-1"></i>Task is Active
+                </label>
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Inactive tasks won't appear in schedules or calendars
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <a [routerLink]="['/households', householdId, 'tasks']" 
+                   class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Cancel
+                </a>
+
+                <button type="submit" 
+                        class="btn btn-{{ isEdit ? 'warning' : 'success' }} btn-lg"
+                        [disabled]="isSubmitting || form.invalid">
+                  @if (isSubmitting) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    {{ isEdit ? 'Updating...' : 'Creating...' }}
+                  } @else {
+                    <i class="fas fa-{{ isEdit ? 'save' : 'plus' }} me-1"></i>
+                    {{ isEdit ? 'Update Task' : 'Create Task' }}
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

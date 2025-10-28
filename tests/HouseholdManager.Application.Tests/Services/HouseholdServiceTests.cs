@@ -17,6 +17,7 @@ namespace HouseholdManager.Application.Tests.Services
         private Mock<IHouseholdRepository> _mockHouseholdRepository;
         private Mock<IHouseholdMemberRepository> _mockMemberRepository;
         private Mock<ILogger<HouseholdService>> _mockLogger;
+        private Mock<IUserRepository> _mockUserRepository;
         private IMapper _mapper; // Реальний AutoMapper
         private HouseholdService _householdService;
 
@@ -25,6 +26,7 @@ namespace HouseholdManager.Application.Tests.Services
         {
             _mockHouseholdRepository = new Mock<IHouseholdRepository>();
             _mockMemberRepository = new Mock<IHouseholdMemberRepository>();
+            _mockUserRepository = new Mock<IUserRepository>();
             _mockLogger = new Mock<ILogger<HouseholdService>>();
 
 
@@ -40,6 +42,7 @@ namespace HouseholdManager.Application.Tests.Services
             _householdService = new HouseholdService(
                 _mockHouseholdRepository.Object,
                 _mockMemberRepository.Object,
+                _mockUserRepository.Object,
                 _mapper,
                 _mockLogger.Object);
         }

@@ -32,3 +32,28 @@ export interface UpdateProfileRequest {
 export interface SetCurrentHouseholdRequest {
   householdId?: string;
 }
+
+export interface UserHouseholdDto {
+  householdId: string;
+  householdName: string;
+  role: string;
+  joinedAt: string;
+  activeTaskCount: number;
+  isCurrent: boolean;
+}
+
+export interface UserProfileDto {
+  user: UserDto;
+  stats: UserDashboardStats;
+  households: ReadonlyArray<UserHouseholdDto>;
+}
+
+export interface UserQueryParameters {
+  role?: SystemRole;
+  householdId?: string;
+  createdAfter?: string;
+  createdBefore?: string;
+  hasActiveTasks?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}

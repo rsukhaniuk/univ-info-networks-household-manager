@@ -1,5 +1,11 @@
+@use '../../shared/styles' as *;
+
+// ==========================================
+// HERO SECTION
+// ==========================================
+
 .hero-section {
-  background: linear-gradient(135deg, #0d6efd, #6f42c1) !important;
+  @include hm-gradient-bg($primary-color, #6f42c1);
   min-height: 50vh;
   display: flex;
   align-items: center;
@@ -10,8 +16,7 @@
   }
 
   .hero-icon {
-    font-size: 10rem;  // 👈 Фіксований розмір або...
-    font-size: clamp(6rem, 15vw, 12rem);  // 👈 Responsive розмір
+    font-size: clamp(6rem, 15vw, 12rem);
     opacity: 0.75;
     color: rgba(255, 255, 255, 0.8);
   }
@@ -25,6 +30,10 @@
     }
   }
 }
+
+// ==========================================
+// FEATURES SECTION
+// ==========================================
 
 .features-section {
   .feature-card {
@@ -52,6 +61,10 @@
   }
 }
 
+// ==========================================
+// CTA SECTION
+// ==========================================
+
 .cta-section {
   .btn-primary {
     padding: 15px 40px;
@@ -59,13 +72,16 @@
     
     &:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(13, 110, 253, 0.4);
+      box-shadow: 0 8px 25px rgba($primary-color, 0.4);
     }
   }
 }
 
-// Responsive adjustments
-@media (max-width: 768px) {
+// ==========================================
+// RESPONSIVE ADJUSTMENTS
+// ==========================================
+
+@include media-max-md {
   .hero-section {
     min-height: 60vh;
     
@@ -86,6 +102,4 @@
   .feature-card {
     margin-bottom: 1.5rem;
   }
-
-  
 }

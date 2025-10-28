@@ -31,7 +31,7 @@ import { RouterModule } from '@angular/router';
               <a routerLink="/privacy" class="footer-link">
                 <i class="fas fa-shield-alt me-1"></i>Privacy
               </a>
-              <a href="https://github.com/yourusername/household-manager" 
+              <a href="https://github.com/rsukhaniuk/univ-info-networks-household-manager" 
                  target="_blank" 
                  class="footer-link">
                 <i class="fab fa-github me-1"></i>GitHub
@@ -44,7 +44,7 @@ import { RouterModule } from '@angular/router';
             <p class="footer-copyright mb-2">
               &copy; {{ currentYear }} Household Manager
             </p>
-            <div class="footer-social">
+            <!-- <div class="footer-social">
               <a href="#" class="social-icon" title="Twitter">
                 <i class="fab fa-twitter"></i>
               </a>
@@ -54,7 +54,7 @@ import { RouterModule } from '@angular/router';
               <a href="#" class="social-icon" title="LinkedIn">
                 <i class="fab fa-linkedin"></i>
               </a>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>

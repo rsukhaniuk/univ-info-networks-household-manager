@@ -208,4 +208,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await HouseholdManager.Infrastructure.DependencyInjection.SeedDataAsync(services);
+}
+
 app.Run();

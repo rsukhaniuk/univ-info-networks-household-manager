@@ -1,0 +1,386 @@
+<div class="container py-4">
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted mt-3">Loading task details...</p>
+    </div>
+  }
+
+  @else if (taskDetails) {
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+          <div class="flex-grow-1">
+            <h1 class="h3 mb-2">
+              <i class="fas fa-tasks text-primary me-2"></i>
+              {{ taskDetails.task.title }}
+            </h1>
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge" [ngClass]="getPriorityBadgeClass(taskDetails.task.priority)">
+                <i class="fas fa-exclamation-circle me-1"></i>{{ TaskPriority[taskDetails.task.priority] }} Priority
+              </span>
+              @if (taskDetails.task.isActive) {
+                <span class="badge bg-success">
+                  <i class="fas fa-check me-1"></i>Active
+                </span>
+              } @else {
+                <span class="badge bg-secondary">
+                  <i class="fas fa-pause me-1"></i>Inactive
+                </span>
+              }
+              @if (taskDetails.task.isOverdue) {
+                <span class="badge bg-danger">
+                  <i class="fas fa-exclamation-triangle me-1"></i>Overdue
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap">
+            <a [routerLink]="['/households', householdId, 'tasks']" 
+               class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i>Back
+            </a>
+
+            @if (canEdit) {
+              <a [routerLink]="['/households', householdId, 'tasks', taskId, 'edit']" 
+                 class="btn btn-warning">
+                <i class="fas fa-edit me-1"></i>Edit
+              </a>
+            }
+
+            @if (isOwner) {
+              @if (taskDetails.task.isActive) {
+                <button type="button" 
+                        class="btn btn-secondary" 
+                        (click)="deactivateTask()">
+                  <i class="fas fa-pause me-1"></i>Deactivate
+                </button>
+              } @else {
+                <button type="button" 
+                        class="btn btn-success" 
+                        (click)="activateTask()">
+                  <i class="fas fa-play me-1"></i>Activate
+                </button>
+              }
+            }
+
+            @if (canDelete) {
+              <button type="button" 
+                      class="btn btn-danger" 
+                      (click)="deleteTask()">
+                <i class="fas fa-trash me-1"></i>Delete
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    @if (successMessage) {
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = null"></button>
+      </div>
+    }
+
+    @if (error) {
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" (click)="error = null"></button>
+      </div>
+    }
+
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Task Details Card -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-info-circle me-2"></i>Task Details
+            </h5>
+          </div>
+          <div class="card-body">
+            <table class="table table-borderless">
+              <tbody>
+                <tr>
+                  <th style="width: 35%;">
+                    <i class="fas fa-door-open text-muted me-2"></i>Room
+                  </th>
+                  <td>{{ taskDetails.room.name }}</td>
+                </tr>
+                <tr>
+                  <th>
+                    <i class="fas fa-user text-muted me-2"></i>Assigned To
+                  </th>
+                  <td>
+                    @if (taskDetails.task.assignedUserName) {
+                      <span>
+                        {{ taskDetails.task.assignedUserName }}
+                        @if (taskDetails.permissions.isAssignedToCurrentUser) {
+                          <span class="badge bg-primary ms-1">You</span>
+                        }
+                      </span>
+                    } @else {
+                      <span class="text-muted">
+                        <i class="fas fa-user-slash me-1"></i>Unassigned
+                      </span>
+                    }
+                  </td>
+                </tr>
+                <tr>
+                  <th>
+                    <i class="fas fa-layer-group text-muted me-2"></i>Task Type
+                  </th>
+                  <td>
+                    @if (taskDetails.task.type === TaskType.Regular) {
+                      <span class="badge bg-primary">
+                        <i class="fas fa-repeat me-1"></i>Regular
+                      </span>
+                      @if (taskDetails.task.scheduledWeekday !== undefined) {
+                        <span class="ms-2">
+                          <i class="fas fa-calendar-week me-1"></i>
+                          {{ taskDetails.task.scheduledWeekday }}
+                        </span>
+                      }
+                    } @else {
+                      <span class="badge bg-info">
+                        <i class="fas fa-calendar-day me-1"></i>One-Time
+                      </span>
+                    }
+                  </td>
+                </tr>
+                <tr>
+                  <th>
+                    <i class="fas fa-clock text-muted me-2"></i>
+                    @if (taskDetails.task.type === TaskType.Regular) {
+                      Estimated Time
+                    } @else {
+                      Due Date
+                    }
+                  </th>
+                  <td>
+                    @if (taskDetails.task.type === TaskType.Regular) {
+                      {{ taskDetails.task.formattedEstimatedTime }}
+                    } @else if (taskDetails.task.dueDate) {
+                      <span [class.text-danger]="taskDetails.task.isOverdue" 
+                            [class.fw-bold]="taskDetails.task.isOverdue">
+                        {{ taskDetails.task.dueDate | date:'medium' }}
+                        @if (taskDetails.task.isOverdue) {
+                          <i class="fas fa-exclamation-triangle text-danger ms-1"></i>
+                        }
+                      </span>
+                    }
+                  </td>
+                </tr>
+                <tr>
+                  <th>
+                    <i class="fas fa-calendar-plus text-muted me-2"></i>Created
+                  </th>
+                  <td>{{ taskDetails.task.createdAt | date:'medium' }}</td>
+                </tr>
+                @if (taskDetails.task.isCompletedThisWeek && taskDetails.task.type === TaskType.Regular) {
+                  <tr>
+                    <th>
+                      <i class="fas fa-check-double text-muted me-2"></i>Status
+                    </th>
+                    <td>
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>Completed This Week
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            @if (taskDetails.task.description) {
+              <hr />
+              <div>
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-align-left me-2"></i>Description
+                </h6>
+                <p class="mb-0">{{ taskDetails.task.description }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Execution History Card -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-history me-2"></i>Execution History
+              <span class="badge bg-secondary ms-2">{{ recentExecutions.length }}</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            @if (recentExecutions.length === 0) {
+              <div class="text-center py-4 text-muted">
+                <i class="fas fa-history fa-2x mb-2"></i>
+                <p class="mb-0">No execution history yet. Complete this task to see history here.</p>
+              </div>
+            } @else {
+              <div class="list-group list-group-flush">
+                @for (execution of recentExecutions; track execution.id) {
+                  <div class="list-group-item px-0">
+                    <div class="d-flex align-items-start">
+                      @if (execution.photoUrl) {
+                        <img [src]="execution.photoUrl" 
+                             alt="Execution photo"
+                             class="execution-photo-thumbnail rounded me-3"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                      } @else {
+                        <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                             style="width: 80px; height: 80px; min-width: 80px;">
+                          <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                      }
+
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                          <h6 class="mb-0">{{ execution.userName }}</h6>
+                          <small class="text-muted">{{ execution.timeAgo }}</small>
+                        </div>
+                        <small class="text-muted d-block mb-2">
+                          <i class="fas fa-calendar me-1"></i>
+                          {{ execution.completedAt | date:'medium' }}
+                        </small>
+                        @if (execution.notes) {
+                          <p class="mb-0 text-muted small">
+                            <i class="fas fa-comment me-1"></i>
+                            {{ execution.notes }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (recentExecutions.length >= 5) {
+                <div class="text-center mt-3">
+                  <a [routerLink]="['/executions/task', taskId, 'history']" 
+                     class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-history me-1"></i>View Full History
+                  </a>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <!-- Complete Task Form -->
+        @if (canComplete && !taskDetails.task.isCompletedThisWeek && taskDetails.task.isActive) {
+          <div class="card shadow-sm mb-4" id="completeForm">
+            <div class="card-header bg-success text-white">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-check-circle me-2"></i>Complete Task
+              </h5>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="completeForm" (ngSubmit)="onCompleteTask()">
+                <!-- Notes -->
+                <div class="mb-3">
+                  <label for="notes" class="form-label">
+                    <i class="fas fa-comment me-1"></i>Notes (Optional)
+                  </label>
+                  <textarea formControlName="notes" 
+                            id="notes" 
+                            class="form-control" 
+                            rows="3"
+                            placeholder="Add any notes about completing this task..."></textarea>
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="mb-3">
+                  <label for="photo" class="form-label">
+                    <i class="fas fa-camera me-1"></i>Photo (Optional)
+                  </label>
+                  <input type="file" 
+                         id="photo" 
+                         class="form-control"
+                         accept="image/jpeg,image/png,image/gif,image/webp"
+                         (change)="onPhotoSelected($event)">
+                  <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Upload a photo showing the completed task (max 5MB)
+                  </div>
+
+                  <!-- Photo Preview -->
+                  @if (photoPreviewUrl) {
+                    <div class="mt-2 position-relative" style="max-width: 300px;">
+                      <img [src]="photoPreviewUrl" 
+                           alt="Preview" 
+                           class="img-thumbnail d-block"
+                           style="max-height: 200px; width: auto;">
+                      <button type="button" 
+                              class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2"
+                              (click)="removePhoto()"
+                              title="Remove photo">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid">
+                  <button type="submit" 
+                          class="btn btn-success btn-lg"
+                          [disabled]="isSubmitting || completeForm.invalid">
+                    @if (isSubmitting) {
+                      <span class="spinner-border spinner-border-sm me-2"></span>
+                      Completing...
+                    } @else {
+                      <i class="fas fa-check me-2"></i>
+                      Complete Task
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        }
+
+        <!-- Related Links Card -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-link me-2"></i>Related
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a [routerLink]="['/households', householdId, 'rooms', taskDetails.task.roomId]" 
+                 class="btn btn-outline-primary">
+                <i class="fas fa-door-open me-2"></i>View Room Details
+              </a>
+
+              <a [routerLink]="['/households', householdId]" 
+                 class="btn btn-outline-info">
+                <i class="fas fa-home me-2"></i>View Household
+              </a>
+
+              @if (canEdit) {
+                <hr class="my-2" />
+                <a [routerLink]="['/households', householdId, 'tasks', 'create']" 
+                   class="btn btn-outline-success">
+                  <i class="fas fa-plus me-2"></i>Create New Task
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

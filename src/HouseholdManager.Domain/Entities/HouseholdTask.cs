@@ -71,7 +71,7 @@ namespace HouseholdManager.Domain.Entities
         /// <summary>
         /// Foreign key to assigned user (optional)
         /// </summary>
-        [StringLength(450)]
+        [StringLength(255)]
         public string? AssignedUserId { get; set; }
 
         /// <summary>

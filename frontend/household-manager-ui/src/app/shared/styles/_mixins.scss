@@ -1,0 +1,232 @@
+@use 'variables' as *;
+
+// ==========================================
+// LAYOUT MIXINS
+// ==========================================
+
+// Card hover effect
+@mixin card-hover {
+  transition: all $transition-fast;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+// Gradient background (namespaced to avoid collision with Bootstrap mixins)
+@mixin hm-gradient-bg($color1, $color2) {
+  background: linear-gradient(135deg, $color1, $color2);
+}
+
+// Icon circle
+@mixin icon-circle($size: 40px, $bg: $primary-color, $icon-size: 1.2rem) {
+  width: $size;
+  height: $size;
+  background: $bg;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  i {
+    color: white;
+    font-size: $icon-size;
+  }
+}
+
+// ==========================================
+// RESPONSIVE MIXINS
+// ==========================================
+
+// Media query breakpoints
+@mixin media-xs {
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    @content;
+  }
+}
+
+@mixin media-sm {
+  @media (min-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin media-md {
+  @media (min-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin media-lg {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin media-xl {
+  @media (min-width: $breakpoint-xl) {
+    @content;
+  }
+}
+
+// Max-width breakpoints
+@mixin media-max-sm {
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    @content;
+  }
+}
+
+@mixin media-max-md {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    @content;
+  }
+}
+
+@mixin media-max-lg {
+  @media (max-width: #{$breakpoint-lg - 1px}) {
+    @content;
+  }
+}
+
+// ==========================================
+// TEXT MIXINS
+// ==========================================
+
+// Truncate text with ellipsis
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Multi-line truncate
+@mixin text-truncate-lines($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ==========================================
+// BUTTON MIXINS
+// ==========================================
+
+// Button with gradient
+@mixin button-gradient($color1, $color2, $hover-color1, $hover-color2) {
+  @include hm-gradient-bg($color1, $color2);
+  border: none;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    @include hm-gradient-bg($hover-color1, $hover-color2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($color1, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ==========================================
+// FORM MIXINS
+// ==========================================
+
+// Input focus state
+@mixin input-focus($color: $primary-color) {
+  border-color: $color;
+  box-shadow: 0 0 0 0.2rem rgba($color, 0.15);
+  outline: none;
+}
+
+// ==========================================
+// ANIMATION MIXINS
+// ==========================================
+
+// Fade in animation
+@mixin fade-in($duration: 0.3s) {
+  animation: fadeIn $duration ease-in-out;
+}
+
+// Slide up animation
+@mixin slide-up($duration: 0.3s) {
+  animation: slideUp $duration ease-out;
+}
+
+// ==========================================
+// UTILITY MIXINS
+// ==========================================
+
+// Clearfix
+@mixin clearfix {
+  &::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+// Center element (absolute positioning)
+@mixin center-absolute {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// Flexbox center
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Full width and height
+@mixin full-size {
+  width: 100%;
+  height: 100%;
+}
+
+// Aspect ratio box
+@mixin aspect-ratio($width, $height) {
+  position: relative;
+
+  &::before {
+    content: "";
+    display: block;
+    padding-top: ($height / $width) * 100%;
+  }
+
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    @include full-size;
+  }
+}
+
+// ==========================================
+// SCROLLBAR MIXIN
+// ==========================================
+
+@mixin custom-scrollbar($width: 10px, $track-color: $bg-light, $thumb-color: #888) {
+  &::-webkit-scrollbar {
+    width: $width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: 5px;
+
+    &:hover {
+      background: darken($thumb-color, 10%);
+    }
+  }
+}

@@ -1,24 +1,27 @@
-/* Import Bootstrap */
-@use 'bootstrap/scss/bootstrap' as *;
+/* Import Shared Styles */
+@use 'app/shared/styles' as *;
+
+/* Import Bootstrap (must use @import, not @use) */
+@import 'bootstrap/scss/bootstrap';
 
 /* Import Font Awesome */
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
 /* ========================================
-   GLOBAL STYLES
+   GLOBAL RESET & BASE
    ======================================== */
 
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: $font-family-base;
 }
 
 body {
   line-height: 1.6;
-  color: #333;
-  background-color: #f8f9fa;
+  color: $text-primary;
+  background-color: $bg-light;
 }
 
 /* ========================================
@@ -26,12 +29,12 @@ body {
    ======================================== */
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  margin-bottom: 1rem;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-md;
 }
 
 .text-muted {
-  color: #6c757d !important;
+  color: $text-muted !important;
 }
 
 /* ========================================
@@ -39,25 +42,25 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .card {
-  border-radius: 12px;
+  border-radius: $border-radius-lg;
   border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: $shadow-sm;
+  transition: all $transition-normal;
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: $shadow-md;
   }
 
   .card-header {
-    background-color: #fff;
-    border-bottom: 1px solid #e9ecef;
-    font-weight: 600;
-    padding: 1rem 1.5rem;
+    background-color: $bg-white;
+    border-bottom: 1px solid $border-color;
+    font-weight: $font-weight-semibold;
+    padding: $spacing-md $spacing-lg;
   }
 
   .card-body {
-    padding: 1.5rem;
+    padding: $spacing-lg;
   }
 }
 
@@ -66,13 +69,13 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .btn {
-  border-radius: 8px;
-  font-weight: 500;
-  padding: 0.5rem 1.25rem;
-  transition: all 0.2s ease;
+  border-radius: $border-radius;
+  font-weight: $font-weight-medium;
+  padding: $spacing-sm ($spacing-md + 0.25rem);
+  transition: all $transition-fast;
   border: none;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-1px);
   }
 
@@ -82,61 +85,46 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-  
-  &:hover {
-    background: linear-gradient(135deg, #0b5ed7, #0a58ca);
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-  }
+  @include button-gradient($primary-color, $primary-hover, $primary-hover, $primary-active);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #198754, #157347);
-  
-  &:hover {
-    background: linear-gradient(135deg, #157347, #146c43);
-    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
-  }
+  @include button-gradient($success-color, $success-hover, $success-hover, $success-active);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #dc3545, #bb2d3b);
-  
-  &:hover {
-    background: linear-gradient(135deg, #bb2d3b, #a02834);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-  }
+  @include button-gradient($danger-color, $danger-hover, $danger-hover, $danger-active);
 }
 
 .btn-light {
-  background-color: #fff;
-  border: 1px solid #dee2e6;
+  background-color: $bg-white;
+  border: 1px solid $border-color;
   
   &:hover {
-    background-color: #f8f9fa;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: $bg-light;
+    box-shadow: $shadow-sm;
   }
 }
 
 .btn-outline-primary {
-  border: 2px solid #0d6efd;
-  color: #0d6efd;
+  border: 2px solid $primary-color;
+  color: $primary-color;
   
   &:hover {
-    background-color: #0d6efd;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    background-color: $primary-color;
+    color: $bg-white;
+    box-shadow: 0 4px 12px rgba($primary-color, 0.2);
   }
 }
 
 .btn-sm {
-  padding: 0.375rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.375rem $spacing-md;
+  font-size: $font-size-sm;
 }
 
 .btn-lg {
-  padding: 0.75rem 2rem;
-  font-size: 1.125rem;
+  padding: 0.75rem $spacing-xl;
+  font-size: $font-size-lg;
 }
 
 /* ========================================
@@ -145,36 +133,34 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-control,
 .form-select {
-  border-radius: 8px;
-  border: 2px solid #e9ecef;
-  padding: 0.625rem 1rem;
-  transition: all 0.2s ease;
+  border-radius: $border-radius;
+  border: 2px solid $border-color;
+  padding: 0.625rem $spacing-md;
+  transition: all $transition-fast;
 
   &:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-    outline: none;
+    @include input-focus($primary-color);
   }
 
   &.is-invalid {
-    border-color: #dc3545;
+    border-color: $danger-color;
     
     &:focus {
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+      box-shadow: 0 0 0 0.2rem rgba($danger-color, 0.15);
     }
   }
 }
 
 .form-label {
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #495057;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-sm;
+  color: $text-secondary;
 }
 
 .invalid-feedback {
   display: block;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  font-size: $font-size-sm;
+  margin-top: $spacing-xs;
 }
 
 /* ========================================
@@ -182,33 +168,33 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .navbar {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  padding: 1rem 0;
+  box-shadow: $shadow-sm;
+  padding: $spacing-md 0;
 
   .navbar-brand {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: #0d6efd !important;
-    transition: color 0.2s ease;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-xl;
+    color: $primary-color !important;
+    transition: color $transition-fast;
 
     &:hover {
-      color: #0b5ed7 !important;
+      color: $primary-hover !important;
     }
   }
 
   .nav-link {
-    font-weight: 500;
-    color: #495057;
-    padding: 0.5rem 1rem;
-    transition: color 0.2s ease;
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    padding: $spacing-sm $spacing-md;
+    transition: color $transition-fast;
 
     &:hover {
-      color: #0d6efd !important;
+      color: $primary-color !important;
     }
 
     &.active {
-      color: #0d6efd !important;
-      font-weight: 600;
+      color: $primary-color !important;
+      font-weight: $font-weight-semibold;
     }
   }
 }
@@ -218,9 +204,9 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .badge {
-  border-radius: 6px;
+  border-radius: $border-radius-sm;
   padding: 0.375rem 0.75rem;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
 }
 
 /* ========================================
@@ -228,33 +214,33 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .alert {
-  border-radius: 8px;
+  border-radius: $border-radius;
   border: none;
-  padding: 1rem 1.5rem;
+  padding: $spacing-md $spacing-lg;
 
   .alert-heading {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-sm;
   }
 }
 
 .alert-success {
-  background: linear-gradient(135deg, #d1e7dd, #badbcc);
+  @include hm-gradient-bg(#d1e7dd, #badbcc);
   color: #0f5132;
 }
 
 .alert-danger {
-  background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+  @include hm-gradient-bg(#f8d7da, #f1aeb5);
   color: #842029;
 }
 
 .alert-warning {
-  background: linear-gradient(135deg, #fff3cd, #ffe69c);
+  @include hm-gradient-bg(#fff3cd, #ffe69c);
   color: #664d03;
 }
 
 .alert-info {
-  background: linear-gradient(135deg, #cfe2ff, #b6d4fe);
+  @include hm-gradient-bg(#cfe2ff, #b6d4fe);
   color: #084298;
 }
 
@@ -263,16 +249,16 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .modal-content {
-  border-radius: 12px;
+  border-radius: $border-radius-lg;
   border: none;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: $shadow-lg;
 
   .modal-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem;
+    border-bottom: 1px solid $border-color;
+    padding: $spacing-lg;
 
     .modal-title {
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
     }
 
     .btn-close {
@@ -281,12 +267,12 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .modal-body {
-    padding: 1.5rem;
+    padding: $spacing-lg;
   }
 
   .modal-footer {
-    border-top: 1px solid #e9ecef;
-    padding: 1rem 1.5rem;
+    border-top: 1px solid $border-color;
+    padding: $spacing-md $spacing-lg;
   }
 }
 
@@ -295,22 +281,22 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .dropdown-menu {
-  border-radius: 8px;
+  border-radius: $border-radius;
   border: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  padding: 0.5rem 0;
+  box-shadow: $shadow-md;
+  padding: $spacing-sm 0;
 
   .dropdown-item {
-    padding: 0.625rem 1.25rem;
-    transition: all 0.2s ease;
+    padding: 0.625rem ($spacing-md + 0.25rem);
+    transition: all $transition-fast;
 
     &:hover {
-      background-color: #f8f9fa;
-      color: #0d6efd;
+      background-color: $bg-light;
+      color: $primary-color;
     }
 
     &:active {
-      background-color: #e9ecef;
+      background-color: $border-color;
     }
 
     i {
@@ -319,7 +305,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .dropdown-divider {
-    margin: 0.5rem 0;
+    margin: $spacing-sm 0;
   }
 }
 
@@ -328,31 +314,31 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .table {
-  background-color: #fff;
-  border-radius: 8px;
+  background-color: $bg-white;
+  border-radius: $border-radius;
   overflow: hidden;
 
   thead {
-    background-color: #f8f9fa;
+    background-color: $bg-light;
 
     th {
-      font-weight: 600;
-      color: #495057;
-      border-bottom: 2px solid #dee2e6;
-      padding: 1rem;
+      font-weight: $font-weight-semibold;
+      color: $text-secondary;
+      border-bottom: 2px solid $border-color;
+      padding: $spacing-md;
     }
   }
 
   tbody {
     tr {
-      transition: background-color 0.2s ease;
+      transition: background-color $transition-fast;
 
       &:hover {
-        background-color: #f8f9fa;
+        background-color: $bg-light;
       }
 
       td {
-        padding: 1rem;
+        padding: $spacing-md;
         vertical-align: middle;
       }
     }
@@ -364,27 +350,27 @@ h1, h2, h3, h4, h5, h6 {
    ======================================== */
 
 .shadow-sm {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: $shadow-sm !important;
 }
 
 .shadow {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: $shadow-md !important;
 }
 
 .shadow-lg {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: $shadow-lg !important;
 }
 
 .rounded-lg {
-  border-radius: 12px !important;
+  border-radius: $border-radius-lg !important;
 }
 
 .text-primary {
-  color: #0d6efd !important;
+  color: $primary-color !important;
 }
 
 .bg-gradient-primary {
-  background: linear-gradient(135deg, #0d6efd, #6f42c1) !important;
+  @include hm-gradient-bg($primary-color, #6f42c1);
 }
 
 /* ========================================
@@ -403,30 +389,41 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn $transition-normal ease-in-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ========================================
    RESPONSIVE ADJUSTMENTS
    ======================================== */
 
-@media (max-width: 768px) {
+@include media-max-md {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: $spacing-md;
+    padding-right: $spacing-md;
   }
 
   .card {
-    margin-bottom: 1rem;
+    margin-bottom: $spacing-md;
   }
 
   .btn-lg {
-    padding: 0.625rem 1.5rem;
-    font-size: 1rem;
+    padding: 0.625rem $spacing-lg;
+    font-size: $font-size-base;
   }
 
   .navbar-brand {
-    font-size: 1.1rem;
+    font-size: $font-size-lg;
   }
 
   h1 {
@@ -447,7 +444,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: $bg-light;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -455,6 +452,6 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 5px;
 
   &:hover {
-    background: #555;
+    background: darken(#888, 10%);
   }
 }

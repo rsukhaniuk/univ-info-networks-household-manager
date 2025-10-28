@@ -57,27 +57,27 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
 
-//   {
-//     path: 'tasks',
-//     loadChildren: () => 
-//       import('./features/tasks/tasks.routes').then(m => m.tasksRoutes),
-//     canActivate: [AuthGuard]
-//   },
+  {
+    path: 'tasks',
+    loadChildren: () => 
+      import('./features/tasks/tasks.routes').then(m => m.tasksRoutes),
+    canActivate: [AuthGuard]
+  },
 
-//   {
-//     path: 'executions',
-//     loadChildren: () => 
-//       import('./features/executions/executions.routes').then(m => m.executionsRoutes),
-//     canActivate: [AuthGuard]
-//   },
+  {
+    path: 'executions',
+    loadChildren: () => 
+      import('./features/executions/executions.routes').then(m => m.executionsRoutes),
+    canActivate: [AuthGuard]
+  },
 
-//   {
-//     path: 'profile',
-//     loadComponent: () => 
-//       import('./features/profile/profile.component').then(m => m.ProfileComponent),
-//     canActivate: [AuthGuard],
-//     title: 'Profile - Household Manager'
-//   },
+  {
+    path: 'profile',
+    loadComponent: () => 
+      import('./features/profile/profile.component').then(m => m.ProfileComponent),
+    canActivate: [AuthGuard],
+    title: 'Profile - Household Manager'
+  },
 
   // Wildcard - redirect to home
   {

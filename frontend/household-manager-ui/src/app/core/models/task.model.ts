@@ -1,4 +1,6 @@
 import { BaseQueryParameters } from "./api-response.model";
+import { ExecutionDto } from "./execution.model";
+import { RoomDto } from "./room.model";
 
 export interface TaskDto {
   id: string;
@@ -102,4 +104,39 @@ export interface TaskQueryParameters extends BaseQueryParameters {
   isActive?: boolean;        // Filter by active status
   isOverdue?: boolean;       // Show only overdue tasks
   scheduledWeekday?: DayOfWeek; // Filter by weekday
+}
+
+export interface TaskDetailsDto {
+  task: TaskDto;
+  room: RoomDto;
+  recentExecutions: ExecutionDto[];
+  availableAssignees: TaskAssigneeDto[];
+  permissions: TaskPermissionsDto;
+  stats: TaskStatsDto;
+}
+
+export interface TaskAssigneeDto {
+  userId: string;
+  userName: string;
+  email?: string;
+  currentTaskCount: number;
+}
+
+export interface TaskPermissionsDto {
+  isOwner: boolean;
+  isSystemAdmin: boolean;
+  isAssignedToCurrentUser: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canComplete: boolean;
+  canAssign: boolean;
+}
+
+export interface TaskStatsDto {
+  totalExecutions: number;
+  executionsThisWeek: number;
+  executionsThisMonth: number;
+  lastCompleted?: Date;
+  lastCompletedBy?: string;
+  averageCompletionTime?: number;
 }
