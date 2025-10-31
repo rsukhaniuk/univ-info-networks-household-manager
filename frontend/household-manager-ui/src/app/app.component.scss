@@ -24,3 +24,127 @@
 main {
   min-height: calc(100vh - 200px);
 }
+
+/* === Global toast notifications (top-right stack) === */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9998;
+  max-width: 450px;
+  width: calc(100% - 40px);
+
+  .alert {
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none;
+    animation: slideInRight 0.3s ease-out;
+
+    &.alert-success {
+      border-left: 4px solid #198754;
+      i {
+        color: #198754;
+      }
+    }
+
+    &.alert-danger {
+      border-left: 4px solid #dc3545;
+      i {
+        color: #dc3545;
+      }
+    }
+
+    &.alert-info {
+      border-left: 4px solid #0dcaf0;
+      i {
+        color: #0dcaf0;
+      }
+    }
+
+    &.alert-warning {
+      border-left: 4px solid #ffc107;
+      i {
+        color: #ffc107;
+      }
+    }
+
+    i {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .btn-close {
+      padding: 0.5rem;
+      margin: 0;
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* === Global error alerts (top-right stack) === */
+.error-alerts-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9998; // нижче за overlay
+  max-width: 450px;
+  width: calc(100% - 40px);
+
+  .alert {
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none;
+    border-left: 4px solid #dc3545;
+    animation: slideInRight 0.3s ease-out;
+
+    i {
+      font-size: 1.25rem;
+      color: #dc3545;
+      flex-shrink: 0;
+    }
+
+    .btn-close {
+      padding: 0.5rem;
+      margin: 0;
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
+}

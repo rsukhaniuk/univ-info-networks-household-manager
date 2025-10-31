@@ -28,16 +28,8 @@
     </div>
   }
 
-  <!-- Loading -->
-  @if (isLoading) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary"></div>
-      <p class="text-muted mt-3">Loading household...</p>
-    </div>
-  }
-
   <!-- Content -->
-  @else if (household) {
+  @if (household) {
     <div class="row justify-content-center">
       <div class="col-lg-10">
         <!-- Header Card -->

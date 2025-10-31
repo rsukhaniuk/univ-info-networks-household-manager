@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,8 @@ import { TaskService } from '../services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TaskDto, TaskPriority, TaskType, TaskQueryParameters } from '../../../core/models/task.model';
 import { PagedResult } from '../../../core/models/api-response.model';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-task-list',
@@ -15,6 +17,9 @@ import { PagedResult } from '../../../core/models/api-response.model';
   styleUrl: './task-list.component.scss'
 })
 export class TaskListComponent implements OnInit {
+  // Debounced search
+  private searchSubject = new Subject<string>();
+  private searchSub: Subscription | null = null;
   private taskService = inject(TaskService);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
@@ -68,6 +73,16 @@ export class TaskListComponent implements OnInit {
       
       this.loadTasks();
     });
+
+    // Wire debounced search to avoid calling loadTasks on every keystroke
+    this.searchSub = this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(term => {
+      this.queryParams.search = term || undefined;
+      this.queryParams.page = 1;
+      this.loadTasks();
+    });
   }
 
   loadTasks(): void {
@@ -90,9 +105,15 @@ export class TaskListComponent implements OnInit {
   }
 
   onSearch(searchTerm: string): void {
-    this.queryParams.search = searchTerm;
-    this.queryParams.page = 1;
-    this.loadTasks();
+    // Push value into debounced subject
+    this.searchSubject.next(searchTerm);
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchSub) {
+      this.searchSub.unsubscribe();
+      this.searchSub = null;
+    }
   }
 
   onFilterChange(filterName: string, value: any): void {

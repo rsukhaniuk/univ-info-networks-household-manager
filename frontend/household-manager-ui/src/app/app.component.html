@@ -1,11 +1,50 @@
 <div class="app-container d-flex flex-column min-vh-100">
-  <!-- Global Loading Indicator -->
-  @if (isLoading$ | async) {
+  <!-- Global Loading Overlay -->
+  @if (loading$ | async) {
     <div class="loading-overlay">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
+  }
+
+  <!-- Global Toast Notifications -->
+  @if (toasts$ | async; as toasts) {
+    <div class="toast-container">
+      @for (toast of toasts; track toast.id) {
+        <div class="alert alert-dismissible fade show" 
+             [class.alert-success]="toast.type === 'success'"
+             [class.alert-danger]="toast.type === 'error'"
+             [class.alert-info]="toast.type === 'info'"
+             [class.alert-warning]="toast.type === 'warning'"
+             role="alert">
+          @if (toast.type === 'success') {
+            <i class="fas fa-check-circle me-2"></i>
+          } @else if (toast.type === 'error') {
+            <i class="fas fa-exclamation-circle me-2"></i>
+          } @else if (toast.type === 'info') {
+            <i class="fas fa-info-circle me-2"></i>
+          } @else if (toast.type === 'warning') {
+            <i class="fas fa-exclamation-triangle me-2"></i>
+          }
+          {{ toast.message }}
+          <button type="button" class="btn-close" (click)="removeToast(toast.id)"></button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Global error display -->
+  @if (errors$ | async; as errors) {
+  <div class="error-alerts-container">
+    @for (error of errors; track $index) {
+    <div class="alert alert-danger alert-dismissible">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ error }}
+      <button (click)="clearErrors()">×</button>
+    </div>
+    }
+  </div>
   }
 
   <!-- Header -->

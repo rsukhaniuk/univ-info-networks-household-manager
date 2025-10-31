@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HouseholdService } from '../services/household.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-household-form',
@@ -16,6 +17,7 @@ export class HouseholdFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private householdService = inject(HouseholdService);
+  private toastService = inject(ToastService);
 
   form!: FormGroup;
   isEditMode = false;
@@ -78,12 +80,16 @@ export class HouseholdFormComponent implements OnInit {
     operation.subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          const message = this.isEditMode 
+            ? 'Household updated successfully' 
+            : 'Household created successfully';
+          this.toastService.success(message);
           this.router.navigate(['/households', response.data.id]);
         }
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to save household';
+      error: () => {
         this.isSubmitting = false;
+        // Errors are handled globally by error interceptor
       }
     });
   }

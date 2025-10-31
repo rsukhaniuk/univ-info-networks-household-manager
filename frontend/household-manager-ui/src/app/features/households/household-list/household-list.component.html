@@ -1,268 +1,320 @@
-<div class="container">
-  <!-- Header -->
+<div class="container household-list-container">
+  <!-- ========================================
+       HEADER SECTION
+       ======================================== -->
   <div class="row justify-content-center mb-4">
     <div class="col-lg-10">
-      <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <div class="text-center text-lg-start">
-          <h1 class="h3 mb-1">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Title -->
+        <div>
+          <h1 class="h3 mb-1 d-flex align-items-center">
             <i class="fas fa-home text-primary me-2"></i>
             @if (isSystemAdmin$ | async) {
-              <span>All Households</span>
-              <span class="badge bg-danger ms-2">System Admin</span>
+            <span>All Households</span>
+            <span class="badge bg-danger ms-2">System Admin</span>
             } @else {
-              <span>My Households</span>
+            <span>My Households</span>
             }
           </h1>
           <p class="text-muted mb-0">
-            @if (isSystemAdmin$ | async) {
-              System-wide household management
-            } @else {
-              Manage and view your household memberships
-            }
+            @if (isSystemAdmin$ | async) { System-wide household management } @else { Manage and
+            view your household memberships }
           </p>
         </div>
 
         <!-- Action Buttons -->
         @if (!(isSystemAdmin$ | async)) {
-          <div class="btn-group" role="group">
-            <a routerLink="/households/create" class="btn btn-primary btn-lg">
-              <i class="fas fa-plus me-1"></i>Create Household
-            </a>
-            <a routerLink="/households/join" class="btn btn-success btn-lg ms-2">
-              <i class="fas fa-key me-1"></i>Join Household
-            </a>
-          </div>
+        <div class="d-flex gap-2">
+          <a routerLink="/households/create" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Create Household
+          </a>
+          <a routerLink="/households/join" class="btn btn-success">
+            <i class="fas fa-key me-1"></i>Join Household
+          </a>
+        </div>
         }
       </div>
     </div>
   </div>
 
-  <!-- Success/Error Messages -->
-  @if (successMessage) {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="fas fa-check-circle me-2"></i>
-      {{ successMessage }}
-      <button type="button" class="btn-close" (click)="successMessage = null"></button>
-    </div>
-  }
-
-  @if (error) {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      {{ error }}
-      <button type="button" class="btn-close" (click)="error = null"></button>
-    </div>
-  }
-
-  <!-- Loading State -->
-  @if (isLoading) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+  <!-- ========================================
+       ERROR MESSAGES
+       ======================================== -->
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      @if (errors$ | async; as errors) { @for (error of errors; track error) {
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ error }}
+        <button type="button" class="btn-close" (click)="errors.length = 0"></button>
       </div>
-      <p class="text-muted mt-3">Loading households...</p>
+      } }
     </div>
-  }
+  </div>
 
-  <!-- Empty State -->
-  @else if (households.length === 0 && !searchQuery) {
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-sm">
-          <div class="card-body text-center py-5">
-            <i class="fas fa-home fa-3x text-muted mb-3"></i>
-            <h4 class="text-muted">No Households Found</h4>
-            <p class="text-muted mb-4">
-              @if (isSystemAdmin$ | async) {
-                No households have been created in the system yet.
-              } @else {
-                You're not a member of any households yet. Create your first household or join an existing one!
-              }
-            </p>
+  <!-- ========================================
+       EMPTY STATE
+       ======================================== -->
+  @if (!loading && totalRecords === 0 && !searchQuery) {
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-home fa-4x text-primary mb-3 opacity-50"></i>
+          <h4 class="text-muted mb-3">No Households Found</h4>
+          <p class="text-muted mb-4">
+            @if (isSystemAdmin$ | async) { No households have been created in the system yet. }
+            @else { You're not a member of any households yet.<br />
+            Create your first household or join an existing one! }
+          </p>
 
-            @if (!(isSystemAdmin$ | async)) {
-              <div class="d-flex justify-content-center gap-2">
-                <a routerLink="/households/create" class="btn btn-primary btn-lg">
-                  <i class="fas fa-plus me-1"></i>Create Household
-                </a>
-                <a routerLink="/households/join" class="btn btn-outline-primary btn-lg">
-                  <i class="fas fa-key me-1"></i>Join Household
-                </a>
-              </div>
-            }
+          @if (!(isSystemAdmin$ | async)) {
+          <div class="d-flex justify-content-center gap-2">
+            <a routerLink="/households/create" class="btn btn-primary btn-lg">
+              <i class="fas fa-plus me-1"></i>Create Household
+            </a>
+            <a routerLink="/households/join" class="btn btn-outline-primary btn-lg">
+              <i class="fas fa-key me-1"></i>Join Household
+            </a>
           </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Households Table -->
-  @else {
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <!-- Search Bar -->
-            <div class="mb-3">
-              <input 
-                type="text" 
-                class="form-control" 
-                placeholder="Search households..."
-                [value]="searchQuery"
-                (input)="onSearch($any($event.target).value)">
-            </div>
-
-            <!-- Table -->
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th (click)="onSort('name')" style="cursor: pointer;">
-                      <i class="fas fa-home me-1"></i>Household
-                      @if (sortBy === 'name') {
-                        <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                      }
-                    </th>
-                    <th (click)="onSort('memberCount')" style="cursor: pointer;">
-                      <i class="fas fa-users me-1"></i>Members
-                      @if (sortBy === 'memberCount') {
-                        <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                      }
-                    </th>
-                    <th (click)="onSort('createdAt')" style="cursor: pointer;">
-                      <i class="fas fa-calendar me-1"></i>Created
-                      @if (sortBy === 'createdAt') {
-                        <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                      }
-                    </th>
-                    <th><i class="fas fa-cogs me-1"></i>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (household of filteredHouseholds; track household.id) {
-                    <tr>
-                      <!-- Household Name -->
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
-                               style="width: 40px; height: 40px;">
-                            <i class="fas fa-home text-white"></i>
-                          </div>
-                          <div>
-                            <h6 class="mb-0">
-                              <a [routerLink]="['/households', household.id]" class="text-decoration-none">
-                                {{ household.name }}
-                              </a>
-                            </h6>
-                            @if (household.description) {
-                              <small class="text-muted">{{ household.description }}</small>
-                            }
-                          </div>
-                        </div>
-                      </td>
-
-                      <!-- Member Count -->
-                      <td>
-                        <span class="badge bg-info rounded-pill">
-                          {{ household.memberCount }}
-                        </span>
-                      </td>
-
-                      <!-- Created Date -->
-                      <td>
-                        <span class="text-muted">
-                          {{ household.createdAt | date:'short' }}
-                        </span>
-                      </td>
-
-                      <!-- Actions -->
-                      <td>
-                        <div class="btn-group btn-group-sm" role="group">
-                          <a [routerLink]="['/households', household.id]"
-                             class="btn btn-outline-primary"
-                             title="View Details">
-                            <i class="fas fa-eye"></i>
-                          </a>
-
-                          <a [routerLink]="['/households', household.id, 'edit']"
-                             class="btn btn-outline-warning"
-                             title="Edit">
-                            <i class="fas fa-edit"></i>
-                          </a>
-
-                          <button 
-                            type="button" 
-                            class="btn btn-outline-danger"
-                            (click)="openDeleteModal(household)"
-                            title="Delete">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Pagination -->
-            @if (totalPages > 1) {
-              <nav>
-                <ul class="pagination justify-content-center">
-                  <li class="page-item" [class.disabled]="currentPage === 1">
-                    <button class="page-link" (click)="onPageChange(currentPage - 1)">
-                      Previous
-                    </button>
-                  </li>
-                  @for (page of [].constructor(totalPages); track $index; let i = $index) {
-                    <li class="page-item" [class.active]="currentPage === i + 1">
-                      <button class="page-link" (click)="onPageChange(i + 1)">
-                        {{ i + 1 }}
-                      </button>
-                    </li>
-                  }
-                  <li class="page-item" [class.disabled]="currentPage === totalPages">
-                    <button class="page-link" (click)="onPageChange(currentPage + 1)">
-                      Next
-                    </button>
-                  </li>
-                </ul>
-              </nav>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-</div>
-
-<!-- Delete Modal -->
-@if (deleteModalHousehold) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header border-0">
-          <h5 class="modal-title text-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>Delete Household
-          </h5>
-          <button type="button" class="btn-close" (click)="deleteModalHousehold = null"></button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to delete <strong>{{ deleteModalHousehold.name }}</strong>?</p>
-          <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Warning:</strong> This action cannot be undone.
-          </div>
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-secondary" (click)="deleteModalHousehold = null">
-            Cancel
-          </button>
-          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
-            <i class="fas fa-trash me-1"></i>Delete
-          </button>
+          }
         </div>
       </div>
     </div>
   </div>
-}
+  }
+
+  <!-- ========================================
+       PRIMENG TABLE
+       ======================================== -->
+  @else {
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <!-- Search & Page Size Controls -->
+          <div class="p-3 border-bottom bg-light">
+            <div class="search-container">
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="fas fa-search text-muted"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Search households by name or description..."
+                  maxlength="100"
+                  [value]="searchQuery"
+                  (input)="onSearch($any($event.target).value)"
+                />
+              </div>
+
+              <select
+                class="form-select"
+                style="max-width: 130px"
+                [value]="rows"
+                (change)="onPageSizeChange(+$any($event.target).value)"
+              >
+                <option value="5">5 per page</option>
+                <option value="10">10 per page</option>
+                <option value="20">20 per page</option>
+                <option value="50">50 per page</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PrimeNG Table -->
+          <p-table
+            [value]="items"
+            [lazy]="true"
+            [paginator]="true"
+            [rows]="rows"
+            [first]="first"
+            [totalRecords]="totalRecords"
+            [loading]="loading"
+            (onLazyLoad)="onLazyLoad($event)"
+            [sortField]="'createdAt'"
+            [sortOrder]="-1"
+            [resizableColumns]="true"
+            [rowHover]="true"
+            class="p-datatable-sm"
+            [tableStyle]="{ 'min-width': '50rem' }"
+          >
+            <!-- Table Header -->
+            <ng-template pTemplate="header">
+              <tr>
+                <!-- Household Name Column -->
+                <th pResizableColumn pSortableColumn="name" style="width: 40%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-home text-primary me-2"></i>
+                    <span>Household</span>
+                    <p-sortIcon field="name"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Members Column -->
+                <th pSortableColumn="memberCount" style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-users text-info me-2"></i>
+                    <span>Members</span>
+                    <p-sortIcon field="memberCount"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Role Column -->
+                <th style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user-tag text-success me-2"></i>
+                    <span>Role</span>
+                  </div>
+                </th>
+
+                <!-- Created Column -->
+                <th pSortableColumn="createdAt" style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar text-warning me-2"></i>
+                    <span>Created</span>
+                    <p-sortIcon field="createdAt"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Actions Column -->
+                <th style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-cogs text-secondary me-2"></i>
+                    <span>Actions</span>
+                  </div>
+                </th>
+              </tr>
+            </ng-template>
+
+            <!-- Table Body -->
+            <ng-template pTemplate="body" let-h>
+              <tr>
+                <!-- Household Name -->
+                <td>
+                  <div class="household-card-inline">
+                    <!-- Використовуємо міксин icon-circle з _shared-styles.scss -->
+                    <div class="household-icon-circle">
+                      <i class="fas fa-home text-white"></i>
+                    </div>
+                    <div class="household-info">
+                      <h6 class="mb-0">
+                        <a [routerLink]="['/households', h.id]">
+                          {{ h.name }}
+                        </a>
+                      </h6>
+                      @if (h.description) {
+                      <small>{{ h.description }}</small>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Members -->
+                <td>
+                  <span class="badge bg-info rounded-pill px-3 py-2">
+                    <i class="fas fa-users me-1"></i>
+                    {{ h.memberCount }}
+                  </span>
+                </td>
+
+                <!-- Role -->
+                <td>
+                  @if (isSystemAdmin$ | async) {
+                  <span class="badge bg-danger"> <i class="fas fa-shield-alt me-1"></i>Admin </span>
+                  } @else if (h.role === 'Owner') {
+                  <span class="badge bg-primary"> <i class="fas fa-crown me-1"></i>Owner </span>
+                  } @else {
+                  <span class="badge bg-success"> <i class="fas fa-user me-1"></i>Member </span>
+                  }
+                </td>
+
+                <!-- Created Date -->
+                <td>
+                  <small class="text-muted">
+                    <i class="far fa-calendar-alt me-1"></i>
+                    {{ h.createdAt | date : 'MMM d, y' }}
+                  </small>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a
+                      [routerLink]="['/households', h.id]"
+                      class="btn btn-outline-primary"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </a>
+
+                    @if ((isSystemAdmin$ | async) || h.role === 'Owner') {
+                    <a
+                      [routerLink]="['/households', h.id, 'edit']"
+                      class="btn btn-outline-warning"
+                      title="Edit"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger"
+                      (click)="confirmDelete(h)"
+                      title="Delete Household"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                    } @else {
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger"
+                      (click)="confirmLeave(h)"
+                      title="Leave Household"
+                    >
+                      <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+
+            <!-- Loading State -->
+            <ng-template pTemplate="loadingbody">
+              <tr *ngFor="let i of [1, 2, 3, 4, 5]">
+                <td colspan="5">
+                  <div class="d-flex align-items-center py-2">
+                    <p-skeleton shape="circle" size="45px" class="me-3"></p-skeleton>
+                    <div class="flex-grow-1">
+                      <p-skeleton width="60%" height="1.2rem" class="mb-2"></p-skeleton>
+                      <p-skeleton width="40%" height="0.9rem"></p-skeleton>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+
+            <!-- Empty State in Table -->
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="5" class="text-center py-5">
+                  <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+                  <h5 class="text-muted">No households found</h5>
+                  <p class="text-muted mb-0">Try adjusting your search criteria</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+  <app-confirmation-dialog
+    [show]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()"
+  ></app-confirmation-dialog>
+</div>

@@ -1,36 +1,50 @@
-@use '../../../shared/styles/index' as *;
+@use '../../../shared/styles' as *;
 
-// Only component-specific overrides/additions here
-
+/* =========================================
+   PAGE CONTAINER
+   ========================================= */
 .household-list-container {
-  padding: 1.5rem 0 2rem;
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
 }
 
-// Table specific
-.table {
-  thead {
-    th {
-      cursor: pointer;
-      user-select: none;
+/* =========================================
+   SEARCH BAR
+   ========================================= */
+.search-container {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+  flex-wrap: wrap;
 
-      &:hover {
-        background-color: #e9ecef;
-      }
+  .input-group {
+    flex: 1;
+    min-width: 250px;
 
-      .sort-icon {
-        margin-left: 0.5rem;
-        color: #adb5bd;
-        font-size: 0.875rem;
+    .input-group-text {
+      background-color: $bg-white;
+      border-right: none;
+      border-color: $border-color;
+    }
+
+    input {
+      border-left: none;
+      border-color: $border-color;
+      
+      &:focus {
+        @include input-focus($primary-color);
+        border-left: none;
       }
     }
   }
 
-  tbody tr:hover {
-    background-color: #f8f9fa;
+  select {
+    min-width: 130px;
   }
 }
 
-// Household card in table row
+/* =========================================
+   HOUSEHOLD CARD INLINE
+   ========================================= */
 .household-card-inline {
   display: flex;
   align-items: center;
@@ -40,13 +54,15 @@
     min-width: 0;
 
     h6 {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      @include text-truncate;
+      margin-bottom: $spacing-xs;
+      font-size: 0.95rem;
 
       a {
-        color: #212529;
+        color: $text-primary;
         text-decoration: none;
+        font-weight: $font-weight-semibold;
+        transition: color $transition-fast;
 
         &:hover {
           color: $primary-color;
@@ -55,52 +71,379 @@
     }
 
     small {
+      @include text-truncate;
       display: block;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      color: $text-muted;
+      font-size: $font-size-sm;
     }
   }
 }
 
-// Pagination
-.pagination {
-  margin-top: 1.5rem;
-  justify-content: center;
+/* =========================================
+   PRIMENG TABLE OVERRIDES
+   ========================================= */
 
-  .page-item {
-    margin: 0 0.25rem;
+:host ::ng-deep {
+  
+  /* TABLE CONTAINER */
+  .p-datatable {
+    background: $bg-white;
+    border-radius: 0;
+    box-shadow: none;
 
-    .page-link {
-      border-radius: 0.375rem;
-      border: 2px solid $border-color;
-      color: $primary-color;
-      padding: 0.5rem 0.75rem;
+    /* Remove default borders */
+    .p-datatable-wrapper {
+      border: none;
+    }
 
-      &:hover {
-        background-color: #e9ecef;
-        border-color: $primary-color;
+    /* TABLE HEADER */
+    .p-datatable-thead > tr > th {
+      background-color: $bg-light !important;
+      color: $text-secondary !important;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      padding: $spacing-md ($spacing-sm + 0.25rem);
+      border-bottom: 2px solid $border-color;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      white-space: nowrap;
+      vertical-align: middle;
+
+      /* Sortable columns */
+      &.p-sortable-column {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color $transition-fast;
+
+        &:hover {
+          background-color: darken($bg-light, 3%) !important;
+        }
+
+        /* Active sorted column */
+        &.p-sortable-column-sorted {
+          background-color: lighten($primary-color, 45%) !important;
+          color: $primary-color !important;
+
+          i {
+            color: $primary-color;
+          }
+        }
+      }
+
+      /* Sort icon */
+      .p-sortable-column-icon {
+        margin-left: $spacing-sm;
+        color: $text-muted;
+        font-size: $font-size-xs;
+        transition: color $transition-fast;
+      }
+
+      /* Header icons */
+      i.fas, i.far {
+        font-size: $font-size-sm;
       }
     }
 
-    &.active .page-link {
+    /* TABLE BODY */
+    .p-datatable-tbody > tr {
+      background: $bg-white;
+      border-bottom: 1px solid lighten($border-color, 5%);
+      transition: background-color $transition-fast;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      /* Hover state */
+      &:hover {
+        background-color: $bg-light !important;
+      }
+
+      /* Table cells */
+      > td {
+        padding: 0.875rem ($spacing-sm + 0.25rem);
+        vertical-align: middle;
+        color: $text-primary;
+        font-size: $font-size-base;
+        border-left: none;
+        border-right: none;
+
+        /* Action buttons spacing */
+        .btn-group {
+          display: flex;
+          gap: $spacing-xs;
+        }
+      }
+    }
+
+    /* Empty message */
+    .p-datatable-emptymessage > td {
+      text-align: center;
+      padding: ($spacing-xl + 1rem) $spacing-md;
+      color: $text-muted;
+      background: $bg-white;
+    }
+
+    /* Loading overlay */
+    .p-datatable-loading-overlay {
+      background-color: rgba($bg-white, 0.8);
+      backdrop-filter: blur(2px);
+    }
+  }
+
+  /* PAGINATOR */
+  .p-paginator {
+    background: $bg-white;
+    border-top: 1px solid $border-color;
+    padding: $spacing-md ($spacing-sm + 0.25rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+
+    /* Rows per page dropdown */
+    .p-dropdown {
+      margin-right: $spacing-md;
+      min-width: 80px;
+    }
+
+    /* Page numbers */
+    .p-paginator-pages {
+      display: flex;
+      gap: $spacing-xs;
+    }
+
+    /* All paginator buttons */
+    .p-paginator-page,
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+      min-width: 2.5rem;
+      height: 2.5rem;
+      margin: 0 0.125rem;
+      padding: 0;
+      border: 2px solid $border-color;
+      border-radius: $border-radius;
+      background: $bg-white;
+      color: $primary-color;
+      font-weight: $font-weight-medium;
+      font-size: $font-size-sm;
+      cursor: pointer;
+      transition: all $transition-fast;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      &:not(.p-disabled):hover {
+        background-color: $bg-light;
+        border-color: $primary-color;
+        color: $primary-color;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba($primary-color, 0.15);
+      }
+
+      &:not(.p-disabled):active {
+        transform: translateY(0);
+      }
+
+      /* Disabled state */
+      &.p-disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+        background-color: $bg-light;
+        border-color: lighten($border-color, 5%);
+        color: $text-muted;
+      }
+    }
+
+    /* Active page */
+    .p-paginator-page.p-paginator-page-active {
       background-color: $primary-color;
       border-color: $primary-color;
-      color: white;
+      color: $bg-white;
+      font-weight: $font-weight-semibold;
+      box-shadow: 0 2px 6px rgba($primary-color, 0.3);
+
+      &:hover {
+        background-color: $primary-hover;
+        border-color: $primary-hover;
+        transform: none;
+      }
     }
 
-    &.disabled .page-link {
-      cursor: not-allowed;
-      opacity: 0.5;
+    /* Current page info */
+    .p-paginator-current {
+      color: $text-muted;
+      font-size: $font-size-sm;
+      padding: 0 $spacing-md;
+    }
+  }
+
+  /* LOADING SKELETON */
+  .p-skeleton {
+    background: linear-gradient(
+      90deg,
+      lighten($border-color, 10%) 25%,
+      lighten($border-color, 15%) 50%,
+      lighten($border-color, 10%) 75%
+    );
+    background-size: 200% 100%;
+    animation: p-skeleton-animation 1.5s ease-in-out infinite;
+    border-radius: $border-radius;
+  }
+
+  @keyframes p-skeleton-animation {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
     }
   }
 }
 
-// Search bar
-.search-container {
-  margin-bottom: 1.5rem;
+/* =========================================
+   BADGES
+   ========================================= */
+.badge {
+  font-weight: $font-weight-semibold;
+  padding: $spacing-sm ($spacing-sm + 0.25rem);
+  font-size: 0.8125rem;
+  border-radius: $border-radius-sm;
+}
 
-  input {
-    max-width: 500px;
+/* =========================================
+   BUTTONS
+   ========================================= */
+.btn {
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: $font-size-sm;
   }
 }
+
+.btn-group .btn {
+  &:hover {
+    z-index: 1;
+  }
+}
+
+/* =========================================
+   CARDS
+   ========================================= */
+.card {
+  position: relative;
+  z-index: 0;
+  border-radius: $border-radius-lg; // або вкажи вручну, наприклад 1rem
+  overflow: hidden; // щоб вміст не виходив за округлі межі
+  box-shadow: 0 2px 10px rgba($primary-color, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 20px rgba($primary-color, 0.15);
+    transform: translateY(-3px);
+    z-index: 1;
+  }
+}
+
+/* =========================================
+   ICON CIRCLES
+   ========================================= */
+.household-icon-circle {
+  @include icon-circle(45px, linear-gradient(135deg, $primary-color, #6f42c1), 1.25rem);
+  flex-shrink: 0;
+  margin-right: $spacing-md;
+}
+
+/* =========================================
+   ALERTS
+   ========================================= */
+.alert {
+  border-radius: $border-radius;
+  box-shadow: $shadow-sm;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@include media-max-lg {
+  .search-container {
+    flex-direction: column;
+    align-items: stretch;
+
+    .input-group,
+    select {
+      width: 100%;
+    }
+  }
+}
+
+@include media-max-md {
+  :host ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th {
+      padding: ($spacing-sm + 0.25rem) $spacing-sm;
+      font-size: 0.8125rem;
+    }
+
+    .p-datatable-tbody > tr > td {
+      padding: ($spacing-sm + 0.25rem) $spacing-sm;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+@include media-max-sm {
+  .household-list-container {
+    padding: $spacing-md 0;
+  }
+
+  .household-card-inline {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .household-info {
+      width: 100%;
+      margin-top: $spacing-sm;
+    }
+  }
+
+  :host ::ng-deep {
+    .p-datatable {
+      .p-datatable-thead > tr > th,
+      .p-datatable-tbody > tr > td {
+        padding: $spacing-sm ($spacing-sm - 0.125rem);
+        font-size: 0.8125rem;
+      }
+    }
+
+    .p-paginator {
+      .p-paginator-page,
+      .p-paginator-first,
+      .p-paginator-prev,
+      .p-paginator-next,
+      .p-paginator-last {
+        min-width: 2rem;
+        height: 2rem;
+        font-size: $font-size-xs;
+      }
+    }
+  }
+
+  .btn-group .btn {
+    padding: ($spacing-sm - 0.125rem) $spacing-sm;
+    font-size: $font-size-xs;
+  }
+} 

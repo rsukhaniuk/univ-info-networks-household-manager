@@ -1,0 +1,78 @@
+<!-- Modal Backdrop & Container -->
+<div 
+  class="modal" 
+  [class.show]="show" 
+  [attr.aria-hidden]="!show"
+  (click)="onBackdropClick($event)"
+  role="dialog"
+  aria-labelledby="confirmDialogTitle"
+  aria-describedby="confirmDialogMessage"
+>
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg border-0">
+      
+      <!-- Modal Header -->
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title d-flex align-items-center" id="confirmDialogTitle">
+          @if (data.icon) {
+            <i 
+              class="fas {{ data.icon }} me-2 fs-4" 
+              [ngClass]="data.iconClass || 'text-warning'"
+            ></i>
+          }
+          <span>{{ data.title }}</span>
+        </h5>
+        <button 
+          type="button" 
+          class="btn-close" 
+          (click)="onCancel()"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body pt-3 pb-4">
+        <p class="mb-0 text-secondary" id="confirmDialogMessage">
+          {{ data.message }}
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer border-0 pt-0">
+        <button 
+          type="button" 
+          class="btn btn-light px-4" 
+          (click)="onCancel()"
+        >
+          <i class="fas fa-times me-1"></i>
+          {{ data.cancelText || 'Cancel' }}
+        </button>
+        <button 
+          type="button" 
+          class="btn px-4"
+          [ngClass]="{
+            'btn-danger': data.confirmClass === 'danger',
+            'btn-warning': data.confirmClass === 'warning',
+            'btn-primary': data.confirmClass === 'primary',
+            'btn-success': data.confirmClass === 'success'
+          }"
+          (click)="onConfirm()"
+        >
+          <i 
+            class="fas me-1"
+            [ngClass]="{
+              'fa-trash': data.confirmClass === 'danger',
+              'fa-sign-out-alt': data.confirmClass === 'warning',
+              'fa-check': data.confirmClass === 'success' || data.confirmClass === 'primary'
+            }"
+          ></i>
+          {{ data.confirmText || 'Confirm' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop" [class.show]="show"></div>

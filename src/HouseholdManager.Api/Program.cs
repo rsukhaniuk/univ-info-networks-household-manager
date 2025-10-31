@@ -55,20 +55,33 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 try
                 {
                     // Extract Auth0 roles from custom claim
-                    var rolesClaimValue = context.Principal?
-                        .FindFirst("https://householdmanager.com/roles")?.Value;
+                    var rolesClaim = context.Principal?
+                        .FindFirst("https://householdmanager.com/roles");
 
-                    if (!string.IsNullOrEmpty(rolesClaimValue))
+                    if (rolesClaim != null && !string.IsNullOrEmpty(rolesClaim.Value))
                     {
-                        var roles = JsonSerializer.Deserialize<string[]>(rolesClaimValue);
+                        var rolesClaimValue = rolesClaim.Value.Trim();
 
-                        if (roles != null && roles.Length > 0)
+                        // Check if it's a JSON array (starts with '[')
+                        if (rolesClaimValue.StartsWith('['))
                         {
-                            foreach (var role in roles)
+                            // Deserialize as JSON array
+                            var roles = JsonSerializer.Deserialize<string[]>(rolesClaimValue);
+
+                            if (roles != null && roles.Length > 0)
                             {
-                                claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
-                                logger.LogDebug("Added role claim: {Role}", role);
+                                foreach (var role in roles)
+                                {
+                                    claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+                                    logger.LogDebug("Added role claim (from JSON array): {Role}", role);
+                                }
                             }
+                        }
+                        else
+                        {
+                            // It's a simple string value (single role)
+                            claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, rolesClaimValue));
+                            logger.LogDebug("Added role claim (from string): {Role}", rolesClaimValue);
                         }
                     }
 
@@ -88,7 +101,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         "JWT token validated for user: {UserId}, Email: {Email}, Roles: {Roles}",
                         userId,
                         email,
-                        rolesClaimValue ?? "none");
+                        rolesClaim?.Value ?? "none");
                 }
                 catch (Exception ex)
                 {

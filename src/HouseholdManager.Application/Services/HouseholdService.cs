@@ -88,7 +88,15 @@ namespace HouseholdManager.Application.Services
         public async Task<IReadOnlyList<HouseholdDto>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default)
         {
             var households = await _householdRepository.GetUserHouseholdsAsync(userId, cancellationToken);
-            return _mapper.Map<IReadOnlyList<HouseholdDto>>(households);
+            var householdDtos = _mapper.Map<IReadOnlyList<HouseholdDto>>(households);
+
+            // Асинхронно заповнюємо роль для кожного household
+            foreach (var dto in householdDtos)
+            {
+                dto.Role = await _memberRepository.GetUserRoleAsync(dto.Id, userId, cancellationToken);
+            }
+
+            return householdDtos;
         }
 
         public async Task<HouseholdDto> UpdateHouseholdAsync(

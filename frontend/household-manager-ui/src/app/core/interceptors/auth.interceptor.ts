@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
-import { switchMap, take, catchError, throwError } from 'rxjs';
+import { switchMap, take, catchError } from 'rxjs';
 
 /**
  * Auth interceptor - adds JWT token to API requests
@@ -25,7 +25,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return next(authReq);
     }),
     catchError(err => {
-      console.error('Auth interceptor error:', err);
+      console.warn('Could not get auth token:', err.message || err);
       return next(req);
     })
   );

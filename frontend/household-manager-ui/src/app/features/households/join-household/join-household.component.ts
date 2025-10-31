@@ -19,7 +19,6 @@ export class JoinHouseholdComponent {
 
   form: FormGroup;
   isSubmitting = false;
-  error: string | null = null;
 
   constructor() {
     this.form = this.fb.group({
@@ -34,7 +33,6 @@ export class JoinHouseholdComponent {
     }
 
     this.isSubmitting = true;
-    this.error = null;
 
     this.householdService.joinHousehold({
       inviteCode: this.form.value.inviteCode
@@ -44,9 +42,9 @@ export class JoinHouseholdComponent {
           this.router.navigate(['/households', response.data.id]);
         }
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to join household. Please check the invite code.';
+      error: () => {
         this.isSubmitting = false;
+        // Errors are handled globally by error interceptor
       }
     });
   }

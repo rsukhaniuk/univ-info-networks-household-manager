@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HouseholdManager.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -50,5 +51,10 @@ namespace HouseholdManager.Application.DTOs.Household
         /// Number of rooms in this household
         /// </summary>
         public int RoomCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the role of the household member.
+        /// </summary>
+        public HouseholdRole? Role { get; set; }
     }
 }

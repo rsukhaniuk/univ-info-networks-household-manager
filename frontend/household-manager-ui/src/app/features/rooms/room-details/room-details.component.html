@@ -43,16 +43,8 @@
   </div>
   }
 
-  <!-- Loading -->
-  @if (isLoading) {
-  <div class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
-    <p class="text-muted mt-3">Loading room details...</p>
-  </div>
-  }
-
   <!-- Content -->
-  @else if (roomDetails) {
+  @if (roomDetails) {
   <div class="row justify-content-center">
     <div class="col-lg-10">
       <!-- Room Header -->
