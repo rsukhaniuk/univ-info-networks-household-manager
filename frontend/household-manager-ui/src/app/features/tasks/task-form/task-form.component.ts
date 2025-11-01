@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -41,6 +41,7 @@ export class TaskFormComponent implements OnInit {
   private roomService = inject(RoomService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
 
   // Data
   householdId: string = '';
@@ -249,7 +250,7 @@ export class TaskFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/households', this.householdId, 'tasks']);
+    this.location.back();
   }
 
   // Getters for template

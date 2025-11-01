@@ -189,19 +189,9 @@
             <!-- Actions -->
             <div class="row g-3 mt-4">
               <div class="col-sm-6">
-                @if (isEditMode) {
-                  <a [routerLink]="['/rooms', roomId]"
-                     [queryParams]="{householdId: householdId}"
-                     class="btn btn-outline-secondary w-100">
-                    <i class="fas fa-times me-2"></i>Cancel
-                  </a>
-                } @else {
-                  <a [routerLink]="['/rooms']"
-                     [queryParams]="{householdId: householdId}"
-                     class="btn btn-outline-secondary w-100">
-                    <i class="fas fa-times me-2"></i>Cancel
-                  </a>
-                }
+                <button type="button" (click)="onCancel()" class="btn btn-outline-secondary w-100">
+                  <i class="fas fa-times me-2"></i>Cancel
+                </button>
               </div>
               <div class="col-sm-6">
                 <button

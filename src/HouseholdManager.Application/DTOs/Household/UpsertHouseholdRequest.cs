@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Swashbuckle.AspNetCore.Annotations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Household
@@ -16,6 +18,8 @@ namespace HouseholdManager.Application.DTOs.Household
         /// <summary>
         /// Household ID (null for create, value for update)
         /// </summary>
+        [SwaggerSchema(ReadOnly = true, Description = "Used only for update")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Guid? Id { get; set; }
 
         /// <summary>

@@ -28,7 +28,7 @@
             <i class="fas fa-exclamation-triangle me-2"></i>
           }
           {{ toast.message }}
-          <button type="button" class="btn-close" (click)="removeToast(toast.id)"></button>
+          <button type="button" class="btn-close" aria-label="Close" (click)="removeToast(toast.id)"></button>
         </div>
       }
     </div>
@@ -38,10 +38,10 @@
   @if (errors$ | async; as errors) {
   <div class="error-alerts-container">
     @for (error of errors; track $index) {
-    <div class="alert alert-danger alert-dismissible">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
       <i class="fas fa-exclamation-triangle me-2"></i>
       {{ error }}
-      <button (click)="clearErrors()">×</button>
+      <button type="button" class="btn-close" aria-label="Close" (click)="clearErrors()"></button>
     </div>
     }
   </div>

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HouseholdService } from '../services/household.service';
@@ -18,6 +18,7 @@ export class HouseholdFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private householdService = inject(HouseholdService);
   private toastService = inject(ToastService);
+  private location = inject(Location);
 
   form!: FormGroup;
   isEditMode = false;
@@ -92,6 +93,10 @@ export class HouseholdFormComponent implements OnInit {
         // Errors are handled globally by error interceptor
       }
     });
+  }
+
+  onCancel(): void {
+    this.location.back();
   }
 
   get pageTitle(): string {

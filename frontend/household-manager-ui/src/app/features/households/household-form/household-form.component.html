@@ -78,9 +78,9 @@
 
             <!-- Actions -->
             <div class="d-flex gap-2">
-              <a routerLink="/households" class="btn btn-secondary">
+              <button type="button" (click)="onCancel()" class="btn btn-secondary">
                 Cancel
-              </a>
+              </button>
               <button
                 type="submit"
                 class="btn {{ submitButtonClass }}"

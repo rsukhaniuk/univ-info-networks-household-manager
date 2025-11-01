@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { RoomService } from '../services/room.service';
@@ -18,6 +18,7 @@ export class RoomFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
+  private location = inject(Location);
 
   form!: FormGroup;
   isEditMode = false;
@@ -176,6 +177,10 @@ export class RoomFormComponent implements OnInit {
     this.router.navigate(['/rooms', roomId], {
       queryParams: { householdId: this.householdId }
     });
+  }
+
+  onCancel(): void {
+    this.location.back();
   }
 
   get pageTitle(): string {

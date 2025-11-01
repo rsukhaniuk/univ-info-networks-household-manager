@@ -150,6 +150,7 @@
       background: $bg-white;
       border-bottom: 1px solid lighten($border-color, 5%);
       transition: background-color $transition-fast;
+      height: 85px; // Фіксована висота рядка
 
       &:last-child {
         border-bottom: none;

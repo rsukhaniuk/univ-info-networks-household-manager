@@ -1,5 +1,12 @@
 @use '../../../shared/styles/index' as *;
 
+/* =========================================
+   PAGE CONTAINER
+   ========================================= */
+.household-details-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
+}
+
 // Header card specific
 .household-header-card {
   .card-body {
