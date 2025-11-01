@@ -68,13 +68,26 @@ namespace HouseholdManager.Api.Controllers
         /// <summary>
         /// Get all executions for a specific task
         /// </summary>
-        /// <param name="taskId">Task ID</param>
+        /// <param name="taskId">Task ID (from route)</param>
         /// <param name="parameters">Query parameters for filtering and pagination</param>
         /// <returns>Paginated list of task executions</returns>
-        /// <response code="200">Returns the paginated list of executions</response>
-        /// <response code="401">User is not authenticated</response>
-        /// <response code="403">User doesn't have access to this task</response>
-        /// <response code="422">Invalid query parameters</response>
+        /// <remarks>
+        /// Query parameters:
+        /// - **Page**: Page number (default: 1)  
+        /// - **PageSize**: Items per page (default: 20, max: 100)  
+        /// - **SortBy**: Sort field (e.g., "CompletedAt")  
+        /// - **SortOrder**: "asc" or "desc" (default: "desc")  
+        /// - **Search**: Free-text search in notes/task title  
+        /// - **UserId**: Filter by user ID  
+        /// - **RoomId**: Filter by room ID  
+        /// - **CompletedAfter / CompletedBefore**: UTC ISO 8601 range  
+        /// - **WeekStarting**: Monday (UTC), for weekly stats  
+        /// - **ThisWeekOnly**: true/false  
+        /// - **HasPhoto**: true/false  
+        ///
+        /// Example:  
+        /// `GET /api/executions/task/{taskId}?page=1&amp;pageSize=10&amp;hasPhoto=true&amp;sortBy=CompletedAt&amp;sortOrder=desc`
+        /// </remarks>
         [HttpGet("task/{taskId:guid}")]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<ExecutionDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -136,13 +149,18 @@ namespace HouseholdManager.Api.Controllers
         /// <summary>
         /// Get all executions for a household
         /// </summary>
-        /// <param name="householdId">Household ID</param>
+        /// <param name="householdId">Household ID (from route)</param>
         /// <param name="parameters">Query parameters for filtering and pagination</param>
         /// <returns>Paginated list of household executions</returns>
-        /// <response code="200">Returns the paginated list of executions</response>
-        /// <response code="401">User is not authenticated</response>
-        /// <response code="403">User is not a member of this household</response>
-        /// <response code="422">Invalid query parameters</response>
+        /// <remarks>
+        /// Query parameters:
+        /// - **Page** / **PageSize** / **SortBy** / **SortOrder** / **Search**  
+        /// - **UserId**, **RoomId**, **CompletedAfter**, **CompletedBefore** (UTC)  
+        /// - **WeekStarting** (UTC Monday), **ThisWeekOnly**, **HasPhoto**  
+        ///
+        /// Example:  
+        /// `GET /api/executions/household/{householdId}?roomId=...&amp;completedAfter=2025-10-01T00:00:00Z`
+        /// </remarks>
         [HttpGet("household/{householdId:guid}")]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<ExecutionDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

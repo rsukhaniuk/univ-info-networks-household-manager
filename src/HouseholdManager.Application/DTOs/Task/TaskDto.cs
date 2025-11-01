@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Task
@@ -55,11 +56,13 @@ namespace HouseholdManager.Application.DTOs.Task
         /// <summary>
         /// Estimated time in minutes
         /// </summary>
+        [JsonIgnore]
         public int EstimatedMinutes { get; set; }
 
         /// <summary>
         /// Formatted estimated time (e.g., "30 min", "1h 30m")
         /// </summary>
+        [JsonIgnore]
         public string FormattedEstimatedTime { get; set; } = string.Empty;
 
         /// <summary>

@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Swashbuckle.AspNetCore.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Execution
@@ -79,6 +81,8 @@ namespace HouseholdManager.Application.DTOs.Execution
         /// <summary>
         /// Formatted time ago (e.g., "2 hours ago", "Just now")
         /// </summary>
+        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true, Description = "Generated internally, hidden from response")]
         public string TimeAgo { get; set; } = string.Empty;
 
         /// <summary>

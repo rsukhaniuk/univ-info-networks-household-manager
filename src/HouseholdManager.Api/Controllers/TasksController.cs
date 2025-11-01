@@ -36,16 +36,30 @@ namespace HouseholdManager.Api.Controllers
         #region CRUD Operations
 
         /// <summary>
-        /// Get all tasks for a household with optional filters
+        /// Get all tasks for a household with optional filtering, sorting, and pagination
         /// </summary>
-        /// <param name="householdId">Household ID</param>
-        /// <param name="queryParameters">Query parameters for filtering and pagination</param>
+        /// <param name="householdId">Household ID (from route)</param>
+        /// <param name="queryParameters">Query parameters for filtering, sorting, and pagination</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Paged list of tasks</returns>
-        /// <response code="200">Returns filtered task list</response>
-        /// <response code="401">Unauthorized - missing/invalid authentication</response>
-        /// <response code="403">Forbidden - user is not a member of the household</response>
-        /// <response code="404">Not Found - household not found</response>
+        /// <returns>Paginated list of tasks within the specified household</returns>
+        /// <remarks>
+        /// Query parameters:
+        /// - **Page**: Page number (default: 1)  
+        /// - **PageSize**: Number of items per page (default: 20, max: 100)  
+        /// - **SortBy**: Sort field (e.g., "Priority", "CreatedAt", "Name")  
+        /// - **SortOrder**: "asc" or "desc" (default: "desc")  
+        /// - **Search**: Search by task name or description  
+        /// - **RoomId**: Filter tasks belonging to a specific room (GUID)  
+        /// - **Type**: Filter by task type ("Regular" or "OneTime")  
+        /// - **Priority**: Filter by task priority ("Low", "Medium", "High")  
+        /// - **AssignedUserId**: Filter by assigned user (Auth0 user ID)  
+        /// - **IsActive**: Filter active/inactive tasks (true/false)  
+        /// - **IsOverdue**: Filter overdue tasks (true/false) — applies to OneTime tasks  
+        /// - **ScheduledWeekday**: Filter by scheduled weekday (e.g., "Monday") — applies to Regular tasks  
+        ///
+        /// Example:  
+        /// `GET /api/households/{householdId}/tasks?page=1&amp;pageSize=10&amp;sortBy=Priority&amp;sortOrder=desc&amp;type=Regular&amp;isActive=true`
+        /// </remarks>
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<TaskDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -205,10 +219,36 @@ namespace HouseholdManager.Api.Controllers
         /// <summary>
         /// Create a new task in a household
         /// </summary>
-        /// <param name="householdId">Household ID</param>
+        /// <param name="householdId">Household ID (from route)</param>
         /// <param name="request">Task creation data</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Created task</returns>
+        /// <remarks>
+        /// Request body parameters:
+        /// - **Title**: Task title (required, max 200 characters)  
+        /// - **Description**: Optional task description (max 1000 characters)  
+        /// - **Type**: Task type ("Regular" or "OneTime")  
+        /// - **Priority**: Task priority ("Low", "Medium", "High")  
+        /// - **RoomId**: ID of the room where this task is performed (required)  
+        /// - **AssignedUserId**: Optional Auth0 user ID of the assigned member  
+        /// - **IsActive**: Whether the task is active (true/false, default: true)  
+        /// - **DueDate**: Due date for OneTime tasks (UTC format, optional)  
+        /// - **ScheduledWeekday**: Weekday for Regular tasks (optional, e.g. "Monday")  
+        ///
+        /// Example:  
+        /// ```json
+        /// {
+        ///   "title": "Clean kitchen",
+        ///   "description": "Wipe counters and mop floor",
+        ///   "type": "Regular",
+        ///   "priority": "High",
+        ///   "roomId": "bcd7b1e8-73f2-4a59-8eab-d7a7b6e1b4e2",
+        ///   "assignedUserId": "auth0|690378562126962460b261ea",
+        ///   "isActive": true,
+        ///   "scheduledWeekday": "Monday"
+        /// }
+        /// ```
+        /// </remarks>
         /// <response code="201">Task created successfully</response>
         /// <response code="400">Bad Request - invalid data</response>
         /// <response code="401">Unauthorized</response>
@@ -345,7 +385,7 @@ namespace HouseholdManager.Api.Controllers
         public async Task<ActionResult<ApiResponse<TaskDto>>> AssignTask(
             [FromRoute] Guid householdId,
             [FromRoute] Guid taskId,
-            [FromBody] AssignTaskRequest request,
+            [FromQuery] AssignTaskRequest request,
             CancellationToken cancellationToken = default)
         {
             var userId = GetCurrentUserId();

@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Swashbuckle.AspNetCore.Annotations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Execution
@@ -21,6 +23,8 @@ namespace HouseholdManager.Application.DTOs.Execution
         /// <summary>
         /// Optional photo path (set by file upload endpoint)
         /// </summary>
+        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true, Description = "Managed internally; not included in requests")]
         [StringLength(260)]
         public string? PhotoPath { get; set; }
     }

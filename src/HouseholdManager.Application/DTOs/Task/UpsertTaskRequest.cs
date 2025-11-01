@@ -1,9 +1,12 @@
 ﻿using HouseholdManager.Domain.Enums;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Task
@@ -17,12 +20,17 @@ namespace HouseholdManager.Application.DTOs.Task
         /// <summary>
         /// Task ID (null for create, value for update)
         /// </summary>
+        [SwaggerSchema(ReadOnly = true, Description = "Used only for update")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Guid? Id { get; set; }
 
         /// <summary>
         /// Household ID that this task belongs to
         /// </summary>
         [Required(ErrorMessage = "Household ID is required")]
+        [JsonIgnore] // не приймається з JSON
+        [BindNever]  // не біндиться з запиту
+        [SwaggerSchema(ReadOnly = true, Description = "Comes from route")]
         public Guid HouseholdId { get; set; }
 
         /// <summary>
@@ -52,7 +60,10 @@ namespace HouseholdManager.Application.DTOs.Task
 
         /// <summary>
         /// Estimated time to complete in minutes (5 minutes to 8 hours)
+        /// Managed internally, not included in client requests.
         /// </summary>
+        [SwaggerSchema(ReadOnly = true, Description = "Managed internally, not included in requests")]
+        [JsonIgnore] // не показувати у Swagger і не приймати з body
         [Range(5, 480, ErrorMessage = "Estimated time must be between 5 minutes and 8 hours")]
         public int EstimatedMinutes { get; set; } = 30;
 
@@ -85,6 +96,8 @@ namespace HouseholdManager.Application.DTOs.Task
         /// <summary>
         /// Concurrency control for optimistic locking
         /// </summary>
+        [SwaggerSchema(ReadOnly = true, Description = "Used for concurrency check")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public byte[]? RowVersion { get; set; }
     }
 }
