@@ -8,11 +8,12 @@ import { TaskDto, TaskPriority, TaskType, TaskQueryParameters } from '../../../c
 import { PagedResult } from '../../../core/models/api-response.model';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, UtcDatePipe],
   templateUrl: './task-list.component.html',
   styleUrl: './task-list.component.scss'
 })

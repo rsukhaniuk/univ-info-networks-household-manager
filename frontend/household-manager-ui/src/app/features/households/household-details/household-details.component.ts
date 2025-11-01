@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HouseholdService } from '../services/household.service';
 import { HouseholdDetailsDto, HouseholdMemberDto } from '../../../core/models/household.model';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-household-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, UtcDatePipe],
   templateUrl: './household-details.component.html',
   styleUrl: './household-details.component.scss'
 })

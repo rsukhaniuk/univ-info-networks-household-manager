@@ -5,11 +5,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { UserService } from './services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserProfileDto, UpdateProfileRequest } from '../../core/models/user.model';
+import { UtcDatePipe } from '../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })

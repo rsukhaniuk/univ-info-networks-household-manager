@@ -97,7 +97,7 @@
                     <div class="col-sm-6">
                       <div class="d-flex align-items-center text-muted">
                         <i class="fas fa-calendar me-2"></i>
-                        <span>Created {{ roomDetails.room.createdAt | date : 'medium' }}</span>
+                        <span>Created {{ roomDetails.room.createdAt | utcDate : 'medium' }}</span>
                       </div>
                     </div>
                   </div>

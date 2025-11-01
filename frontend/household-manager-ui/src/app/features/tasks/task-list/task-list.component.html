@@ -225,7 +225,7 @@
                         @if (task.type === TaskType.OneTime && task.dueDate) {
                           <i class="fas fa-calendar-alt text-muted me-1"></i>
                           <span [class.text-danger]="task.isOverdue" [class.fw-bold]="task.isOverdue">
-                            {{ task.dueDate | date:'short' }}
+                            {{ task.dueDate | utcDate:'short' }}
                           </span>
                         } @else if (task.type === TaskType.Regular && task.scheduledWeekday !== undefined) {
                           <i class="fas fa-calendar-week text-muted me-1"></i>

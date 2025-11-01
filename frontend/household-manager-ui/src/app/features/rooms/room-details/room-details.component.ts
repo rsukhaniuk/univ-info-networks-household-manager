@@ -4,11 +4,12 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { RoomService } from '../services/room.service';
 import { RoomWithTasksDto } from '../../../core/models/room.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-room-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, UtcDatePipe],
   templateUrl: './room-details.component.html',
   styleUrl: './room-details.component.scss',
 })

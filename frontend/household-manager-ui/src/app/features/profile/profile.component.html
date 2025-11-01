@@ -128,7 +128,7 @@
                 <label class="form-label">Member Since</label>
                 <input type="text" 
                        class="form-control" 
-                       [value]="profile.user.createdAt | date:'longDate'" 
+                       [value]="profile.user.createdAt | utcDate:'longDate'" 
                        disabled 
                        readonly>
               </div>
@@ -199,7 +199,7 @@
                         </p>
                         <p class="mb-0 text-muted small">
                           <i class="fas fa-calendar me-1"></i>
-                          Joined {{ household.joinedAt | date:'mediumDate' }}
+                          Joined {{ household.joinedAt | utcDate:'mediumDate' }}
                         </p>
                       </div>
 
@@ -299,7 +299,7 @@
               <div class="text-center">
                 <small class="text-muted">
                   <i class="fas fa-clock me-1"></i>
-                  Last activity: {{ profile.stats.lastActivity | date:'medium' }}
+                  Last activity: {{ profile.stats.lastActivity | utcDate:'medium' }}
                 </small>
               </div>
             }

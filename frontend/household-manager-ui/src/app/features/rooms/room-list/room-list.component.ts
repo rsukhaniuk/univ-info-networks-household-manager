@@ -6,11 +6,12 @@ import { HouseholdService } from '../../households/services/household.service';
 import { RoomDto } from '../../../core/models/room.model';
 import { HouseholdDto, HouseholdDetailsDto } from '../../../core/models/household.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, UtcDatePipe],
   templateUrl: './room-list.component.html',
   styleUrl: './room-list.component.scss'
 })

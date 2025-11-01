@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 import { ExecutionService } from '../services/execution.service';
 import { ExecutionDto, ExecutionQueryParameters } from '../../../core/models/execution.model';
 import { PagedResult } from '../../../core/models/api-response.model';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-execution-history',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, UtcDatePipe],
   templateUrl: './execution-history.component.html',
   styleUrl: './execution-history.component.scss'
 })

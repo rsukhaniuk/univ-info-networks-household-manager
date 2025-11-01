@@ -161,7 +161,7 @@
                     } @else if (taskDetails.task.dueDate) {
                       <span [class.text-danger]="taskDetails.task.isOverdue" 
                             [class.fw-bold]="taskDetails.task.isOverdue">
-                        {{ taskDetails.task.dueDate | date:'medium' }}
+                        {{ taskDetails.task.dueDate | utcDate:'medium' }}
                         @if (taskDetails.task.isOverdue) {
                           <i class="fas fa-exclamation-triangle text-danger ms-1"></i>
                         }
@@ -173,7 +173,7 @@
                   <th>
                     <i class="fas fa-calendar-plus text-muted me-2"></i>Created
                   </th>
-                  <td>{{ taskDetails.task.createdAt | date:'medium' }}</td>
+                  <td>{{ taskDetails.task.createdAt | utcDate:'medium' }}</td>
                 </tr>
                 @if (taskDetails.task.isCompletedThisWeek && taskDetails.task.type === TaskType.Regular) {
                   <tr>
@@ -240,7 +240,7 @@
                         </div>
                         <small class="text-muted d-block mb-2">
                           <i class="fas fa-calendar me-1"></i>
-                          {{ execution.completedAt | date:'medium' }}
+                          {{ execution.completedAt | utcDate:'medium' }}
                         </small>
                         @if (execution.notes) {
                           <p class="mb-0 text-muted small">

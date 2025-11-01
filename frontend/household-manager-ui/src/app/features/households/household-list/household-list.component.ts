@@ -15,6 +15,7 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { HouseholdDto, HouseholdRole } from '../../../core/models/household.model';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 type SortBy = 'name' | 'createdAt' | 'memberCount';
 type SortOrder = 'asc' | 'desc';
@@ -29,7 +30,8 @@ type SortOrder = 'asc' | 'desc';
     InputTextModule,
     ButtonModule,
     SkeletonModule,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    UtcDatePipe
   ],
   templateUrl: './household-list.component.html',
   styleUrls: ['./household-list.component.scss'],

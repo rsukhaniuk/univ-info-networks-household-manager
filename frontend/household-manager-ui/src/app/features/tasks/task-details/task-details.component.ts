@@ -7,11 +7,12 @@ import { ExecutionService } from '../../executions/services/execution.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TaskDetailsDto, TaskPriority, TaskType } from '../../../core/models/task.model';
 import { ExecutionDto, CompleteTaskRequest } from '../../../core/models/execution.model';
+import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-task-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe],
   templateUrl: './task-details.component.html',
   styleUrl: './task-details.component.scss'
 })
