@@ -1,47 +1,54 @@
-<div class="container">
+<div class="container room-details-container">
   <!-- Breadcrumb -->
-  @if (roomDetails) {
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <a routerLink="/households" class="text-decoration-none">
-          <i class="fas fa-home me-1"></i>My Households
-        </a>
-      </li>
-      <li class="breadcrumb-item">
-        <a
-          [routerLink]="['/households', roomDetails.room.householdId]"
-          class="text-decoration-none"
-        >
-          {{ roomDetails.room.householdId }}
-        </a>
-      </li>
-      <li class="breadcrumb-item">
-        <a
-          [routerLink]="['/rooms']"
-          [queryParams]="{ householdId: roomDetails.room.householdId }"
-          class="text-decoration-none"
-        >
-          Rooms
-        </a>
-      </li>
-      <li class="breadcrumb-item active">{{ roomDetails.room.name }}</li>
-    </ol>
+  <nav aria-label="breadcrumb" class="mb-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/households" class="text-decoration-none">
+              <i class="fas fa-home me-1"></i>My Households
+            </a>
+          </li>
+          @if (household) {
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/households', household.id]" class="text-decoration-none">
+              {{ household.name }}
+            </a>
+          </li>
+          }
+          <li class="breadcrumb-item">
+            <a
+              [routerLink]="['/rooms']"
+              [queryParams]="{ householdId: householdId }"
+              class="text-decoration-none"
+            >
+              Rooms
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ roomDetails?.room?.name || 'Loading...' }}
+          </li>
+        </ol>
+      </div>
+    </div>
   </nav>
-  }
 
   <!-- Messages -->
-  @if (successMessage) {
-  <div class="alert alert-success alert-dismissible fade show">
-    <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
-    <button type="button" class="btn-close" (click)="successMessage = null"></button>
-  </div>
-  } @if (error) {
-  <div class="alert alert-danger alert-dismissible fade show">
-    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-    <button type="button" class="btn-close" (click)="error = null"></button>
-  </div>
-  }
+  <!-- <div class="row justify-content-center mb-4">
+    <div class="col-lg-10">
+      @if (successMessage) {
+      <div class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = null"></button>
+      </div>
+      } @if (error) {
+      <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" (click)="error = null"></button>
+      </div>
+      }
+    </div>
+  </div> -->
 
   <!-- Content -->
   @if (roomDetails) {
@@ -75,12 +82,12 @@
                 <!-- Info -->
                 <div class="flex-grow-1">
                   <h1 class="h3 mb-2">{{ roomDetails.room.name }}</h1>
-                  <h1 class="h3 mb-2">{{ roomDetails.room.name }}</h1>
                   @if (isSystemAdmin) {
                   <span class="badge bg-danger mb-2">
                     <i class="fas fa-shield-alt me-1"></i>System Admin
                   </span>
-                  } @if (roomDetails.room.description) {
+                  }
+                  @if (roomDetails.room.description) {
                   <p class="text-muted mb-3">{{ roomDetails.room.description }}</p>
                   }
 
@@ -123,7 +130,7 @@
                 </button>
                 }
 
-                <button type="button" class="btn btn-outline-danger" (click)="openDeleteModal()">
+                <button type="button" class="btn btn-outline-danger" (click)="confirmDeleteRoom()">
                   <i class="fas fa-trash me-1"></i>Delete Room
                 </button>
               </div>
@@ -325,43 +332,10 @@
 </div>
 }
 
-<!-- Delete Modal -->
-@if (showDeleteModal && roomDetails) {
-<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header border-0">
-        <h5 class="modal-title text-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Delete Room
-        </h5>
-        <button type="button" class="btn-close" (click)="closeDeleteModal()"></button>
-      </div>
-      <div class="modal-body">
-        <p>
-          Are you sure you want to delete <strong>{{ roomDetails.room.name }}</strong
-          >?
-        </p>
-
-        @if (roomDetails.activeTasks.length > 0) {
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          <strong>Warning:</strong> This room has {{ roomDetails.activeTasks.length }} task(s).
-          Deleting will also delete all tasks and execution history.
-        </div>
-        }
-
-        <div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          <strong>Warning:</strong> This action cannot be undone.
-        </div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
-        <button type="button" class="btn btn-danger" (click)="confirmDelete()">
-          <i class="fas fa-trash me-1"></i>Delete Room
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-}
+<!-- Confirmation Dialog -->
+<app-confirmation-dialog
+  [show]="showConfirmDialog"
+  [data]="confirmDialogData"
+  (confirmed)="onDialogConfirmed()"
+  (cancelled)="onDialogCancelled()"
+></app-confirmation-dialog>

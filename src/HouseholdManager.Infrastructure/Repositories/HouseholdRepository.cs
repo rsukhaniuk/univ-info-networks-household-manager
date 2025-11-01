@@ -20,7 +20,8 @@ namespace HouseholdManager.Infrastructure.Repositories
             return await _dbSet
                 .Include(h => h.Members)
                     .ThenInclude(m => m.User)
-                .Include(h => h.Rooms) // Add rooms for completeness
+                .Include(h => h.Rooms)
+                .Include(h => h.Tasks)
                 .OrderByDescending(h => h.CreatedAt)
                 .ToListAsync(cancellationToken);
         }
@@ -31,7 +32,9 @@ namespace HouseholdManager.Infrastructure.Repositories
             return await _dbSet
                 .Include(h => h.Members)
                     .ThenInclude(m => m.User)
-                .Include(h => h.Rooms) // Add rooms to the query
+                .Include(h => h.Rooms)
+                    .ThenInclude(r => r.Tasks)
+                .Include(h => h.Tasks.Where(t => t.IsActive))
                 .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
         }
 
@@ -39,6 +42,8 @@ namespace HouseholdManager.Infrastructure.Repositories
         {
             return await _dbSet
                 .Include(h => h.Members)
+                .Include(h => h.Rooms)
+                .Include(h => h.Tasks)
                 .Where(h => h.Members.Any(m => m.UserId == userId))
                 .ToListAsync(cancellationToken);
         }

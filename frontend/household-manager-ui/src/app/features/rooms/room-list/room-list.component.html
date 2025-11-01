@@ -1,45 +1,58 @@
-<div class="container">
+<div class="container room-list-container">
+  <!-- ========================================
+       HEADER SECTION
+       ======================================== -->
   <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <a routerLink="/households" class="text-decoration-none">
-          <i class="fas fa-home me-1"></i>My Households
-        </a>
-      </li>
-      @if (household) {
-      <li class="breadcrumb-item">
-        <a [routerLink]="['/households', household.id]" class="text-decoration-none">
-          {{ household.name }}
-        </a>
-      </li>
-      }
-      <li class="breadcrumb-item active" aria-current="page">Rooms</li>
-    </ol>
+  <nav aria-label="breadcrumb" class="mb-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/households" class="text-decoration-none">
+              <i class="fas fa-home me-1"></i>My Households
+            </a>
+          </li>
+          @if (household) {
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/households', household.id]" class="text-decoration-none">
+              {{ household.name }}
+            </a>
+          </li>
+          }
+          <li class="breadcrumb-item active" aria-current="page">Rooms</li>
+        </ol>
+      </div>
+    </div>
   </nav>
 
-  <!-- Page Header -->
+  <!-- ========================================
+       HEADER SECTION
+       ======================================== -->
   <div class="row justify-content-center mb-4">
     <div class="col-lg-10">
-      <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Title -->
         <div>
-          <h1 class="h3 mb-1">
+          <h1 class="h3 mb-1 d-flex align-items-center">
             <i class="fas fa-door-open text-success me-2"></i>
-            Rooms in {{ household?.name || 'Loading...' }}
-            @if (isSystemAdmin) {
-            <span class="badge bg-danger ms-2">
-              <i class="fas fa-shield-alt me-1"></i>System Admin
-            </span>
+            @if (household) {
+            <span>Rooms in {{ household.name }}</span>
+            } @else {
+            <span>Rooms</span>
+            }
+            @if (isSystemAdmin$ | async) {
+            <span class="badge bg-danger ms-2">System Admin</span>
             }
           </h1>
           <p class="text-muted mb-0">Manage and organize rooms in this household</p>
         </div>
 
+        <!-- Action Buttons -->
         @if (canManageRooms) {
         <a
           [routerLink]="['/rooms/create']"
           [queryParams]="{ householdId: householdId }"
-          class="btn btn-success btn-lg"
+          class="btn btn-success"
         >
           <i class="fas fa-plus me-1"></i>Add Room
         </a>
@@ -48,45 +61,19 @@
     </div>
   </div>
 
-  <!-- Messages -->
-  @if (successMessage) {
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="alert alert-success alert-dismissible fade show">
-        <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
-        <button type="button" class="btn-close" (click)="successMessage = null"></button>
-      </div>
-    </div>
-  </div>
-  } @if (error) {
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="alert alert-danger alert-dismissible fade show">
-        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-        <button type="button" class="btn-close" (click)="error = null"></button>
-      </div>
-    </div>
-  </div>
-  }
-
-  <!-- Loading -->
-  @if (isLoading) {
-  <div class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
-    <p class="text-muted mt-3">Loading rooms...</p>
-  </div>
-  }
-
-  <!-- Empty State -->
-  @else if (rooms.length === 0) {
+  <!-- ========================================
+       EMPTY STATE
+       ======================================== -->
+  @if (!loading && totalRecords === 0 && !searchQuery) {
   <div class="row justify-content-center">
     <div class="col-lg-10">
       <div class="card shadow-sm">
         <div class="card-body text-center py-5">
-          <i class="fas fa-door-open fa-3x text-muted mb-3"></i>
-          <h4 class="text-muted">No Rooms Found</h4>
+          <i class="fas fa-door-open fa-4x text-success mb-3 opacity-50"></i>
+          <h4 class="text-muted mb-3">No Rooms Found</h4>
           <p class="text-muted mb-4">
-            This household doesn't have any rooms yet. Add your first room to get started!
+            This household doesn't have any rooms yet.<br />
+            Add your first room to get started!
           </p>
 
           @if (canManageRooms) {
@@ -98,7 +85,7 @@
             <i class="fas fa-plus me-1"></i>Add First Room
           </a>
           } @else {
-          <a [routerLink]="['/households', householdId]" class="btn btn-outline-secondary">
+          <a [routerLink]="['/households', householdId]" class="btn btn-outline-secondary btn-lg">
             <i class="fas fa-arrow-left me-1"></i>Back to Household
           </a>
           }
@@ -108,187 +95,259 @@
   </div>
   }
 
-  <!-- Rooms Table -->
+  <!-- ========================================
+       PRIMENG TABLE
+       ======================================== -->
   @else {
   <div class="row justify-content-center">
     <div class="col-lg-10">
       <div class="card shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-list me-2"></i>Rooms ({{ rooms.length }})
-          </h5>
-        </div>
-        <div class="card-body">
-          <!-- Search -->
-          <div class="mb-3">
-            <input
-              type="text"
-              class="form-control"
-              placeholder="Search rooms..."
-              [value]="searchQuery"
-              (input)="onSearch($any($event.target).value)"
-            />
+        <div class="card-body p-0">
+          <!-- Search & Page Size Controls -->
+          <div class="p-3 border-bottom bg-light">
+            <div class="search-container">
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="fas fa-search text-muted"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Search rooms by name or description..."
+                  maxlength="100"
+                  [value]="searchQuery"
+                  (input)="onSearch($any($event.target).value)"
+                />
+              </div>
+
+              <select
+                class="form-select"
+                style="max-width: 130px"
+                [value]="rows"
+                (change)="onPageSizeChange(+$any($event.target).value)"
+              >
+                <option value="5">5 per page</option>
+                <option value="10">10 per page</option>
+                <option value="20">20 per page</option>
+                <option value="50">50 per page</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Table -->
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th><i class="fas fa-image me-1"></i>Photo</th>
-                  <th (click)="onSort('name')" style="cursor: pointer">
-                    <i class="fas fa-door-open me-1"></i>Name @if (sortBy === 'name') {
-                    <i class="fas fa-sort-{{ sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                    }
-                  </th>
-                  <th><i class="fas fa-align-left me-1"></i>Description</th>
-                  <th><i class="fas fa-tasks me-1"></i>Tasks</th>
-                  <th><i class="fas fa-cogs me-1"></i>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (room of filteredRooms; track room.id) {
-                <tr>
-                  <!-- Photo -->
-                  <td>
-                    @if (room.photoUrl) {
-                    <img
-                      [src]="room.photoUrl"
-                      [alt]="room.name"
-                      class="rounded"
-                      style="width: 64px; height: 64px; object-fit: cover"
-                    />
-                    } @else {
-                    <div
-                      class="bg-light rounded d-flex align-items-center justify-content-center"
-                      style="width: 64px; height: 64px"
+          <!-- PrimeNG Table -->
+          <p-table
+            [value]="items"
+            [lazy]="true"
+            [paginator]="true"
+            [rows]="rows"
+            [first]="first"
+            [totalRecords]="totalRecords"
+            [loading]="loading"
+            (onLazyLoad)="onLazyLoad($event)"
+            [sortField]="'name'"
+            [sortOrder]="1"
+            [resizableColumns]="true"
+            [rowHover]="true"
+            class="p-datatable-sm"
+            [tableStyle]="{ 'min-width': '50rem' }"
+          >
+            <!-- Table Header -->
+            <ng-template pTemplate="header">
+              <tr>
+                <!-- Photo Column -->
+                <th style="width: 10%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-image text-muted me-2"></i>
+                    <span>Photo</span>
+                  </div>
+                </th>
+
+                <!-- Room Name Column -->
+                <th pResizableColumn pSortableColumn="name" style="width: 30%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-door-open text-success me-2"></i>
+                    <span>Room</span>
+                    <p-sortIcon field="name"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Description Column -->
+                <th style="width: 30%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-align-left text-info me-2"></i>
+                    <span>Description</span>
+                  </div>
+                </th>
+
+                <!-- Tasks Column -->
+                <th pSortableColumn="activeTaskCount" style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-tasks text-warning me-2"></i>
+                    <span>Tasks</span>
+                    <p-sortIcon field="activeTaskCount"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Created Column -->
+                <th pSortableColumn="createdAt" style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar text-primary me-2"></i>
+                    <span>Created</span>
+                    <p-sortIcon field="createdAt"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Actions Column -->
+                <th style="width: 15%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-cogs text-secondary me-2"></i>
+                    <span>Actions</span>
+                  </div>
+                </th>
+              </tr>
+            </ng-template>
+
+            <!-- Table Body -->
+            <ng-template pTemplate="body" let-room>
+              <tr>
+                <!-- Photo -->
+                <td>
+                  @if (room.photoUrl) {
+                  <img
+                    [src]="room.photoUrl"
+                    [alt]="room.name"
+                    class="rounded shadow-sm"
+                    style="width: 64px; height: 64px; object-fit: cover"
+                  />
+                  } @else {
+                  <div
+                    class="bg-light rounded d-flex align-items-center justify-content-center"
+                    style="width: 64px; height: 64px"
+                  >
+                    <i class="fas fa-door-open text-muted fa-lg"></i>
+                  </div>
+                  }
+                </td>
+
+                <!-- Room Name -->
+                <td>
+                  <div class="room-card-inline">
+                    <div class="room-info">
+                      <h6 class="mb-0">
+                        <a
+                          [routerLink]="['/rooms', room.id]"
+                          [queryParams]="{ householdId: householdId }"
+                        >
+                          {{ room.name }}
+                        </a>
+                      </h6>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Description -->
+                <td>
+                  @if (room.description) { @if (room.description.length > 60) {
+                  <span [title]="room.description">
+                    {{ room.description.substring(0, 60) }}...
+                  </span>
+                  } @else {
+                  <span>{{ room.description }}</span>
+                  } } @else {
+                  <span class="text-muted fst-italic">No description</span>
+                  }
+                </td>
+
+                <!-- Tasks -->
+                <td>
+                  <span class="badge bg-info rounded-pill px-3 py-2">
+                    <i class="fas fa-tasks me-1"></i>
+                    {{ room.activeTaskCount }}
+                  </span>
+                </td>
+
+                <!-- Created Date -->
+                <td>
+                  <small class="text-muted">
+                    <i class="far fa-calendar-alt me-1"></i>
+                    {{ room.createdAt | utcDate : 'MMM d, y' }}
+                  </small>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a
+                      [routerLink]="['/rooms', room.id]"
+                      [queryParams]="{ householdId: householdId }"
+                      class="btn btn-primary"
+                      title="View Details"
                     >
-                      <i class="fas fa-door-open text-muted fa-lg"></i>
-                    </div>
+                      <i class="fas fa-eye"></i>
+                    </a>
+
+                    @if (canManageRooms) {
+                    <a
+                      [routerLink]="['/rooms', room.id, 'edit']"
+                      [queryParams]="{ householdId: householdId }"
+                      class="btn btn-warning"
+                      title="Edit"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      (click)="confirmDelete(room)"
+                      title="Delete Room"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
                     }
-                  </td>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
 
-                  <!-- Name -->
-                  <td>
-                    <h6 class="mb-0">
-                      <a
-                        [routerLink]="['/rooms', room.id]"
-                        [queryParams]="{ householdId: householdId }"
-                        class="text-decoration-none"
-                      >
-                        {{ room.name }}
-                      </a>
-                    </h6>
-                    <small class="text-muted">
-                      Created {{ room.createdAt | utcDate : 'short' }}
-                    </small>
-                  </td>
-
-                  <!-- Description -->
-                  <td>
-                    @if (room.description) { @if (room.description.length > 50) {
-                    <span [title]="room.description">
-                      {{ room.description.substring(0, 50) }}...
-                    </span>
-                    } @else {
-                    <span>{{ room.description }}</span>
-                    } } @else {
-                    <span class="text-muted">No description</span>
-                    }
-                  </td>
-
-                  <!-- Tasks Count -->
-                  <td>
-                    <span class="badge bg-info">{{ room.activeTaskCount }}</span>
-                    <small class="text-muted d-block">active tasks</small>
-                  </td>
-
-                  <!-- Actions -->
-                  <td>
-                    <div class="btn-group btn-group-sm">
-                      <!-- View Details - Available for everyone -->
-                      <a
-                        [routerLink]="['/rooms', room.id]"
-                        [queryParams]="{ householdId: householdId }"
-                        class="btn btn-outline-primary"
-                        title="View Details"
-                      >
-                        <i class="fas fa-eye"></i>
-                      </a>
-
-                      <!-- Edit & Delete - Only for Owner OR SystemAdmin -->
-                      @if (canManageRooms) {
-                      <a
-                        [routerLink]="['/rooms', room.id, 'edit']"
-                        [queryParams]="{ householdId: householdId }"
-                        class="btn btn-outline-warning"
-                        title="Edit"
-                      >
-                        <i class="fas fa-edit"></i>
-                      </a>
-
-                      <button
-                        type="button"
-                        class="btn btn-outline-danger"
-                        (click)="openDeleteModal(room)"
-                        title="Delete"
-                      >
-                        <i class="fas fa-trash"></i>
-                      </button>
-                      }
+            <!-- Loading State -->
+            <ng-template pTemplate="loadingbody">
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+              <tr>
+                <td colspan="6">
+                  <div class="d-flex align-items-center py-2">
+                    <p-skeleton shape="square" size="64px" class="me-3"></p-skeleton>
+                    <div class="flex-grow-1">
+                      <p-skeleton width="60%" height="1.2rem" class="mb-2"></p-skeleton>
+                      <p-skeleton width="40%" height="0.9rem"></p-skeleton>
                     </div>
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                  </div>
+                </td>
+              </tr>
+              }
+            </ng-template>
+
+            <!-- Empty State in Table -->
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center py-5">
+                  <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+                  <h5 class="text-muted">No rooms found</h5>
+                  <p class="text-muted mb-0">Try adjusting your search criteria</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
         </div>
       </div>
     </div>
   </div>
   }
+
+  <!-- Confirmation Dialog -->
+  <app-confirmation-dialog
+    [show]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()"
+  ></app-confirmation-dialog>
 </div>
-
-<!-- Delete Modal -->
-@if (deleteModalRoom) {
-<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header border-0">
-        <h5 class="modal-title text-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Delete Room
-        </h5>
-        <button type="button" class="btn-close" (click)="deleteModalRoom = null"></button>
-      </div>
-      <div class="modal-body">
-        <p>
-          Are you sure you want to delete <strong>{{ deleteModalRoom.name }}</strong
-          >?
-        </p>
-
-        @if (deleteModalRoom.activeTaskCount > 0) {
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          <strong>Warning:</strong> This room has {{ deleteModalRoom.activeTaskCount }} active
-          task(s). Deleting will also delete all tasks and execution history.
-        </div>
-        }
-
-        <div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          <strong>Warning:</strong> This action cannot be undone.
-        </div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary" (click)="deleteModalRoom = null">
-          Cancel
-        </button>
-        <button type="button" class="btn btn-danger" (click)="confirmDelete()">
-          <i class="fas fa-trash me-1"></i>Delete Room
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-}

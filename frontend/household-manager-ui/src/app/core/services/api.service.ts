@@ -65,10 +65,14 @@ export class ApiService {
 
   /**
    * Upload file (multipart/form-data)
+   * @param endpoint API endpoint
+   * @param file File to upload
+   * @param fieldName Form field name for the file (default: 'file')
+   * @param additionalData Additional form data fields
    */
-  upload<T>(endpoint: string, file: File, additionalData?: any): Observable<ApiResponse<T>> {
+  upload<T>(endpoint: string, file: File, fieldName: string = 'file', additionalData?: any): Observable<ApiResponse<T>> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append(fieldName, file);
 
     if (additionalData) {
       Object.keys(additionalData).forEach(key => {

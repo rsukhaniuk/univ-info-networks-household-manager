@@ -24,7 +24,7 @@ namespace HouseholdManager.Application.Mapping
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.FullName))
                 .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Task.Room.Name))
                 .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src =>
-                    !string.IsNullOrEmpty(src.PhotoPath) ? $"/uploads/{src.PhotoPath}" : null))
+                    !string.IsNullOrEmpty(src.PhotoPath) ? $"/{src.PhotoPath}" : null))
                 .ForMember(dest => dest.TimeAgo, opt => opt.MapFrom(src => src.TimeAgo))
                 .ForMember(dest => dest.IsThisWeek, opt => opt.MapFrom(src => src.IsThisWeek));
 

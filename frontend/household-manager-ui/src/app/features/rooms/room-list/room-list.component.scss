@@ -1,99 +1,441 @@
-@use '../../../shared/styles/index' as *;
+@use '../../../shared/styles' as *;
 
-// ========================================
-// COMPONENT-SPECIFIC STYLES
-// ========================================
+/* =========================================
+   PAGE CONTAINER
+   ========================================= */
+.room-list-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
+}
 
-// Page header with action button
-.page-header {
+/* =========================================
+   SEARCH BAR
+   ========================================= */
+.search-container {
   display: flex;
-  justify-content: space-between;
+  gap: $spacing-md;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
 
-  h1 {
-    margin-bottom: 0;
+  .input-group {
+    flex: 1;
+    min-width: 250px;
+
+    .input-group-text {
+      background-color: $bg-white;
+      border-right: none;
+      border-color: $border-color;
+    }
+
+    input {
+      border-left: none;
+      border-color: $border-color;
+
+      &:focus {
+        @include input-focus($primary-color);
+        border-left: none;
+      }
+    }
   }
 
-  @media (max-width: 576px) {
-    flex-direction: column;
-    align-items: flex-start;
+  select {
+    min-width: 130px;
+  }
+}
 
-    .btn {
+/* =========================================
+   ROOM CARD INLINE
+   ========================================= */
+.room-card-inline {
+  display: flex;
+  align-items: center;
+
+  .room-info {
+    flex: 1;
+    min-width: 0;
+
+    h6 {
+      @include text-truncate;
+      margin-bottom: 0;
+      font-size: 0.95rem;
+
+      a {
+        color: $text-primary;
+        text-decoration: none;
+        font-weight: $font-weight-semibold;
+        transition: color $transition-fast;
+
+        &:hover {
+          color: $success-color;
+        }
+      }
+    }
+
+    small {
+      @include text-truncate;
+      display: block;
+      color: $text-muted;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+/* =========================================
+   PRIMENG TABLE OVERRIDES
+   ========================================= */
+
+:host ::ng-deep {
+
+  /* TABLE CONTAINER */
+  .p-datatable {
+    background: $bg-white;
+    border-radius: 0;
+    box-shadow: none;
+
+    /* Remove default borders */
+    .p-datatable-wrapper {
+      border: none;
+    }
+
+    /* TABLE HEADER */
+    .p-datatable-thead > tr > th {
+      background-color: $bg-light !important;
+      color: $text-secondary !important;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      padding: $spacing-md ($spacing-sm + 0.25rem);
+      border-bottom: 2px solid $border-color;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      white-space: nowrap;
+      vertical-align: middle;
+
+      /* Sortable columns */
+      &.p-sortable-column {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color $transition-fast;
+
+        &:hover {
+          background-color: darken($bg-light, 3%) !important;
+        }
+
+        /* Active sorted column */
+        &.p-sortable-column-sorted {
+          background-color: lighten($success-color, 45%) !important;
+          color: $success-color !important;
+
+          i {
+            color: $success-color;
+          }
+        }
+      }
+
+      /* Sort icon */
+      .p-sortable-column-icon {
+        margin-left: $spacing-sm;
+        color: $text-muted;
+        font-size: $font-size-xs;
+        transition: color $transition-fast;
+      }
+
+      /* Header icons */
+      i.fas, i.far {
+        font-size: $font-size-sm;
+      }
+    }
+
+    /* TABLE BODY */
+    .p-datatable-tbody > tr {
+      background: $bg-white;
+      border-bottom: 1px solid lighten($border-color, 5%);
+      transition: background-color $transition-fast;
+      height: 85px;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      /* Hover state */
+      &:hover {
+        background-color: $bg-light !important;
+      }
+
+      /* Table cells */
+      > td {
+        padding: 0.875rem ($spacing-sm + 0.25rem);
+        vertical-align: middle;
+        color: $text-primary;
+        font-size: $font-size-base;
+        border-left: none;
+        border-right: none;
+
+        /* Action buttons spacing */
+        .btn-group {
+          display: flex;
+          gap: $spacing-xs;
+        }
+      }
+    }
+
+    /* Empty message */
+    .p-datatable-emptymessage > td {
+      text-align: center;
+      padding: ($spacing-xl + 1rem) $spacing-md;
+      color: $text-muted;
+      background: $bg-white;
+    }
+
+    /* Loading overlay */
+    .p-datatable-loading-overlay {
+      background-color: rgba($bg-white, 0.8);
+      backdrop-filter: blur(2px);
+    }
+  }
+
+  /* PAGINATOR */
+  .p-paginator {
+    background: $bg-white;
+    border-top: 1px solid $border-color;
+    padding: $spacing-md ($spacing-sm + 0.25rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+
+    /* Rows per page dropdown */
+    .p-dropdown {
+      margin-right: $spacing-md;
+      min-width: 80px;
+    }
+
+    /* Page numbers */
+    .p-paginator-pages {
+      display: flex;
+      gap: $spacing-xs;
+    }
+
+    /* All paginator buttons */
+    .p-paginator-page,
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+      min-width: 2.5rem;
+      height: 2.5rem;
+      margin: 0 0.125rem;
+      padding: 0;
+      border: 2px solid $border-color;
+      border-radius: $border-radius;
+      background: $bg-white;
+      color: $success-color;
+      font-weight: $font-weight-medium;
+      font-size: $font-size-sm;
+      cursor: pointer;
+      transition: all $transition-fast;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      &:not(.p-disabled):hover {
+        background-color: $bg-light;
+        border-color: $success-color;
+        color: $success-color;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba($success-color, 0.15);
+      }
+
+      &:not(.p-disabled):active {
+        transform: translateY(0);
+      }
+
+      /* Disabled state */
+      &.p-disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+        background-color: $bg-light;
+        border-color: lighten($border-color, 5%);
+        color: $text-muted;
+      }
+    }
+
+    /* Active page */
+    .p-paginator-page.p-paginator-page-active {
+      background-color: $success-color;
+      border-color: $success-color;
+      color: $bg-white;
+      font-weight: $font-weight-semibold;
+      box-shadow: 0 2px 6px rgba($success-color, 0.3);
+
+      &:hover {
+        background-color: darken($success-color, 8%);
+        border-color: darken($success-color, 8%);
+        transform: none;
+      }
+    }
+
+    /* Current page info */
+    .p-paginator-current {
+      color: $text-muted;
+      font-size: $font-size-sm;
+      padding: 0 $spacing-md;
+    }
+  }
+
+  /* LOADING SKELETON */
+  .p-skeleton {
+    background: linear-gradient(
+      90deg,
+      lighten($border-color, 10%) 25%,
+      lighten($border-color, 15%) 50%,
+      lighten($border-color, 10%) 75%
+    );
+    background-size: 200% 100%;
+    animation: p-skeleton-animation 1.5s ease-in-out infinite;
+    border-radius: $border-radius;
+  }
+
+  @keyframes p-skeleton-animation {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+/* =========================================
+   BADGES
+   ========================================= */
+.badge {
+  font-weight: $font-weight-semibold;
+  padding: $spacing-sm ($spacing-sm + 0.25rem);
+  font-size: 0.8125rem;
+  border-radius: $border-radius-sm;
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+.btn {
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: $font-size-sm;
+  }
+}
+
+.btn-group .btn {
+  &:hover {
+    z-index: 1;
+  }
+}
+
+/* =========================================
+   CARDS
+   ========================================= */
+.card {
+  position: relative;
+  z-index: 0;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba($success-color, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 20px rgba($success-color, 0.15);
+    transform: translateY(-3px);
+    z-index: 1;
+  }
+}
+
+/* =========================================
+   ALERTS
+   ========================================= */
+.alert {
+  border-radius: $border-radius;
+  box-shadow: $shadow-sm;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@include media-max-lg {
+  .search-container {
+    flex-direction: column;
+    align-items: stretch;
+
+    .input-group,
+    select {
       width: 100%;
     }
   }
 }
 
-// Search input styling
-.search-input {
-  margin-bottom: 1rem;
+@include media-max-md {
+  :host ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th {
+      padding: ($spacing-sm + 0.25rem) $spacing-sm;
+      font-size: 0.8125rem;
+    }
 
-  input {
-    border-radius: 8px;
-    border: 2px solid #e9ecef;
-    padding: 0.75rem 1rem;
-
-    &:focus {
-      border-color: #0d6efd;
-      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    .p-datatable-tbody > tr > td {
+      padding: ($spacing-sm + 0.25rem) $spacing-sm;
+      font-size: $font-size-sm;
     }
   }
 }
 
-// Room grid layout (if you want grid view instead of table)
-.room-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+@include media-max-sm {
+  .room-list-container {
+    padding: $spacing-md 0;
+  }
 
-  .room-grid-item {
-    transition: all 0.3s ease;
+  .room-card-inline {
+    flex-direction: column;
+    align-items: flex-start;
 
-    &:hover {
-      transform: translateY(-5px);
+    .room-info {
+      width: 100%;
+      margin-top: $spacing-sm;
     }
   }
-}
 
-// Table row hover effect enhancement
-.room-table tbody tr {
-  cursor: pointer;
-
-  &:hover {
-    background-color: #f1f3f5 !important;
-  }
-}
-
-// Action buttons in table
-.action-buttons {
-  .btn-group {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-    .btn {
-      &:first-child {
-        border-top-left-radius: 6px;
-        border-bottom-left-radius: 6px;
+  :host ::ng-deep {
+    .p-datatable {
+      .p-datatable-thead > tr > th,
+      .p-datatable-tbody > tr > td {
+        padding: $spacing-sm ($spacing-sm - 0.125rem);
+        font-size: 0.8125rem;
       }
+    }
 
-      &:last-child {
-        border-top-right-radius: 6px;
-        border-bottom-right-radius: 6px;
+    .p-paginator {
+      .p-paginator-page,
+      .p-paginator-first,
+      .p-paginator-prev,
+      .p-paginator-next,
+      .p-paginator-last {
+        min-width: 2rem;
+        height: 2rem;
+        font-size: $font-size-xs;
       }
     }
   }
-}
 
-// Delete modal specific styling
-#deleteModal {
-  .modal-body {
-    .alert {
-      margin-bottom: 1rem;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
+  .btn-group .btn {
+    padding: ($spacing-sm - 0.125rem) $spacing-sm;
+    font-size: $font-size-xs;
   }
 }

@@ -21,7 +21,7 @@ namespace HouseholdManager.Application.Mapping
             // Room → RoomDto
             CreateMap<Room, RoomDto>()
                 .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src =>
-                    !string.IsNullOrEmpty(src.PhotoPath) ? $"/uploads/{src.PhotoPath}" : null))
+                    !string.IsNullOrEmpty(src.PhotoPath) ? $"/{src.PhotoPath}" : null))
                 .ForMember(dest => dest.ActiveTaskCount, opt => opt.MapFrom(src => src.Tasks.Count(t => t.IsActive)));
 
             // Room → RoomWithTasksDto (complex mapping with nested data)

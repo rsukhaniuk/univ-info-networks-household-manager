@@ -1,58 +1,110 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
+import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { Subject, debounceTime, finalize } from 'rxjs';
+
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
-import { RoomDto } from '../../../core/models/room.model';
-import { HouseholdDto, HouseholdDetailsDto } from '../../../core/models/household.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { ServerErrorService } from '../../../core/services/server-error.service';
+import { LoadingService } from '../../../core/services/loading.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { RoomDto } from '../../../core/models/room.model';
+import { HouseholdDto } from '../../../core/models/household.model';
+import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+
+type SortBy = 'name' | 'priority' | 'createdAt';
+type SortOrder = 'asc' | 'desc';
 
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, UtcDatePipe],
+  imports: [
+    CommonModule,
+    RouterModule,
+    TableModule,
+    InputTextModule,
+    ButtonModule,
+    SkeletonModule,
+    ConfirmationDialogComponent,
+    UtcDatePipe
+  ],
   templateUrl: './room-list.component.html',
   styleUrl: './room-list.component.scss'
 })
-export class RoomListComponent implements OnInit {
+export class RoomListComponent implements OnInit, OnDestroy {
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
   private route = inject(ActivatedRoute);
-  private authService = inject(AuthService);
+  private auth = inject(AuthService);
+  private errors = inject(ServerErrorService);
+  private loadingService = inject(LoadingService);
+  private toastService = inject(ToastService);
+
+  isSystemAdmin$ = this.auth.isSystemAdmin$();
+  errors$ = this.errors.errors$;
 
   householdId: string = '';
-  household: any = null;
-  rooms: RoomDto[] = [];
-  filteredRooms: RoomDto[] = [];
+  household: HouseholdDto | null = null;
   isOwner = false;
-  isSystemAdmin = false;
   canManageRooms = false;
-  isLoading = true;
-  error: string | null = null;
-  successMessage: string | null = null;
 
-  // Filters
+  loading = true;
+  private loadingDelayMs = 400;
+  private loadingTimer: any = null;
+  rows = 10;
+  first = 0;
+  totalRecords = 0;
+
+  items: RoomDto[] = [];
+
   searchQuery = '';
-  sortBy: 'name' | 'priority' | 'createdAt' = 'name';
-  sortOrder: 'asc' | 'desc' = 'asc';
+  private search$ = new Subject<string>();
+  private searchSubscription: any;
 
-  // Modal state
-  deleteModalRoom: RoomDto | null = null;
+  currentSortField: SortBy = 'name';
+  currentSortOrder: SortOrder = 'asc';
 
-ngOnInit(): void {
-  this.householdId = this.route.snapshot.queryParamMap.get('householdId') || '';
-  
-  if (this.householdId) {
-    // Check if SystemAdmin
-    this.authService.isSystemAdmin$().subscribe(isAdmin => {
-      this.isSystemAdmin = isAdmin;
-    });
+  showConfirmDialog = false;
+  confirmDialogData: ConfirmDialogData = {
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmClass: 'danger'
+  };
+  private pendingAction: (() => void) | null = null;
 
-    this.loadHousehold();
-    this.loadRooms();
+  ngOnInit(): void {
+    this.householdId = this.route.snapshot.queryParamMap.get('householdId') || '';
+
+    if (this.householdId) {
+      this.loadHousehold();
+    }
+
+    this.searchSubscription = this.search$
+      .pipe(debounceTime(300))
+      .subscribe(q => {
+        this.searchQuery = q;
+        this.first = 0;
+        this.loadData();
+      });
   }
-}
+
+  ngOnDestroy(): void {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
+    if (this.loadingTimer) {
+      clearTimeout(this.loadingTimer);
+    }
+  }
 
   private loadHousehold(): void {
     this.householdService.getHouseholdById(this.householdId).subscribe({
@@ -60,91 +112,150 @@ ngOnInit(): void {
         if (response.success && response.data) {
           this.household = response.data.household;
           this.isOwner = response.data.isOwner;
-          this.canManageRooms = this.isOwner || this.isSystemAdmin;
+          this.updateCanManageRooms();
         }
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load household';
+        console.error('Failed to load household:', error);
       }
     });
   }
 
-  loadRooms(): void {
-    this.isLoading = true;
-    this.error = null;
-
-    this.roomService.getRooms(this.householdId, {
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder,
-      search: this.searchQuery || undefined
-    }).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.rooms = response.data;
-          this.filteredRooms = response.data;
-        }
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.error = error.message || 'Failed to load rooms';
-        this.isLoading = false;
-      }
+  private updateCanManageRooms(): void {
+    this.auth.isSystemAdmin$().subscribe(isAdmin => {
+      this.canManageRooms = this.isOwner || isAdmin;
     });
+  }
+
+  onLazyLoad(event: TableLazyLoadEvent): void {
+    const pageSize = event.rows ?? this.rows;
+    const page = Math.floor((event.first ?? 0) / pageSize) + 1;
+
+    const sortField = (event.sortField as SortBy) ?? 'name';
+    const sortOrder: SortOrder = (event.sortOrder ?? 1) === 1 ? 'asc' : 'desc';
+
+    this.currentSortField = sortField;
+    this.currentSortOrder = sortOrder;
+
+    this.rows = pageSize;
+    this.first = (page - 1) * pageSize;
+
+    this.loadData(page, pageSize, sortField, sortOrder);
+  }
+
+  private loadData(
+    page: number = 1,
+    pageSize: number = this.rows,
+    sortBy: SortBy = this.currentSortField,
+    sortOrder: SortOrder = this.currentSortOrder
+  ): void {
+    if (this.showConfirmDialog) {
+      return;
+    }
+
+    if (this.loadingTimer) {
+      clearTimeout(this.loadingTimer);
+      this.loadingTimer = null;
+    }
+    this.loadingTimer = setTimeout(() => {
+      this.loading = true;
+      this.loadingTimer = null;
+    }, this.loadingDelayMs);
+
+    this.roomService
+      .getRooms(this.householdId, {
+        page,
+        pageSize,
+        sortBy,
+        sortOrder,
+        search: this.searchQuery || undefined,
+      })
+      .pipe(
+        finalize(() => {
+          if (this.loadingTimer) {
+            clearTimeout(this.loadingTimer);
+            this.loadingTimer = null;
+          }
+          this.loading = false;
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.items = res.data?.items ?? [];
+          this.totalRecords = res.data?.totalCount ?? 0;
+        },
+        error: (err) => {
+          console.error('Failed to load rooms:', err);
+          this.items = [];
+          this.totalRecords = 0;
+        }
+      });
   }
 
   onSearch(query: string): void {
-    this.searchQuery = query;
-    this.applyFilters();
+    this.search$.next(query);
   }
 
-  onSort(field: 'name' | 'priority' | 'createdAt'): void {
-    if (this.sortBy === field) {
-      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortBy = field;
-      this.sortOrder = 'asc';
+  onPageSizeChange(size: number): void {
+    this.rows = size;
+    this.first = 0;
+    this.loadData(1, size);
+  }
+
+  reload(): void {
+    const currentPage = Math.floor(this.first / this.rows) + 1;
+    this.loadData(currentPage, this.rows);
+  }
+
+  confirmDelete(room: RoomDto): void {
+    this.loadingService.beginSuppress();
+
+    this.showConfirmDialog = true;
+
+    if (this.loadingTimer) {
+      clearTimeout(this.loadingTimer);
+      this.loadingTimer = null;
     }
-    this.loadRooms();
+    this.loading = false;
+
+    this.confirmDialogData = {
+      title: 'Delete Room',
+      message: `Are you sure you want to delete "${room.name}"?\n\nThis action cannot be undone. All tasks and execution history in this room will be permanently deleted.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmClass: 'danger',
+      icon: 'fa-trash-alt',
+      iconClass: 'text-danger'
+    };
+
+    this.pendingAction = () => {
+      this.showConfirmDialog = false;
+
+      this.loadingService.endSuppress();
+
+      this.roomService.deleteRoom(this.householdId, room.id).subscribe({
+        next: () => {
+          this.toastService.success(`Room "${room.name}" deleted successfully`);
+          setTimeout(() => this.reload(), 150);
+        },
+        error: (err) => {
+          console.error('Failed to delete room:', err);
+        }
+      });
+    };
   }
 
-  private applyFilters(): void {
-    let filtered = this.rooms;
-
-    if (this.searchQuery) {
-      filtered = filtered.filter(r =>
-        r.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        (r.description && r.description.toLowerCase().includes(this.searchQuery.toLowerCase()))
-      );
+  onDialogConfirmed(): void {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
     }
-
-    this.filteredRooms = filtered;
   }
 
-  openDeleteModal(room: RoomDto): void {
-    this.deleteModalRoom = room;
-  }
+  onDialogCancelled(): void {
+    this.pendingAction = null;
+    this.showConfirmDialog = false;
 
-  confirmDelete(): void {
-    if (!this.deleteModalRoom) return;
-
-    this.roomService.deleteRoom(this.householdId, this.deleteModalRoom.id).subscribe({
-      next: () => {
-        this.successMessage = `Room "${this.deleteModalRoom!.name}" deleted successfully`;
-        this.deleteModalRoom = null;
-        this.loadRooms();
-        this.autoHideMessage();
-      },
-      error: (error) => {
-        this.error = error.message || 'Failed to delete room';
-        this.deleteModalRoom = null;
-      }
-    });
-  }
-
-  private autoHideMessage(): void {
-    setTimeout(() => {
-      this.successMessage = null;
-      this.error = null;
-    }, 5000);
+    this.loadingService.endSuppress();
   }
 }

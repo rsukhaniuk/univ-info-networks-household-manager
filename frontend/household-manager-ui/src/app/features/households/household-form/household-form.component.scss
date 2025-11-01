@@ -1,8 +1,7 @@
 @use '../../../shared/styles/index' as *;
 
-.container {
-  padding-top: 1.5rem;
-  padding-bottom: 2rem;
+.household-form-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
 }
 
 // Header

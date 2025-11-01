@@ -38,9 +38,11 @@ namespace HouseholdManager.Api.Controllers
         /// <param name="householdId">Household ID (GUID)</param>
         /// <param name="queryParameters">Query parameters for filtering and sorting</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>List of rooms in the household</returns>
+        /// <returns>Paginated list of rooms in the household</returns>
         /// <remarks>
         /// Query parameters:
+        /// - **Page**: Page number (default: 1)
+        /// - **PageSize**: Items per page (default: 20, max: 100)
         /// - **SortBy**: Sort field (e.g., "Priority", "Name", "CreatedAt")
         /// - **SortOrder**: "asc" or "desc" (default: "desc")
         /// - **Search**: Search by room name or description
@@ -49,16 +51,17 @@ namespace HouseholdManager.Api.Controllers
         /// - **HasPhoto**: Filter rooms with photos (true) or without (false)
         /// - **HasActiveTasks**: Filter rooms with active tasks (true) or without (false)
         /// 
-        /// Example: `GET /api/households/{id}/rooms?sortBy=Priority&amp;sortOrder=desc&amp;search=kitchen`
+        /// Example: `GET /api/households/{id}/rooms?page=1&amp;pageSize=10&amp;sortBy=Priority&amp;sortOrder=desc&amp;search=kitchen`
         /// </remarks>
         [HttpGet]
-        [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<RoomDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<RoomDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<IReadOnlyList<RoomDto>>>> GetHouseholdRooms(
+        public async Task<ActionResult<ApiResponse<PagedResult<RoomDto>>>> GetHouseholdRooms(
             Guid householdId,
             [FromQuery] RoomQueryParameters queryParameters,
             CancellationToken cancellationToken = default)
@@ -66,8 +69,8 @@ namespace HouseholdManager.Api.Controllers
             var userId = GetCurrentUserId();
 
             _logger.LogInformation(
-                "User {UserId} requesting rooms for household {HouseholdId} with filters: Search={Search}",
-                userId, householdId, queryParameters?.Search);
+                "User {UserId} requesting rooms for household {HouseholdId} with filters: Page={Page}, PageSize={PageSize}, Search={Search}",
+                userId, householdId, queryParameters?.Page ?? 1, queryParameters?.PageSize ?? 20, queryParameters?.Search);
 
             // Validate household exists and user has access
             await _householdService.ValidateUserAccessAsync(householdId, userId, cancellationToken);
@@ -130,11 +133,15 @@ namespace HouseholdManager.Api.Controllers
                 };
             }
 
-            var result = filteredRooms.ToList();
+            // Apply pagination
+            var pagedResult = PagedResult<RoomDto>.Create(
+                filteredRooms,
+                queryParameters?.Page ?? 1,
+                queryParameters?.PageSize ?? 20);
 
-            return Ok(ApiResponse<IReadOnlyList<RoomDto>>.SuccessResponse(
-                result,
-                $"Retrieved {result.Count} room(s) successfully"));
+            return Ok(ApiResponse<PagedResult<RoomDto>>.SuccessResponse(
+                pagedResult,
+                $"Retrieved {pagedResult.Items.Count} of {pagedResult.TotalCount} room(s) (Page {pagedResult.PageNumber}/{pagedResult.TotalPages})"));
         }
 
         /// <summary>

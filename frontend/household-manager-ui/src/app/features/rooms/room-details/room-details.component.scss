@@ -4,6 +4,11 @@
 // COMPONENT-SPECIFIC STYLES
 // ========================================
 
+// Room details container
+.room-details-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
+}
+
 // Room header layout
 .room-header {
   .room-info {

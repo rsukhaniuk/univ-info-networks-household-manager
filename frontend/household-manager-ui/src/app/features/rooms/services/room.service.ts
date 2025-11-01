@@ -7,7 +7,7 @@ import {
   UpsertRoomRequest,
   RoomQueryParameters
 } from '../../../core/models/room.model';
-import { ApiResponse } from '../../../core/models/api-response.model';
+import { ApiResponse, PagedResult } from '../../../core/models/api-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,10 +16,10 @@ export class RoomService {
   private api = inject(ApiService);
 
   /**
-   * Get all rooms for a household
+   * Get paginated list of rooms for a household
    */
-  getRooms(householdId: string, params?: RoomQueryParameters): Observable<ApiResponse<RoomDto[]>> {
-    return this.api.get<RoomDto[]>(`/households/${householdId}/rooms`, params);
+  getRooms(householdId: string, params?: RoomQueryParameters): Observable<ApiResponse<PagedResult<RoomDto>>> {
+    return this.api.getPaged<RoomDto>(`/households/${householdId}/rooms`, params);
   }
 
   /**
@@ -54,7 +54,7 @@ export class RoomService {
    * Upload room photo
    */
   uploadPhoto(householdId: string, roomId: string, file: File): Observable<ApiResponse<string>> {
-    return this.api.upload<string>(`/households/${householdId}/rooms/${roomId}/photo`, file);
+    return this.api.upload<string>(`/households/${householdId}/rooms/${roomId}/photo`, file, 'photo');
   }
 
   /**

@@ -1,7 +1,7 @@
 @use '../../../shared/styles/index' as *;
 
-.container {
-  padding: 2rem 0;
+.join-household-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
 }
 
 // Header

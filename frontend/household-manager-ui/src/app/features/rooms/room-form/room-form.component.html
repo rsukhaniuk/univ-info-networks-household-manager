@@ -1,29 +1,46 @@
-<div class="container py-4">
+<div class="container room-form-container">
   <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <a routerLink="/households" class="text-decoration-none">
-          <i class="fas fa-home me-1"></i>My Households
-        </a>
-      </li>
-      @if (household) {
-        <li class="breadcrumb-item">
-          <a [routerLink]="['/households', household.id]" class="text-decoration-none">
-            {{ household.name }}
-          </a>
-        </li>
-        <li class="breadcrumb-item">
-          <a [routerLink]="['/rooms']" 
-             [queryParams]="{householdId: householdId}"
-             class="text-decoration-none">
-            Rooms
-          </a>
-        </li>
-      }
-      <li class="breadcrumb-item active">{{ isEditMode ? 'Edit' : 'Create' }}</li>
-    </ol>
+  <nav aria-label="breadcrumb" class="mb-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/households" class="text-decoration-none">
+              <i class="fas fa-home me-1"></i>My Households
+            </a>
+          </li>
+          @if (household) {
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/households', household.id]" class="text-decoration-none">
+              {{ household.name }}
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/rooms']"
+               [queryParams]="{householdId: householdId}"
+               class="text-decoration-none">
+              Rooms
+            </a>
+          </li>
+          @if (isEditMode && roomName) {
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/rooms', roomId]"
+               [queryParams]="{householdId: householdId}"
+               class="text-decoration-none">
+              {{ roomName }}
+            </a>
+          </li>
+          }
+          }
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ isEditMode ? 'Edit' : 'Create' }}
+          </li>
+        </ol>
+      </div>
+    </div>
   </nav>
+
+
 
   <!-- Header -->
   <div class="row justify-content-center mb-4">
@@ -43,18 +60,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Error Message -->
-  @if (error) {
-    <div class="row justify-content-center">
-      <div class="col-lg-8 col-xl-6">
-        <div class="alert alert-danger alert-dismissible fade show">
-          <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-          <button type="button" class="btn-close" (click)="error = null"></button>
-        </div>
-      </div>
-    </div>
-  }
 
   <!-- Form -->
   <div class="row justify-content-center">

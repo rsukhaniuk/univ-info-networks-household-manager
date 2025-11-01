@@ -1,32 +1,40 @@
 <div class="container household-details-container">
   <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <a routerLink="/households" class="text-decoration-none">
-          <i class="fas fa-home me-1"></i>My Households
-        </a>
-      </li>
-      <li class="breadcrumb-item active" aria-current="page">
-        {{ household?.household?.name || 'Loading...' }}
-      </li>
-    </ol>
+  <nav aria-label="breadcrumb" class="mb-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/households" class="text-decoration-none">
+              <i class="fas fa-home me-1"></i>My Households
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ household?.household?.name || 'Loading...' }}
+          </li>
+        </ol>
+      </div>
+    </div>
   </nav>
 
   <!-- Messages -->
-  @if (successMessage) {
-    <div class="alert alert-success alert-dismissible fade show">
-      <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
-      <button type="button" class="btn-close" (click)="successMessage = null"></button>
-    </div>
-  }
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-10">
+      @if (successMessage) {
+        <div class="alert alert-success alert-dismissible fade show">
+          <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+          <button type="button" class="btn-close" (click)="successMessage = null"></button>
+        </div>
+      }
 
-  @if (error) {
-    <div class="alert alert-danger alert-dismissible fade show">
-      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-      <button type="button" class="btn-close" (click)="error = null"></button>
+      @if (error) {
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+          <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+      }
     </div>
-  }
+  </div>
 
   <!-- Content -->
   @if (household) {

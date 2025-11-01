@@ -25,6 +25,7 @@ export class RoomFormComponent implements OnInit {
   roomId: string | null = null;
   householdId: string = '';
   household: any = null;
+  roomName: string = '';
   isSubmitting = false;
   error: string | null = null;
 
@@ -72,6 +73,7 @@ export class RoomFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           const room = response.data.room;
+          this.roomName = room.name;
           this.form.patchValue({
             name: room.name,
             description: room.description,

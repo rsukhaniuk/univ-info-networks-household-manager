@@ -23,6 +23,7 @@ export class HouseholdFormComponent implements OnInit {
   form!: FormGroup;
   isEditMode = false;
   householdId: string | null = null;
+  householdName: string | null = null;
   isSubmitting = false;
   error: string | null = null;
 
@@ -48,6 +49,7 @@ export class HouseholdFormComponent implements OnInit {
     this.householdService.getHouseholdById(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          this.householdName = response.data.household.name;
           this.form.patchValue({
             name: response.data.household.name,
             description: response.data.household.description

@@ -18,7 +18,7 @@ namespace HouseholdManager.Infrastructure.Repositories
         public async Task<IReadOnlyList<Room>> GetByHouseholdIdAsync(Guid householdId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-             .Include(r => r.Tasks.Where(t => t.IsActive)) 
+             .Include(r => r.Tasks) // Load all tasks, not filtered
              .Where(r => r.HouseholdId == householdId)
              .OrderBy(r => r.Name)
              .ToListAsync(cancellationToken);
@@ -27,8 +27,10 @@ namespace HouseholdManager.Infrastructure.Repositories
         public async Task<Room?> GetByIdWithTasksAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(r => r.Tasks.Where(t => t.IsActive))
+                .Include(r => r.Tasks) // Load all tasks
                     .ThenInclude(t => t.AssignedUser)
+                .Include(r => r.Tasks) // Also load for executions if needed
+                    .ThenInclude(t => t.Executions)
                 .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
         }
 

@@ -99,17 +99,7 @@ export class ExecutionService {
     photo?: File
   ): Observable<ApiResponse<ExecutionDto>> {
     if (photo) {
-      const formData = new FormData();
-      formData.append('taskId', request.taskId);
-      if (request.notes) {
-        formData.append('notes', request.notes);
-      }
-      if (request.completedAt) {
-        formData.append('completedAt', request.completedAt.toISOString());
-      }
-      formData.append('photo', photo);
-
-      return this.api.upload<ExecutionDto>('/executions/complete', photo, {
+      return this.api.upload<ExecutionDto>('/executions/complete', photo, 'photo', {
         taskId: request.taskId,
         notes: request.notes,
         completedAt: request.completedAt?.toISOString()
@@ -143,7 +133,7 @@ export class ExecutionService {
     id: string,
     photo: File
   ): Observable<ApiResponse<string>> {
-    return this.api.upload<string>(`/executions/${id}/photo`, photo);
+    return this.api.upload<string>(`/executions/${id}/photo`, photo, 'photo');
   }
 
   /**

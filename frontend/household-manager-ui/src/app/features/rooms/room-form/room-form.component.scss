@@ -10,6 +10,11 @@
   margin: 0 auto;
 }
 
+// Room form container
+.room-form-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
+}
+
 // Page title section
 .page-title-section {
   text-align: center;

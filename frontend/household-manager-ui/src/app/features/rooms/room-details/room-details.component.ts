@@ -2,25 +2,32 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { RoomService } from '../services/room.service';
+import { HouseholdService } from '../../households/services/household.service';
 import { RoomWithTasksDto } from '../../../core/models/room.model';
+import { HouseholdDto } from '../../../core/models/household.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-room-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, UtcDatePipe],
+  imports: [CommonModule, RouterModule, ConfirmationDialogComponent, UtcDatePipe],
   templateUrl: './room-details.component.html',
   styleUrl: './room-details.component.scss',
 })
 export class RoomDetailsComponent implements OnInit {
   private roomService = inject(RoomService);
+  private householdService = inject(HouseholdService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private authService = inject(AuthService);
+  private auth = inject(AuthService);
+  private toastService = inject(ToastService);
 
   roomId: string = '';
   householdId: string = '';
+  household: HouseholdDto | null = null;
   roomDetails: RoomWithTasksDto | null = null;
   isSystemAdmin = false;
   canManageRoom = false;
@@ -30,23 +37,45 @@ export class RoomDetailsComponent implements OnInit {
 
   // Modal state
   showPhotoModal = false;
-  showDeleteModal = false;
   selectedPhotoFile: File | null = null;
   isUploadingPhoto = false;
+
+  // Confirmation dialog state
+  showConfirmDialog = false;
+  confirmDialogData: ConfirmDialogData = {
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmClass: 'danger'
+  };
+  private pendingAction: (() => void) | null = null;
 
   ngOnInit(): void {
     this.roomId = this.route.snapshot.paramMap.get('id') || '';
     this.householdId = this.route.snapshot.queryParamMap.get('householdId') || '';
 
     if (this.roomId && this.householdId) {
-      // Check if SystemAdmin
-      this.authService.isSystemAdmin$().subscribe((isAdmin) => {
+      this.auth.isSystemAdmin$().subscribe((isAdmin) => {
         this.isSystemAdmin = isAdmin;
-        this.updateCanManageRoom();
       });
 
+      this.loadHousehold();
       this.loadRoom();
     }
+  }
+
+  private loadHousehold(): void {
+    this.householdService.getHouseholdById(this.householdId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.household = response.data.household;
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load household:', error);
+      }
+    });
   }
 
   loadRoom(): void {
@@ -136,26 +165,48 @@ export class RoomDetailsComponent implements OnInit {
     });
   }
 
-  openDeleteModal(): void {
-    this.showDeleteModal = true;
+  confirmDeleteRoom(): void {
+    this.showConfirmDialog = true;
+
+    this.confirmDialogData = {
+      title: 'Delete Room',
+      message: `Are you sure you want to delete "${this.roomDetails?.room?.name}"?\n\nThis action cannot be undone. All tasks and execution history in this room will be permanently deleted.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmClass: 'danger',
+      icon: 'fa-trash-alt',
+      iconClass: 'text-danger'
+    };
+
+    this.pendingAction = () => {
+      this.showConfirmDialog = false;
+
+      this.roomService.deleteRoom(this.householdId, this.roomId).subscribe({
+        next: () => {
+          this.toastService.success(`Room "${this.roomDetails?.room?.name}" deleted successfully`);
+          setTimeout(() => {
+            this.router.navigate(['/rooms'], {
+              queryParams: { householdId: this.householdId },
+            });
+          }, 150);
+        },
+        error: (error) => {
+          console.error('Failed to delete room:', error);
+        },
+      });
+    };
   }
 
-  closeDeleteModal(): void {
-    this.showDeleteModal = false;
+  onDialogConfirmed(): void {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
+    }
   }
 
-  confirmDelete(): void {
-    this.roomService.deleteRoom(this.householdId, this.roomId).subscribe({
-      next: () => {
-        this.router.navigate(['/rooms'], {
-          queryParams: { householdId: this.householdId },
-        });
-      },
-      error: (error) => {
-        this.error = error.message || 'Failed to delete room';
-        this.closeDeleteModal();
-      },
-    });
+  onDialogCancelled(): void {
+    this.pendingAction = null;
+    this.showConfirmDialog = false;
   }
 
   private autoHideMessage(): void {
