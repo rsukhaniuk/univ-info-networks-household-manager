@@ -27,6 +27,8 @@ namespace HouseholdManager.Infrastructure.Repositories
         public async Task<IReadOnlyList<TaskExecution>> GetByTaskIdAsync(Guid taskId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
+                .Include(te => te.Task)
+                    .ThenInclude(t => t.Room)
                 .Include(te => te.User)
                 .Where(te => te.TaskId == taskId)
                 .OrderByDescending(te => te.CompletedAt)
@@ -37,6 +39,7 @@ namespace HouseholdManager.Infrastructure.Repositories
         {
             return await _dbSet
                 .Include(te => te.Task)
+                    .ThenInclude(t => t.Room)
                 .Include(te => te.User)
                 .Where(te => te.HouseholdId == householdId)
                 .OrderByDescending(te => te.CompletedAt)
@@ -78,6 +81,7 @@ namespace HouseholdManager.Infrastructure.Repositories
             return await _dbSet
                 .Include(te => te.Task)
                     .ThenInclude(t => t.Room)
+                .Include(te => te.User)
                 .Where(te => te.UserId == userId &&
                            te.HouseholdId == householdId &&
                            te.WeekStarting == weekStart)
@@ -97,6 +101,8 @@ namespace HouseholdManager.Infrastructure.Repositories
         public async Task<TaskExecution?> GetLatestExecutionForTaskAsync(Guid taskId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
+                .Include(te => te.Task)
+                    .ThenInclude(t => t.Room)
                 .Include(te => te.User)
                 .Where(te => te.TaskId == taskId)
                 .OrderByDescending(te => te.CompletedAt)

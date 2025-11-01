@@ -203,8 +203,7 @@
                   Active Tasks ({{ household.activeTasks.length }})
                 </h5>
                 @if (household.isOwner) {
-                  <a [routerLink]="['/tasks/create']"
-                     [queryParams]="{householdId: household.household.id}"
+                  <a [routerLink]="['/tasks', household.household.id, 'create']"
                      class="btn btn-sm btn-outline-info">
                     <i class="fas fa-plus me-1"></i>Add Task
                   </a>

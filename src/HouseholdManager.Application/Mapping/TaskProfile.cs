@@ -48,15 +48,7 @@ namespace HouseholdManager.Application.Mapping
                 .ForMember(dest => dest.CompletedAt, opt => opt.Ignore()) // Calculated by service
                 .ForMember(dest => dest.IsOverdue, opt => opt.MapFrom(src => src.IsOverdue));
 
-            // TaskExecution → ExecutionDto (for nested executions)
-            CreateMap<TaskExecution, ExecutionDto>()
-                .ForMember(dest => dest.TaskTitle, opt => opt.MapFrom(src => src.Task.Title))
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.FullName))
-                .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Task.Room.Name))
-                .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src =>
-                    !string.IsNullOrEmpty(src.PhotoPath) ? $"/{src.PhotoPath}" : null))
-                .ForMember(dest => dest.TimeAgo, opt => opt.MapFrom(src => src.TimeAgo))
-                .ForMember(dest => dest.IsThisWeek, opt => opt.MapFrom(src => src.IsThisWeek));
+            // NOTE: TaskExecution -> ExecutionDto mapping is in ExecutionProfile.cs
 
             // Room → RoomDto (for nested room in TaskDetailsDto)
             CreateMap<Room, RoomDto>()

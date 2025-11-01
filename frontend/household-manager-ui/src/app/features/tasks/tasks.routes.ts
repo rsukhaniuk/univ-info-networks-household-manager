@@ -3,7 +3,7 @@ import { AuthGuard } from '@auth0/auth0-angular';
 
 export const tasksRoutes: Routes = [
   {
-    path: ':householdId/tasks',
+    path: ':householdId',
     canActivate: [AuthGuard],
     children: [
       {

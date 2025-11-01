@@ -119,29 +119,91 @@
               </h5>
             </div>
             <div class="card-body">
-              <!-- ✅ Due Date with Flatpickr -->
+              <!-- Task Type -->
               <div class="mb-3">
-                <label for="dueDate" class="form-label">
-                  <i class="fas fa-calendar-alt me-1"></i>Due Date & Time
+                <label class="form-label">
+                  <i class="fas fa-sync-alt me-1"></i>Task Type
                   <span class="text-danger">*</span>
                 </label>
-                <input type="text" 
-                       id="dueDate" 
-                       formControlName="dueDate" 
-                       class="form-control form-control-lg"
-                       [class.is-invalid]="dueDate?.invalid && dueDate?.touched"
-                       placeholder="Click to select date and time..."
-                       mwlFlatpickr
-                       [options]="flatpickrOptions"
-                       readonly>
+                <div class="btn-group w-100" role="group">
+                  <input type="radio"
+                         class="btn-check"
+                         id="typeOneTime"
+                         [value]="TaskType.OneTime"
+                         formControlName="type">
+                  <label class="btn btn-outline-primary" for="typeOneTime">
+                    <i class="fas fa-calendar-day me-1"></i>One-Time
+                  </label>
+
+                  <input type="radio"
+                         class="btn-check"
+                         id="typeRegular"
+                         [value]="TaskType.Regular"
+                         formControlName="type">
+                  <label class="btn btn-outline-info" for="typeRegular">
+                    <i class="fas fa-calendar-week me-1"></i>Regular
+                  </label>
+                </div>
                 <div class="form-text">
                   <i class="fas fa-info-circle me-1"></i>
-                  Select date and time for this task (24-hour format)
+                  One-Time: Single occurrence | Regular: Repeats weekly
                 </div>
-                @if (dueDate?.invalid && dueDate?.touched) {
-                  <div class="invalid-feedback">Due date is required</div>
-                }
               </div>
+
+              <!-- ✅ Due Date (One-Time tasks) -->
+              @if (type?.value === TaskType.OneTime) {
+                <div class="mb-3">
+                  <label for="dueDate" class="form-label">
+                    <i class="fas fa-calendar-alt me-1"></i>Due Date & Time (24h)
+                    <span class="text-danger">*</span>
+                  </label>
+                  <input type="text"
+                         id="dueDate"
+                         formControlName="dueDate"
+                         class="form-control"
+                         [class.is-invalid]="dueDate?.invalid && dueDate?.touched"
+                         placeholder="Click to select date and time..."
+                         mwlFlatpickr
+                         [options]="flatpickrOptions"
+                         readonly>
+                  @if (dueDate?.errors?.['required'] && dueDate?.touched) {
+                    <div class="invalid-feedback d-block">Due date and time are required</div>
+                  }
+                  @if (dueDate?.errors?.['pastDate'] && dueDate?.touched) {
+                    <div class="invalid-feedback d-block">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      Due date must be in the future. Please select a later time.
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Scheduled Weekday (Regular tasks) -->
+              @if (type?.value === TaskType.Regular) {
+                <div class="mb-3">
+                  <label for="scheduledWeekday" class="form-label">
+                    <i class="fas fa-calendar-week me-1"></i>Scheduled Weekday
+                    <span class="text-danger">*</span>
+                  </label>
+                  <select id="scheduledWeekday"
+                          formControlName="scheduledWeekday"
+                          class="form-select"
+                          [class.is-invalid]="scheduledWeekday?.invalid && scheduledWeekday?.touched">
+                    <option [value]="null">-- Select Weekday --</option>
+                    <option [value]="DayOfWeekEnum.Sunday">Sunday</option>
+                    <option [value]="DayOfWeekEnum.Monday">Monday</option>
+                    <option [value]="DayOfWeekEnum.Tuesday">Tuesday</option>
+                    <option [value]="DayOfWeekEnum.Wednesday">Wednesday</option>
+                    <option [value]="DayOfWeekEnum.Thursday">Thursday</option>
+                    <option [value]="DayOfWeekEnum.Friday">Friday</option>
+                    <option [value]="DayOfWeekEnum.Saturday">Saturday</option>
+                  </select>
+                  @if (scheduledWeekday?.invalid && scheduledWeekday?.touched) {
+                    <div class="invalid-feedback">Please select a weekday</div>
+                  }
+                </div>
+              }
+
             </div>
           </div>
 
@@ -193,20 +255,19 @@
               <div class="mb-3">
                 <label for="assignedUserId" class="form-label">
                   <i class="fas fa-user me-1"></i>Assign To
-                  <span class="text-danger">*</span>
                 </label>
-                <select id="assignedUserId" 
-                        formControlName="assignedUserId" 
+                <select id="assignedUserId"
+                        formControlName="assignedUserId"
                         class="form-select"
                         [class.is-invalid]="assignedUserId?.invalid && assignedUserId?.touched">
-                  <option value="">-- Select Member --</option>
+                  <option value="">-- Unassigned --</option>
                   @for (member of members; track member.userId) {
-                    <option [value]="member.userId">{{ member.userName }}</option>
+                    <option [value]="member.userId">{{ member.userName || member.email }}</option>
                   }
                 </select>
                 <div class="form-text">
                   <i class="fas fa-info-circle me-1"></i>
-                  Choose who will be responsible for this task
+                  Optional: Choose who will be responsible for this task
                 </div>
                 @if (assignedUserId?.invalid && assignedUserId?.touched) {
                   <div class="invalid-feedback">Please assign this task to a member</div>

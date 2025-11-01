@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 
-import { FlatpickrDirective, FlatpickrDefaultsInterface } from 'angularx-flatpickr';
+import { FlatpickrDirective, FlatpickrDefaults } from 'angularx-flatpickr';
 
 // Services
 import { TaskService } from '../services/task.service';
@@ -24,13 +24,13 @@ import { HouseholdMemberDto } from '../../../core/models/household.model';
 
 @Component({
   selector: 'app-task-form',
-  standalone: true,
   imports: [
-    CommonModule, 
-    RouterModule, 
+    CommonModule,
+    RouterModule,
     ReactiveFormsModule,
     FlatpickrDirective
   ],
+  providers: [FlatpickrDefaults],
   templateUrl: './task-form.component.html',
   styleUrl: './task-form.component.scss'
 })
@@ -65,14 +65,56 @@ export class TaskFormComponent implements OnInit {
   DayOfWeekEnum = DayOfWeek;
   DayOfWeekKeys = Object.keys(DayOfWeek).filter(k => isNaN(Number(k)));
 
-  // ✅ Flatpickr options
-  flatpickrOptions: FlatpickrDefaultsInterface = {
-    enableTime: false,
-    dateFormat: 'Y-m-d',
-    minDate: 'today',
+  // ✅ Custom validator for future date/time
+  futureDateValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null;
+      }
+      const selectedDate = new Date(control.value);
+      const now = new Date();
+      
+      if (selectedDate <= now) {
+        return { pastDate: true };
+      }
+      return null;
+    };
+  }
+
+  // ✅ Flatpickr options with date AND time (strict 24-hour format, no past times)
+  flatpickrOptions: any = {
+    enableTime: true,
+    noCalendar: false,
+    dateFormat: 'Y-m-d H:i',
+    time_24hr: true,
+    minDate: new Date(),
     altInput: true,
-    altFormat: 'F j, Y',
-    allowInput: false
+    altFormat: 'j F Y, H:i',
+    allowInput: false,
+    minuteIncrement: 1,
+    defaultHour: 12,
+    defaultMinute: 0,
+    locale: {
+      firstDayOfWeek: 1
+    },
+    // Update minDate every time picker opens to prevent selecting past times
+    onOpen: (selectedDates: Date[], dateStr: string, instance: any) => {
+      const now = new Date();
+      instance.set('minDate', now);
+      instance.set('time_24hr', true);
+    },
+    // Validate that selected time is not in the past
+    onChange: (selectedDates: Date[], dateStr: string, instance: any) => {
+      if (selectedDates.length > 0) {
+        const selected = selectedDates[0];
+        const now = new Date();
+
+        // If selected date/time is in the past, reset to current time
+        if (selected < now) {
+          instance.setDate(now, false);
+        }
+      }
+    }
   };
 
   constructor() {
@@ -82,8 +124,8 @@ export class TaskFormComponent implements OnInit {
       roomId: ['', [Validators.required]],
       type: [TaskType.OneTime, [Validators.required]],
       priority: [TaskPriority.Medium, [Validators.required]],
-      estimatedMinutes: [30, [Validators.required, Validators.min(5), Validators.max(480)]],
-      assignedUserId: ['', [Validators.required]],
+      estimatedMinutes: [30],
+      assignedUserId: [''],
       isActive: [true],
       dueDate: [null],
       scheduledWeekday: [null],
@@ -100,6 +142,16 @@ export class TaskFormComponent implements OnInit {
     this.householdId = this.route.snapshot.paramMap.get('householdId')!;
     this.taskId = this.route.snapshot.paramMap.get('taskId');
     this.isEdit = !!this.taskId;
+
+    // ✅ Validate householdId
+    if (!this.householdId) {
+      this.error = 'Household ID is missing from the route. Please navigate from a household page.';
+      this.isLoading = false;
+      console.error('Missing householdId in route params:', this.route.snapshot.paramMap);
+      return;
+    }
+
+    console.log('Task form initialized with householdId:', this.householdId);
 
     this.loadFormData();
   }
@@ -186,13 +238,13 @@ export class TaskFormComponent implements OnInit {
     });
   }
 
-  onTaskTypeChange(type: TaskType): void {
+  onTaskTypeChange(type: any): void {
     const dueDateControl = this.form.get('dueDate');
     const scheduledWeekdayControl = this.form.get('scheduledWeekday');
 
-    if (type === TaskType.OneTime) {
-      // One-time task: require due date, clear weekday
-      dueDateControl?.setValidators([Validators.required]);
+    if (type === TaskType.OneTime || type === 1) {
+      // One-time task: require due date with future date validation
+      dueDateControl?.setValidators([Validators.required, this.futureDateValidator()]);
       scheduledWeekdayControl?.clearValidators();
       scheduledWeekdayControl?.setValue(null);
     } else {
@@ -207,8 +259,24 @@ export class TaskFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // ✅ Revalidate due date before submit (in case time has passed)
+    if (this.form.get('type')?.value === TaskType.OneTime) {
+      this.form.get('dueDate')?.updateValueAndValidity();
+    }
+
     if (this.form.invalid || this.isSubmitting) {
       this.form.markAllAsTouched();
+      
+      // Show specific error message for past date
+      if (this.form.get('dueDate')?.errors?.['pastDate']) {
+        this.error = 'Due date must be in the future. Please select a later time.';
+      }
+      return;
+    }
+
+    // ✅ Validate householdId
+    if (!this.householdId) {
+      this.error = 'Household ID is required. Please navigate from a household.';
       return;
     }
 
@@ -216,21 +284,30 @@ export class TaskFormComponent implements OnInit {
     this.error = null;
 
     const formValue = this.form.value;
+    
+    // ✅ Prepare dueDate in ISO format for API
+    let dueDateForApi: string | undefined = undefined;
+    if (formValue.dueDate) {
+      const date = new Date(formValue.dueDate);
+      dueDateForApi = date.toISOString();
+    }
+
     const request: UpsertTaskRequest = {
       id: this.taskId || undefined,
-      householdId: this.householdId,
       title: formValue.title.trim(),
       description: formValue.description?.trim() || undefined,
       roomId: formValue.roomId,
       type: formValue.type,
       priority: formValue.priority,
-      estimatedMinutes: formValue.estimatedMinutes,
       assignedUserId: formValue.assignedUserId || undefined,
       isActive: formValue.isActive,
-      dueDate: formValue.dueDate ? new Date(formValue.dueDate) : undefined,
+      dueDate: dueDateForApi as any,
       scheduledWeekday: formValue.scheduledWeekday !== null ? Number(formValue.scheduledWeekday) : undefined,
       rowVersion: formValue.rowVersion
     };
+
+    console.log('Creating task with request:', JSON.stringify(request, null, 2));
+    console.log('HouseholdId (in URL):', this.householdId);
 
     const operation = this.isEdit
       ? this.taskService.updateTask(this.householdId, this.taskId!, request)
@@ -239,7 +316,7 @@ export class TaskFormComponent implements OnInit {
     operation.subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.router.navigate(['/households', this.householdId, 'tasks', response.data.id]);
+          this.router.navigate(['/tasks', this.householdId, response.data.id]);
         }
       },
       error: (error) => {
@@ -279,6 +356,7 @@ export class TaskFormComponent implements OnInit {
   }
 
   getMemberName(userId: string): string {
-    return this.members.find(m => m.userId === userId)?.userName || '';
+    const member = this.members.find(m => m.userId === userId);
+    return member?.userName || member?.email || '';
   }
 }

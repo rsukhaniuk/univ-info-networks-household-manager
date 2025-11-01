@@ -5,14 +5,15 @@ export interface ExecutionDto {
   taskId: string;
   taskTitle: string;
   userId: string;
-  userName: string;
+  userName: string;  // User's full name, falls back to email if no name set
+  userEmail?: string; // Optional - can be used as fallback display
   householdId: string;
   roomId: string;
   roomName: string;
   completedAt: Date;
   notes?: string;
-  photoPath?: string;
-  photoUrl?: string;
+  photoPath?: string;  // Relative path to photo
+  photoUrl?: string;   // Full URL to photo
   weekStarting: Date;
   timeAgo: string;
   isThisWeek: boolean;

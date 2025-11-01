@@ -167,7 +167,7 @@ export class TaskDetailsComponent implements OnInit {
 
     this.taskService.deleteTask(this.householdId, this.taskId).subscribe({
       next: () => {
-        this.router.navigate(['/households', this.householdId, 'tasks']);
+        this.router.navigate(['/tasks', this.householdId]);
       },
       error: (error) => {
         this.error = error.message || 'Failed to delete task';

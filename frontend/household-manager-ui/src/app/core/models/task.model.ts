@@ -25,8 +25,8 @@ export interface TaskDto {
 }
 
 export enum TaskType {
-  Regular = 'Regular',
-  OneTime = 'OneTime'
+  Regular = 0,
+  OneTime = 1
 }
 
 export enum TaskPriority {
@@ -47,16 +47,15 @@ export enum DayOfWeek {
 
 export interface UpsertTaskRequest {
   id?: string;
-  householdId: string;
   title: string;
   description?: string;
   type: TaskType;
   priority: TaskPriority;
-  estimatedMinutes: number;
+  estimatedMinutes?: number;  // Optional - managed by backend
   roomId: string;
   assignedUserId?: string;
   isActive: boolean;
-  dueDate?: Date;
+  dueDate?: Date | string;
   scheduledWeekday?: DayOfWeek;
   rowVersion?: Uint8Array;
 }

@@ -157,8 +157,8 @@
           </h5>
           @if (canManageRoom) {
           <a
-            [routerLink]="['/tasks/create']"
-            [queryParams]="{ householdId: householdId, roomId: roomId }"
+            [routerLink]="['/tasks', householdId, 'create']"
+            [queryParams]="{ roomId: roomId }"
             class="btn btn-sm btn-info"
           >
             <i class="fas fa-plus me-1"></i>Add Task
@@ -189,7 +189,7 @@
                     }
                   </td>
                   <td>
-                    @if (task.type === 'Regular') {
+                    @if (task.type === 0) {
                     <span class="badge bg-primary">Regular</span>
                     } @else {
                     <span class="badge bg-info">One-time</span>
@@ -223,7 +223,7 @@
                   <td>
                     <div class="btn-group btn-group-sm">
                       <a
-                        [routerLink]="['/tasks', task.id]"
+                        [routerLink]="['/tasks', householdId, task.id]"
                         class="btn btn-outline-primary"
                         title="View Details"
                       >
@@ -231,7 +231,7 @@
                       </a>
                       @if (canManageRoom) {
                       <a
-                        [routerLink]="['/tasks', task.id, 'edit']"
+                        [routerLink]="['/tasks', householdId, task.id, 'edit']"
                         class="btn btn-outline-warning"
                         title="Edit"
                       >
@@ -252,8 +252,8 @@
             <p class="text-muted mb-4">This room doesn't have any tasks.</p>
             @if (canManageRoom) {
             <a
-              [routerLink]="['/tasks/create']"
-              [queryParams]="{ householdId: householdId, roomId: roomId }"
+              [routerLink]="['/tasks', householdId, 'create']"
+              [queryParams]="{ roomId: roomId }"
               class="btn btn-sm btn-info"
             >
               <i class="fas fa-plus me-1"></i>Create First Task

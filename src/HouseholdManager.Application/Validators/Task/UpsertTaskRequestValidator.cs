@@ -17,12 +17,13 @@ namespace HouseholdManager.Application.Validators.Task
     {
         public UpsertTaskRequestValidator()
         {
-            // Household ID validation
+            // Household ID validation (for update only - create gets it from route)
             RuleFor(x => x.HouseholdId)
                 .NotEmpty()
                 .WithMessage("Household ID is required")
                 .Must(id => id != Guid.Empty)
-                .WithMessage("Invalid household ID");
+                .WithMessage("Invalid household ID")
+                .When(x => x.Id.HasValue); // Only validate on update
 
             // Room ID validation
             RuleFor(x => x.RoomId)

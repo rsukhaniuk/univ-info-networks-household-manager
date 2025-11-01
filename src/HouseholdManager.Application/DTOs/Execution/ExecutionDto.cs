@@ -34,9 +34,14 @@ namespace HouseholdManager.Application.DTOs.Execution
         public string UserId { get; set; } = string.Empty;
 
         /// <summary>
-        /// User name who completed the task (for display)
+        /// User name who completed the task (full name with fallback to email)
         /// </summary>
         public string UserName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// User email (optional, for additional display purposes)
+        /// </summary>
+        public string? UserEmail { get; set; }
 
         /// <summary>
         /// Household ID (denormalized)
