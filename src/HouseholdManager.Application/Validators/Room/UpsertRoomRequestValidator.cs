@@ -15,12 +15,13 @@ namespace HouseholdManager.Application.Validators.Room
     {
         public UpsertRoomRequestValidator()
         {
-            // Household ID validation
+            // HouseholdId validation (for update only - create gets it from route)
             RuleFor(x => x.HouseholdId)
                 .NotEmpty()
                 .WithMessage("Household ID is required")
                 .Must(id => id != Guid.Empty)
-                .WithMessage("Invalid household ID");
+                .WithMessage("Invalid household ID")
+                .When(x => x.Id.HasValue); // Only validate on update
 
             // Name validation
             RuleFor(x => x.Name)
@@ -37,10 +38,11 @@ namespace HouseholdManager.Application.Validators.Room
                 .WithMessage("Description cannot exceed 500 characters")
                 .When(x => !string.IsNullOrEmpty(x.Description));
 
-            // Priority validation
+            // Priority validation (optional, has default value)
             RuleFor(x => x.Priority)
                 .InclusiveBetween(1, 10)
-                .WithMessage("Priority must be between 1 and 10");
+                .WithMessage("Priority must be between 1 and 10")
+                .When(x => x.Priority > 0); // Only validate if explicitly set
 
             // Photo path validation (optional)
             RuleFor(x => x.PhotoPath)

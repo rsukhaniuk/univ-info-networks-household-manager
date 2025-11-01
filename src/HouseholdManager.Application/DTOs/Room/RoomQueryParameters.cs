@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Swashbuckle.AspNetCore.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HouseholdManager.Application.DTOs.Room
@@ -14,6 +16,8 @@ namespace HouseholdManager.Application.DTOs.Room
         /// <summary>
         /// Filter by household ID
         /// </summary>
+        [JsonIgnore]
+        [SwaggerIgnore]
         public Guid? HouseholdId { get; set; }
 
         /// <summary>

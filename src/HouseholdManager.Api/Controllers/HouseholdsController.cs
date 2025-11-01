@@ -323,7 +323,7 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<HouseholdDto>>> JoinHousehold(
-            [FromBody] JoinHouseholdRequest request,
+            [FromQuery] JoinHouseholdRequest request,
             CancellationToken cancellationToken = default)
         {
             var userId = GetCurrentUserId();
