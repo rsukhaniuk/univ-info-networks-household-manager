@@ -10,6 +10,7 @@ import { Subject, debounceTime, finalize } from 'rxjs';
 
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
+import { HouseholdContext } from '../../households/services/household-context';
 import { AuthService } from '../../../core/services/auth.service';
 import { ServerErrorService } from '../../../core/services/server-error.service';
 import { LoadingService } from '../../../core/services/loading.service';
@@ -41,6 +42,7 @@ type SortOrder = 'asc' | 'desc';
 export class RoomListComponent implements OnInit, OnDestroy {
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
+  private householdContext = inject(HouseholdContext);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
   private errors = inject(ServerErrorService);
@@ -104,6 +106,8 @@ export class RoomListComponent implements OnInit, OnDestroy {
     if (this.loadingTimer) {
       clearTimeout(this.loadingTimer);
     }
+    // Clear household context when leaving
+    this.householdContext.clearHousehold();
   }
 
   private loadHousehold(): void {
@@ -113,6 +117,13 @@ export class RoomListComponent implements OnInit, OnDestroy {
           this.household = response.data.household;
           this.isOwner = response.data.isOwner;
           this.updateCanManageRooms();
+
+          // Set household context for navigation
+          this.householdContext.setHousehold({
+            id: this.household.id,
+            name: this.household.name,
+            isOwner: this.isOwner
+          });
         }
       },
       error: (error) => {

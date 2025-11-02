@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { HouseholdContext, HouseholdContextData } from '../../../features/households/services/household-context';
 
 @Component({
   selector: 'app-header',
@@ -12,10 +13,13 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class HeaderComponent {
   authService = inject(AuthService);
+  householdContext = inject(HouseholdContext);
+  router = inject(Router);
 
   isAuthenticated$ = this.authService.isAuthenticated$;
   user$ = this.authService.user$;
   isSystemAdmin$ = this.authService.isSystemAdmin$();
+  currentHousehold$ = this.householdContext.currentHousehold$;
 
   login(): void {
     this.authService.login();
@@ -27,5 +31,9 @@ export class HeaderComponent {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  isActive(path: string): boolean {
+    return this.router.url.includes(path);
   }
 }

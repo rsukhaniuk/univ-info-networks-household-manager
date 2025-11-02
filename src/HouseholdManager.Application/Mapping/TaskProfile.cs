@@ -24,8 +24,7 @@ namespace HouseholdManager.Application.Mapping
             CreateMap<HouseholdTask, TaskDto>()
                 .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room.Name))
                 .ForMember(dest => dest.FormattedEstimatedTime, opt => opt.MapFrom(src => src.FormattedEstimatedTime))
-                .ForMember(dest => dest.AssignedUserName, opt => opt.MapFrom(src =>
-                    src.AssignedUser != null ? src.AssignedUser.FullName : null))
+                .ForMember(dest => dest.AssignedUserName, opt => opt.MapFrom(src => GetUserDisplayName(src.AssignedUser)))
                 .ForMember(dest => dest.IsOverdue, opt => opt.MapFrom(src => src.IsOverdue))
                 .ForMember(dest => dest.IsCompletedThisWeek, opt => opt.Ignore()); // Calculated by service
 
@@ -42,8 +41,7 @@ namespace HouseholdManager.Application.Mapping
             // HouseholdTask → TaskCalendarItemDto (for calendar view)
             CreateMap<HouseholdTask, TaskCalendarItemDto>()
                 .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room.Name))
-                .ForMember(dest => dest.AssignedUserName, opt => opt.MapFrom(src =>
-                    src.AssignedUser != null ? src.AssignedUser.FullName : null))
+                .ForMember(dest => dest.AssignedUserName, opt => opt.MapFrom(src => GetUserDisplayName(src.AssignedUser)))
                 .ForMember(dest => dest.IsCompleted, opt => opt.Ignore()) // Calculated by service
                 .ForMember(dest => dest.CompletedAt, opt => opt.Ignore()) // Calculated by service
                 .ForMember(dest => dest.IsOverdue, opt => opt.MapFrom(src => src.IsOverdue));
@@ -58,7 +56,7 @@ namespace HouseholdManager.Application.Mapping
 
             // ApplicationUser → TaskAssigneeDto (for task assignment dropdown)
             CreateMap<ApplicationUser, TaskAssigneeDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.FullName))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => GetUserDisplayName(src)))
                 .ForMember(dest => dest.CurrentTaskCount, opt => opt.Ignore()); // Calculated by service
 
             // Request → Entity mappings
@@ -85,6 +83,44 @@ namespace HouseholdManager.Application.Mapping
         }
 
         /// <summary>
+        /// Gets user display name with fallback chain: FullName -> FirstName -> LastName -> Email -> UserId
+        /// </summary>
+        private static string? GetUserDisplayName(ApplicationUser? user)
+        {
+            if (user == null)
+                return null;
+
+            var firstName = user.FirstName?.Trim();
+            var lastName = user.LastName?.Trim();
+
+            // Try full name
+            if (!string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
+                return $"{firstName} {lastName}";
+
+            // Try first name only
+            if (!string.IsNullOrEmpty(firstName))
+                return firstName;
+
+            // Try last name only
+            if (!string.IsNullOrEmpty(lastName))
+                return lastName;
+
+            // Fallback to email
+            var email = user.Email?.Trim();
+            if (!string.IsNullOrEmpty(email))
+                return email;
+
+            // Last resort: show abbreviated user ID
+            if (!string.IsNullOrEmpty(user.Id))
+            {
+                var shortId = user.Id.Length > 8 ? user.Id.Substring(0, 8) : user.Id;
+                return $"User {shortId}...";
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Safe mapping for TaskStatsDto with null checks
         /// </summary>
         private static TaskStatsDto MapTaskStats(HouseholdTask task)
@@ -103,7 +139,7 @@ namespace HouseholdManager.Application.Mapping
                 ExecutionsThisWeek = thisWeekExecutions.Count,
                 ExecutionsThisMonth = thisMonthExecutions.Count,
                 LastCompleted = lastExecution?.CompletedAt, // Safe null check
-                LastCompletedBy = lastExecution?.User.FullName, // Safe null check
+                LastCompletedBy = lastExecution != null ? GetUserDisplayName(lastExecution.User) : null, // Safe null check with fallback
                 AverageCompletionTime = allExecutions.Any()
                     ? (int?)allExecutions.Average(e => e.Task.EstimatedMinutes)
                     : task.EstimatedMinutes // Fallback to estimated time if no executions

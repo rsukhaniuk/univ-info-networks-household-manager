@@ -251,6 +251,49 @@
                     No active tasks. Create your first task!
                   </p>
                 }
+
+                @if (household.activeTasks.length > 0) {
+                  <hr class="my-3">
+                  <div class="text-center">
+                    <a [routerLink]="['/tasks', household.household.id]"
+                       class="btn btn-sm btn-outline-info">
+                      <i class="fas fa-arrow-right me-1"></i>View All Tasks
+                    </a>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row">
+          <div class="col-12">
+            <div class="card shadow-sm quick-actions-card">
+              <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-bolt text-warning me-2"></i>
+                  Quick Actions
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3 justify-content-center">
+                  <div class="col-md-4 col-sm-6">
+                    <a [routerLink]="['/rooms']"
+                       [queryParams]="{householdId: household.household.id}"
+                       class="btn btn-outline-success w-100 py-3">
+                      <i class="fas fa-door-open fa-lg mb-2 d-block"></i>
+                      <span class="d-block">Manage Rooms</span>
+                    </a>
+                  </div>
+                  <div class="col-md-4 col-sm-6">
+                    <a [routerLink]="['/tasks', household.household.id]"
+                       class="btn btn-outline-info w-100 py-3">
+                      <i class="fas fa-tasks fa-lg mb-2 d-block"></i>
+                      <span class="d-block">Manage Tasks</span>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -339,6 +382,40 @@
           </button>
           <button type="button" class="btn btn-danger" (click)="confirmRemoveMember()">
             <i class="fas fa-user-minus me-1"></i>Remove Member
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Leave Household Modal -->
+@if (showLeaveHouseholdModal && household) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">
+            <i class="fas fa-sign-out-alt me-2"></i>Leave Household
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeLeaveHouseholdModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> You are about to leave this household.
+          </div>
+          <p>Are you sure you want to leave <strong>{{ household.household.name }}</strong>?</p>
+          <p class="text-muted mb-0">
+            <small>You will lose access to all rooms, tasks, and data associated with this household. You can only rejoin if you receive a new invite.</small>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeLeaveHouseholdModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmLeaveHousehold()">
+            <i class="fas fa-sign-out-alt me-1"></i>Leave Household
           </button>
         </div>
       </div>

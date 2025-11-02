@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
+import { HouseholdContext } from '../../households/services/household-context';
 import { RoomWithTasksDto } from '../../../core/models/room.model';
 import { HouseholdDto } from '../../../core/models/household.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -17,9 +18,10 @@ import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
   templateUrl: './room-details.component.html',
   styleUrl: './room-details.component.scss',
 })
-export class RoomDetailsComponent implements OnInit {
+export class RoomDetailsComponent implements OnInit, OnDestroy {
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
+  private householdContext = inject(HouseholdContext);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private auth = inject(AuthService);
@@ -70,6 +72,13 @@ export class RoomDetailsComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.household = response.data.household;
+
+          // Set household context for navigation
+          this.householdContext.setHousehold({
+            id: response.data.household.id,
+            name: response.data.household.name,
+            isOwner: response.data.isOwner
+          });
         }
       },
       error: (error) => {
@@ -214,5 +223,10 @@ export class RoomDetailsComponent implements OnInit {
       this.successMessage = null;
       this.error = null;
     }, 5000);
+  }
+
+  ngOnDestroy(): void {
+    // Clear household context when leaving
+    this.householdContext.clearHousehold();
   }
 }

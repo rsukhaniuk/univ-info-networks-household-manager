@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -8,6 +8,7 @@ import { FlatpickrDirective, FlatpickrDefaults } from 'angularx-flatpickr';
 // Services
 import { TaskService } from '../services/task.service';
 import { HouseholdService } from '../../households/services/household.service';
+import { HouseholdContext } from '../../households/services/household-context';
 import { RoomService } from '../../rooms/services/room.service';
 
 // Models
@@ -34,10 +35,11 @@ import { HouseholdMemberDto } from '../../../core/models/household.model';
   templateUrl: './task-form.component.html',
   styleUrl: './task-form.component.scss'
 })
-export class TaskFormComponent implements OnInit {
+export class TaskFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
   private householdService = inject(HouseholdService);
+  private householdContext = inject(HouseholdContext);
   private roomService = inject(RoomService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -47,7 +49,9 @@ export class TaskFormComponent implements OnInit {
   householdId: string = '';
   taskId: string | null = null;
   isEdit = false;
-  
+  householdName: string = '';
+  isOwner = false;
+
   form: FormGroup;
   rooms: RoomDto[] = [];
   members: HouseholdMemberDto[] = [];
@@ -196,6 +200,16 @@ export class TaskFormComponent implements OnInit {
         next: (response) => {
           if (response.success && response.data) {
             this.members = response.data.members || [];
+            this.householdName = response.data.household.name;
+            this.isOwner = response.data.isOwner;
+
+            // Set household context for navigation
+            this.householdContext.setHousehold({
+              id: response.data.household.id,
+              name: response.data.household.name,
+              isOwner: response.data.isOwner
+            });
+
             resolve();
           } else {
             reject(new Error('Failed to load members'));
@@ -349,6 +363,11 @@ export class TaskFormComponent implements OnInit {
 
   getTypeLabel(type: TaskType): string {
     return TaskType[type];
+  }
+
+  ngOnDestroy(): void {
+    // Clear household context when leaving
+    this.householdContext.clearHousehold();
   }
 
   getRoomName(roomId: string): string {

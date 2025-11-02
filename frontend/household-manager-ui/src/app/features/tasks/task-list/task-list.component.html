@@ -1,64 +1,137 @@
-<div class="container py-4">
-  <!-- Header -->
+<div class="container task-list-container">
+  <!-- ========================================
+       BREADCRUMB
+       ======================================== -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/households" class="text-decoration-none">
+              <i class="fas fa-home me-1"></i>My Households
+            </a>
+          </li>
+          @if (household) {
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/households', household.id]" class="text-decoration-none">
+              {{ household.name }}
+            </a>
+          </li>
+          }
+          <li class="breadcrumb-item active" aria-current="page">Tasks</li>
+        </ol>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================
+       HEADER SECTION
+       ======================================== -->
   <div class="row justify-content-center mb-4">
     <div class="col-lg-10">
-      <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Title -->
         <div>
-          <h1 class="h3 mb-1">
+          <h1 class="h3 mb-1 d-flex align-items-center">
             <i class="fas fa-tasks text-primary me-2"></i>
-            Tasks
+            @if (household) {
+            <span>Tasks in {{ household.name }}</span>
+            } @else {
+            <span>Tasks</span>
+            }
             @if (isSystemAdmin$ | async) {
-              <span class="badge bg-danger ms-2">System Admin</span>
+            <span class="badge bg-danger ms-2">System Admin</span>
             }
           </h1>
           <p class="text-muted mb-0">Manage and track household tasks</p>
         </div>
 
-        <div class="d-flex gap-2">
-          <a [routerLink]="['/tasks', householdId, 'create']"
-             class="btn btn-success">
-            <i class="fas fa-plus me-1"></i>Create Task
-          </a>
-        </div>
+        <!-- Action Buttons -->
+        @if (canManageTasks) {
+        <a
+          [routerLink]="['/tasks', householdId, 'create']"
+          class="btn btn-warning"
+        >
+          <i class="fas fa-plus me-1"></i>Add Task
+        </a>
+        }
       </div>
     </div>
   </div>
 
-  <!-- Messages -->
-  @if (successMessage) {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="fas fa-check-circle me-2"></i>
-      {{ successMessage }}
-      <button type="button" class="btn-close" (click)="successMessage = null"></button>
-    </div>
-  }
-
-  @if (error) {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      {{ error }}
-      <button type="button" class="btn-close" (click)="error = null"></button>
-    </div>
-  }
-
-  <!-- Filters Card -->
+  <!-- ========================================
+       FILTERS & SEARCH PANEL (Always visible)
+       ======================================== -->
   <div class="row justify-content-center mb-4">
-    <div class="col-lg-10">
+    <div class="col-12">
       <div class="card shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-filter me-2"></i>Filters
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label">
-                <i class="fas fa-exclamation-circle me-1"></i>Priority
-              </label>
-              <select class="form-select" 
-                      [value]="queryParams.priority || ''"
-                      (change)="onFilterChange('priority', $any($event.target).value)">
+        <div class="card-body p-3">
+          <!-- Search & Page Size Row -->
+          <div class="search-container mb-3">
+            <div class="input-group">
+              <span class="input-group-text bg-white">
+                <i class="fas fa-search text-muted"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Search tasks by title or description..."
+                maxlength="100"
+                [(ngModel)]="searchQuery"
+                (input)="onSearch($any($event.target).value)"
+              />
+            </div>
+
+            <select
+              class="form-select"
+              style="max-width: 130px"
+              [value]="rows"
+              (change)="onPageSizeChange(+$any($event.target).value)"
+            >
+              <option value="5">5 per page</option>
+              <option value="10">10 per page</option>
+              <option value="20">20 per page</option>
+              <option value="50">50 per page</option>
+            </select>
+          </div>
+
+          <!-- Filters Row 1 -->
+          <div class="row g-2 mb-2">
+            <!-- Room Filter -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterRoomId"
+                (change)="onFilterChange()"
+              >
+                <option value="">All Rooms</option>
+                @for (room of availableRooms; track room.id) {
+                <option [value]="room.id">{{ room.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Assigned User Filter -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterAssignedUserId"
+                (change)="onFilterChange()"
+              >
+                <option value="">All Users</option>
+                @for (assignee of availableAssignees; track assignee.userId) {
+                <option [value]="assignee.userId">{{ assignee.userName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Priority Filter -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterPriority"
+                (change)="onFilterChange()"
+              >
                 <option value="">All Priorities</option>
                 <option [value]="TaskPriority.Low">Low</option>
                 <option [value]="TaskPriority.Medium">Medium</option>
@@ -66,34 +139,75 @@
               </select>
             </div>
 
-            <div class="col-md-3">
-              <label class="form-label">
-                <i class="fas fa-toggle-on me-1"></i>Status
-              </label>
-              <select class="form-select" 
-                      (change)="onFilterChange('isActive', $any($event.target).value === 'true' ? true : $any($event.target).value === 'false' ? false : undefined)">
+            <!-- Type Filter -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterType"
+                (change)="onFilterChange()"
+              >
+                <option value="">All Types</option>
+                <option [value]="TaskType.OneTime">One-Time</option>
+                <option [value]="TaskType.Regular">Regular</option>
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterIsActive"
+                (change)="onFilterChange()"
+              >
                 <option value="">All Status</option>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
             </div>
 
-            <div class="col-md-4">
-              <label class="form-label">
-                <i class="fas fa-search me-1"></i>Search
-              </label>
-              <input type="text" 
-                     class="form-control" 
-                     placeholder="Search tasks..."
-                     [value]="queryParams.search || ''"
-                     (input)="onSearch($any($event.target).value)">
+            <!-- Overdue Filter -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterIsOverdue"
+                (change)="onFilterChange()"
+              >
+                <option value="">All Tasks</option>
+                <option value="true">Overdue Only</option>
+                <option value="false">Not Overdue</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filters Row 2 -->
+          <div class="row g-2">
+            <!-- Weekday Filter (for Regular tasks) -->
+            <div class="col-md-2">
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filterScheduledWeekday"
+                (change)="onFilterChange()"
+              >
+                <option value="">Any Day</option>
+                <option [value]="DayOfWeek.Monday">Monday</option>
+                <option [value]="DayOfWeek.Tuesday">Tuesday</option>
+                <option [value]="DayOfWeek.Wednesday">Wednesday</option>
+                <option [value]="DayOfWeek.Thursday">Thursday</option>
+                <option [value]="DayOfWeek.Friday">Friday</option>
+                <option [value]="DayOfWeek.Saturday">Saturday</option>
+                <option [value]="DayOfWeek.Sunday">Sunday</option>
+              </select>
             </div>
 
-            <div class="col-md-2 d-flex align-items-end">
-              <button type="button" 
-                      class="btn btn-outline-secondary w-100"
-                      (click)="clearFilters()">
-                <i class="fas fa-times me-1"></i>Clear
+            <!-- Clear Filters Button -->
+            <div class="col-md-2">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm w-100"
+                (click)="clearFilters()"
+                [disabled]="!hasActiveFilters()"
+              >
+                <i class="fas fa-times me-1"></i>Clear All
               </button>
             </div>
           </div>
@@ -102,195 +216,314 @@
     </div>
   </div>
 
-  <!-- Loading State -->
-  @if (isLoading) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <p class="text-muted mt-3">Loading tasks...</p>
-    </div>
-  }
+  <!-- ========================================
+       EMPTY STATE (No tasks at all)
+       ======================================== -->
+  @if (!loading && totalRecords === 0 && !hasActiveFilters()) {
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-tasks fa-4x text-warning mb-3 opacity-50"></i>
+          <h4 class="text-muted mb-3">No Tasks Found</h4>
+          <p class="text-muted mb-4">
+            This household doesn't have any tasks yet.<br />
+            Add your first task to get started!
+          </p>
 
-  <!-- Empty State -->
-  @else if (tasks.length === 0) {
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-sm">
-          <div class="card-body text-center py-5">
-            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
-            <h4 class="text-muted">No Tasks Found</h4>
-            <p class="text-muted mb-4">
-              @if (queryParams.search || queryParams.priority || queryParams.isActive !== undefined) {
-                No tasks match your current filters. Try adjusting the filters above.
-              } @else {
-                This household doesn't have any tasks yet. Create your first task to get started!
-              }
-            </p>
-            <a [routerLink]="['/tasks', householdId, 'create']"
-               class="btn btn-success btn-lg">
-              <i class="fas fa-plus me-1"></i>Create First Task
-            </a>
-          </div>
+          @if (canManageTasks) {
+          <a
+            [routerLink]="['/tasks', householdId, 'create']"
+            class="btn btn-warning btn-lg"
+          >
+            <i class="fas fa-plus me-1"></i>Add First Task
+          </a>
+          } @else {
+          <a [routerLink]="['/households', householdId]" class="btn btn-outline-secondary btn-lg">
+            <i class="fas fa-arrow-left me-1"></i>Back to Household
+          </a>
+          }
         </div>
       </div>
     </div>
+  </div>
   }
 
-  <!-- Tasks Table -->
+  <!-- ========================================
+       PRIMENG TABLE
+       ======================================== -->
   @else {
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-sm">
-          <div class="card-header bg-light">
-            <h5 class="card-title mb-0">
-              <i class="fas fa-list me-2"></i>
-              Tasks ({{ pagedResult?.totalCount || 0 }})
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th (click)="onSort('title')" style="cursor: pointer;">
-                      <i class="fas fa-tasks me-1"></i>Title
-                      @if (queryParams.sortBy === 'title') {
-                        <i class="fas fa-sort-{{ queryParams.sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+  <div class="row justify-content-center">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+
+          <!-- PrimeNG Table -->
+          <p-table
+            [value]="items"
+            [lazy]="true"
+            [paginator]="true"
+            [rows]="rows"
+            [first]="first"
+            [totalRecords]="totalRecords"
+            [loading]="loading"
+            (onLazyLoad)="onLazyLoad($event)"
+            [sortField]="'priority'"
+            [sortOrder]="-1"
+            [resizableColumns]="true"
+            [rowHover]="true"
+            class="p-datatable-sm"
+            [tableStyle]="{ 'min-width': '75rem' }"
+          >
+            <!-- Table Header -->
+            <ng-template pTemplate="header">
+              <tr>
+                <!-- Task Title Column -->
+                <th pResizableColumn pSortableColumn="title" style="width: 25%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-tasks text-warning me-2"></i>
+                    <span>Task</span>
+                    <p-sortIcon field="title"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Room Column -->
+                <th style="width: 12%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-door-open text-success me-2"></i>
+                    <span>Room</span>
+                  </div>
+                </th>
+
+                <!-- Type Column -->
+                <th style="width: 10%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-tag text-primary me-2"></i>
+                    <span>Type</span>
+                  </div>
+                </th>
+
+                <!-- Priority Column -->
+                <th pSortableColumn="priority" style="width: 10%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                    <span>Priority</span>
+                    <p-sortIcon field="priority"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Status Column -->
+                <th style="width: 10%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-toggle-on text-info me-2"></i>
+                    <span>Status</span>
+                  </div>
+                </th>
+
+                <!-- Assigned Column -->
+                <th style="width: 13%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user text-info me-2"></i>
+                    <span>Assigned</span>
+                  </div>
+                </th>
+
+                <!-- Due Date Column -->
+                <th pSortableColumn="dueDate" style="width: 10%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar text-primary me-2"></i>
+                    <span>Due Date</span>
+                    <p-sortIcon field="dueDate"></p-sortIcon>
+                  </div>
+                </th>
+
+                <!-- Actions Column -->
+                <th style="width: 10%">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-cogs text-secondary me-2"></i>
+                    <span>Actions</span>
+                  </div>
+                </th>
+              </tr>
+            </ng-template>
+
+            <!-- Table Body -->
+            <ng-template pTemplate="body" let-task>
+              <tr>
+                <!-- Task Title -->
+                <td>
+                  <div class="task-card-inline">
+                    <div class="task-info">
+                      <h6 class="mb-0">
+                        <a
+                          [routerLink]="['/tasks', householdId, task.id]"
+                        >
+                          {{ task.title }}
+                        </a>
+                      </h6>
+                      @if (task.description) {
+                      <small>
+                        {{ task.description.length > 50 ? task.description.substring(0, 50) + '...' : task.description }}
+                      </small>
                       }
-                    </th>
-                    <th><i class="fas fa-door-open me-1"></i>Room</th>
-                    <th (click)="onSort('priority')" style="cursor: pointer;">
-                      <i class="fas fa-exclamation-circle me-1"></i>Priority
-                      @if (queryParams.sortBy === 'priority') {
-                        <i class="fas fa-sort-{{ queryParams.sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                      }
-                    </th>
-                    <th><i class="fas fa-user me-1"></i>Assigned</th>
-                    <th><i class="fas fa-calendar me-1"></i>Due Date</th>
-                    <th><i class="fas fa-cogs me-1"></i>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (task of tasks; track task.id) {
-                    <tr [class.table-primary]="isAssignedToCurrentUser(task)"
-                        [class.table-danger]="task.isOverdue">
-                      <!-- Title -->
-                      <td>
-                        <div>
-                          <h6 class="mb-0">
-                            <a [routerLink]="['/tasks', householdId, task.id]"
-                               class="text-decoration-none">
-                              {{ task.title }}
-                            </a>
-                            @if (isAssignedToCurrentUser(task)) {
-                              <span class="badge bg-primary ms-1">You</span>
-                            }
-                          </h6>
-                          @if (task.description) {
-                            <small class="text-muted">
-                              {{ task.description.length > 60 ? task.description.substring(0, 60) + '...' : task.description }}
-                            </small>
-                          }
-                        </div>
-                      </td>
+                    </div>
+                  </div>
+                </td>
 
-                      <!-- Room -->
-                      <td>
-                        <i class="fas fa-door-open text-muted me-1"></i>
-                        {{ task.roomName }}
-                      </td>
-
-                      <!-- Priority -->
-                      <td>
-                        <span class="badge" [ngClass]="getPriorityBadgeClass(task.priority)">
-                          {{ TaskPriority[task.priority] }}
-                        </span>
-                      </td>
-
-                      <!-- Assigned -->
-                      <td>
-                        @if (task.assignedUserName) {
-                          <i class="fas fa-user text-muted me-1"></i>
-                          {{ task.assignedUserName }}
-                        } @else {
-                          <span class="text-muted">
-                            <i class="fas fa-user-slash me-1"></i>Unassigned
-                          </span>
-                        }
-                      </td>
-
-                      <!-- Due Date -->
-                      <td>
-                        @if (task.type === TaskType.OneTime && task.dueDate) {
-                          <i class="fas fa-calendar-alt text-muted me-1"></i>
-                          <span [class.text-danger]="task.isOverdue" [class.fw-bold]="task.isOverdue">
-                            {{ task.dueDate | utcDate:'short' }}
-                          </span>
-                        } @else if (task.type === TaskType.Regular && task.scheduledWeekday !== undefined) {
-                          <i class="fas fa-calendar-week text-muted me-1"></i>
-                          {{ task.scheduledWeekday }}
-                        } @else {
-                          <span class="text-muted">N/A</span>
-                        }
-                      </td>
-
-                      <!-- Actions -->
-                      <td>
-                        <div class="btn-group btn-group-sm" role="group">
-                          <a [routerLink]="['/tasks', householdId, task.id]"
-                             class="btn btn-primary"
-                             title="View Details">
-                            <i class="fas fa-eye"></i>
-                          </a>
-
-                          <a [routerLink]="['/tasks', householdId, task.id, 'edit']"
-                             class="btn btn-warning"
-                             title="Edit">
-                            <i class="fas fa-edit"></i>
-                          </a>
-                          
-                          <button type="button" 
-                                  class="btn btn-danger" 
-                                  (click)="deleteTask(task.id, task.title)" 
-                                  title="Delete">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                <!-- Room -->
+                <td>
+                  @if (task.roomName) {
+                  <i class="fas fa-door-open text-muted me-1"></i>
+                  <span>{{ task.roomName }}</span>
+                  } @else {
+                  <span class="text-muted fst-italic">No room</span>
                   }
-                </tbody>
-              </table>
-            </div>
+                </td>
 
-            <!-- Pagination -->
-            @if (pagedResult && pagedResult.totalPages > 1) {
-              <nav>
-                <ul class="pagination justify-content-center">
-                  <li class="page-item" [class.disabled]="!pagedResult.hasPreviousPage">
-                    <button class="page-link" (click)="onPageChange(pagedResult.pageNumber - 1)">
-                      Previous
-                    </button>
-                  </li>
-                  @for (page of [].constructor(pagedResult.totalPages); track $index) {
-                    <li class="page-item" [class.active]="pagedResult.pageNumber === $index + 1">
-                      <button class="page-link" (click)="onPageChange($index + 1)">
-                        {{ $index + 1 }}
-                      </button>
-                    </li>
+                <!-- Type -->
+                <td>
+                  @if (task.type === TaskType.OneTime) {
+                  <span class="badge bg-info rounded-pill px-3 py-2">
+                    <i class="fas fa-clock me-1"></i>
+                    One-Time
+                  </span>
+                  } @else {
+                  <span class="badge bg-primary rounded-pill px-3 py-2">
+                    <i class="fas fa-redo me-1"></i>
+                    Regular
+                  </span>
                   }
-                  <li class="page-item" [class.disabled]="!pagedResult.hasNextPage">
-                    <button class="page-link" (click)="onPageChange(pagedResult.pageNumber + 1)">
-                      Next
+                </td>
+
+                <!-- Priority -->
+                <td>
+                  <span class="badge rounded-pill px-3 py-2" [ngClass]="getPriorityBadgeClass(task.priority)">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    {{ TaskPriority[task.priority] }}
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td>
+                  @if (task.isActive) {
+                  <span class="badge bg-success rounded-pill px-3 py-2">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Active
+                  </span>
+                  } @else {
+                  <span class="badge bg-secondary rounded-pill px-3 py-2">
+                    <i class="fas fa-times-circle me-1"></i>
+                    Inactive
+                  </span>
+                  }
+                </td>
+
+                <!-- Assigned -->
+                <td>
+                  @if (task.assignedUserName) {
+                  <i class="fas fa-user text-muted me-1"></i>
+                  <span>{{ task.assignedUserName }}</span>
+                  } @else {
+                  <span class="text-muted fst-italic">
+                    <i class="fas fa-user-slash me-1"></i>Unassigned
+                  </span>
+                  }
+                </td>
+
+                <!-- Due Date -->
+                <td>
+                  @if (task.type === TaskType.OneTime && task.dueDate) {
+                  <small [class.text-danger]="task.isOverdue" [class.fw-bold]="task.isOverdue">
+                    <i class="far fa-calendar-alt me-1"></i>
+                    {{ task.dueDate | utcDate : 'MMM d, y' }}
+                  </small>
+                  } @else if (task.type === TaskType.Regular) {
+                  <small class="text-muted">
+                    <i class="fas fa-redo me-1"></i>Regular
+                  </small>
+                  } @else {
+                  <span class="text-muted">N/A</span>
+                  }
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a
+                      [routerLink]="['/tasks', householdId, task.id]"
+                      class="btn btn-primary"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </a>
+
+                    @if (canManageTasks) {
+                    <a
+                      [routerLink]="['/tasks', householdId, task.id, 'edit']"
+                      class="btn btn-warning"
+                      title="Edit"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      (click)="confirmDelete(task)"
+                      title="Delete Task"
+                    >
+                      <i class="fas fa-trash"></i>
                     </button>
-                  </li>
-                </ul>
-              </nav>
-            }
-          </div>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+
+            <!-- Loading State -->
+            <ng-template pTemplate="loadingbody">
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+              <tr>
+                <td colspan="8">
+                  <div class="d-flex align-items-center py-2">
+                    <div class="flex-grow-1">
+                      <p-skeleton width="60%" height="1.2rem" class="mb-2"></p-skeleton>
+                      <p-skeleton width="40%" height="0.9rem"></p-skeleton>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              }
+            </ng-template>
+
+            <!-- Empty State in Table (with filters applied) -->
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="8" class="text-center py-5">
+                  <i class="fas fa-filter fa-3x text-muted mb-3 opacity-50"></i>
+                  <h5 class="text-muted">No tasks match your filters</h5>
+                  <p class="text-muted mb-3">Try adjusting your search criteria or filters</p>
+                  <button
+                    type="button"
+                    class="btn btn-outline-warning btn-sm"
+                    (click)="clearFilters()"
+                  >
+                    <i class="fas fa-times me-1"></i>Clear All Filters
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
         </div>
       </div>
     </div>
+  </div>
   }
+
+  <!-- Confirmation Dialog -->
+  <app-confirmation-dialog
+    [show]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()"
+  ></app-confirmation-dialog>
 </div>

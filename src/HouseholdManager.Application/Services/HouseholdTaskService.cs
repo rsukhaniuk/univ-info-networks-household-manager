@@ -22,6 +22,8 @@ namespace HouseholdManager.Application.Services
         private readonly IRoomService _roomService;
         private readonly IHouseholdMemberService _householdMemberService;
         private readonly ITaskAssignmentService _taskAssignmentService;
+        private readonly IExecutionRepository _executionRepository;
+        private readonly IFileUploadService _fileUploadService;
         private readonly ILogger<HouseholdTaskService> _logger;
         private readonly IMapper _mapper;
 
@@ -31,6 +33,8 @@ namespace HouseholdManager.Application.Services
             IRoomService roomService,
             IHouseholdMemberService householdMemberService,
             ITaskAssignmentService taskAssignmentService,
+            IExecutionRepository executionRepository,
+            IFileUploadService fileUploadService,
             IMapper mapper,
             ILogger<HouseholdTaskService> logger)
         {
@@ -39,6 +43,8 @@ namespace HouseholdManager.Application.Services
             _roomService = roomService;
             _householdMemberService = householdMemberService;
             _taskAssignmentService = taskAssignmentService;
+            _executionRepository = executionRepository;
+            _fileUploadService = fileUploadService;
             _mapper = mapper;
             _logger = logger;
         }
@@ -159,6 +165,21 @@ namespace HouseholdManager.Application.Services
         {
             await ValidateTaskOwnerAccessAsync(id, requestingUserId, cancellationToken);
 
+            // First, delete all task executions (history) to avoid foreign key constraint
+            var executions = await _executionRepository.GetByTaskIdAsync(id, cancellationToken);
+            foreach (var execution in executions)
+            {
+                // Delete photo file if exists
+                if (!string.IsNullOrEmpty(execution.PhotoPath))
+                {
+                    await _fileUploadService.DeleteFileAsync(execution.PhotoPath, cancellationToken);
+                }
+                
+                await _executionRepository.DeleteAsync(execution, cancellationToken);
+            }
+            _logger.LogInformation("Deleted {Count} executions for task {TaskId}", executions.Count, id);
+
+            // Now delete the task itself
             await _taskRepository.DeleteByIdAsync(id, cancellationToken);
             _logger.LogInformation("Deleted task {TaskId}", id);
         }

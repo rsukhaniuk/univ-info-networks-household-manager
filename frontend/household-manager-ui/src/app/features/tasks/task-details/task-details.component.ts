@@ -1,25 +1,35 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TaskService } from '../services/task.service';
+import { HouseholdService } from '../../households/services/household.service';
+import { HouseholdContext } from '../../households/services/household-context';
 import { ExecutionService } from '../../executions/services/execution.service';
+import { ExecutionHistoryComponent } from '../../executions/execution-history/execution-history.component';
+import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { TaskDetailsDto, TaskPriority, TaskType } from '../../../core/models/task.model';
-import { ExecutionDto, CompleteTaskRequest } from '../../../core/models/execution.model';
+import { CompleteTaskRequest } from '../../../core/models/execution.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 @Component({
   selector: 'app-task-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe, ExecutionHistoryComponent, ConfirmationDialogComponent],
   templateUrl: './task-details.component.html',
   styleUrl: './task-details.component.scss'
 })
-export class TaskDetailsComponent implements OnInit {
+export class TaskDetailsComponent implements OnInit, OnDestroy {
+  @ViewChild(ExecutionHistoryComponent) executionHistory?: ExecutionHistoryComponent;
+
   private taskService = inject(TaskService);
+  private householdService = inject(HouseholdService);
+  private householdContext = inject(HouseholdContext);
   private executionService = inject(ExecutionService);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -27,13 +37,12 @@ export class TaskDetailsComponent implements OnInit {
   // Data
   householdId: string = '';
   taskId: string = '';
+  householdName: string = '';
+  householdIsOwner = false;
   taskDetails: TaskDetailsDto | null = null;
-  recentExecutions: ExecutionDto[] = [];
 
   // State
   isLoading = true;
-  error: string | null = null;
-  successMessage: string | null = null;
   
   // Complete form
   completeForm: FormGroup;
@@ -44,6 +53,17 @@ export class TaskDetailsComponent implements OnInit {
   // User info
   currentUserId: string = '';
   isSystemAdmin$ = this.authService.isSystemAdmin$();
+
+  // Confirmation dialog state
+  showConfirmDialog = false;
+  confirmDialogData: ConfirmDialogData = {
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmClass: 'danger'
+  };
+  pendingAction: (() => void) | null = null;
 
   // Enums
   TaskPriority = TaskPriority;
@@ -60,6 +80,11 @@ export class TaskDetailsComponent implements OnInit {
     this.householdId = this.route.snapshot.paramMap.get('householdId')!;
     this.taskId = this.route.snapshot.paramMap.get('taskId')!;
 
+    // Load household for context
+    if (this.householdId) {
+      this.loadHousehold();
+    }
+
     this.authService.getUserId$().subscribe(userId => {
       if (userId) {
         this.currentUserId = userId;
@@ -69,20 +94,39 @@ export class TaskDetailsComponent implements OnInit {
     this.loadTaskDetails();
   }
 
+  private loadHousehold(): void {
+    this.householdService.getHouseholdById(this.householdId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.householdName = response.data.household.name;
+          this.householdIsOwner = response.data.isOwner;
+
+          // Set household context for navigation
+          this.householdContext.setHousehold({
+            id: response.data.household.id,
+            name: response.data.household.name,
+            isOwner: response.data.isOwner
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load household:', error);
+      }
+    });
+  }
+
   loadTaskDetails(): void {
     this.isLoading = true;
-    this.error = null;
 
     this.taskService.getTaskDetails(this.householdId, this.taskId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.taskDetails = response.data;
-          this.recentExecutions = response.data.recentExecutions.slice(0, 5);
         }
         this.isLoading = false;
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load task details';
+        this.toastService.error(error.message || 'Failed to load task details');
         this.isLoading = false;
       }
     });
@@ -96,7 +140,7 @@ export class TaskDetailsComponent implements OnInit {
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.error = 'Photo must be less than 5MB';
+        this.toastService.error('Photo must be less than 5MB');
         input.value = '';
         return;
       }
@@ -104,7 +148,7 @@ export class TaskDetailsComponent implements OnInit {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        this.error = 'Only JPEG, PNG, GIF, and WebP images are allowed';
+        this.toastService.error('Only JPEG, PNG, GIF, and WebP images are allowed');
         input.value = '';
         return;
       }
@@ -132,7 +176,6 @@ export class TaskDetailsComponent implements OnInit {
     }
 
     this.isSubmitting = true;
-    this.error = null;
 
     const request: CompleteTaskRequest = {
       taskId: this.taskId,
@@ -143,47 +186,75 @@ export class TaskDetailsComponent implements OnInit {
     this.executionService.completeTask(request, this.selectedPhoto || undefined).subscribe({
       next: (response) => {
         if (response.success) {
-          this.successMessage = 'Task completed successfully!';
+          this.toastService.success('Task completed successfully!');
           this.completeForm.reset();
           this.removePhoto();
           this.loadTaskDetails();
-          this.autoHideMessage();
+          // Reload execution history
+          if (this.executionHistory) {
+            this.executionHistory.loadExecutions();
+          }
         }
         this.isSubmitting = false;
       },
       error: (error) => {
-        this.error = error.message || 'Failed to complete task';
+        this.toastService.error(error.message || 'Failed to complete task');
         this.isSubmitting = false;
       }
     });
   }
 
   // Task actions
-  deleteTask(): void {
+  confirmDeleteTask(): void {
     if (!this.taskDetails) return;
 
-    const confirmed = confirm(`Are you sure you want to delete "${this.taskDetails.task.title}"? This action cannot be undone.`);
-    if (!confirmed) return;
+    this.showConfirmDialog = true;
+    this.confirmDialogData = {
+      title: 'Delete Task',
+      message: `Are you sure you want to delete "${this.taskDetails.task.title}"?\n\nThis action cannot be undone. All execution history for this task will be permanently deleted.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmClass: 'danger',
+      icon: 'fa-trash-alt',
+      iconClass: 'text-danger'
+    };
 
-    this.taskService.deleteTask(this.householdId, this.taskId).subscribe({
-      next: () => {
-        this.router.navigate(['/tasks', this.householdId]);
-      },
-      error: (error) => {
-        this.error = error.message || 'Failed to delete task';
-      }
-    });
+    this.pendingAction = () => {
+      this.showConfirmDialog = false;
+      this.taskService.deleteTask(this.householdId, this.taskId).subscribe({
+        next: () => {
+          this.toastService.success(`Task "${this.taskDetails?.task.title}" deleted successfully`);
+          setTimeout(() => {
+            this.router.navigate(['/tasks', this.householdId]);
+          }, 150);
+        },
+        error: (error) => {
+          this.toastService.error(error.message || 'Failed to delete task');
+        }
+      });
+    };
+  }
+
+  onConfirmDialogConfirmed(): void {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
+    }
+  }
+
+  onConfirmDialogCancelled(): void {
+    this.showConfirmDialog = false;
+    this.pendingAction = null;
   }
 
   activateTask(): void {
     this.taskService.activateTask(this.householdId, this.taskId).subscribe({
       next: () => {
-        this.successMessage = 'Task activated successfully';
+        this.toastService.success('Task activated successfully');
         this.loadTaskDetails();
-        this.autoHideMessage();
       },
       error: (error) => {
-        this.error = error.message || 'Failed to activate task';
+        this.toastService.error(error.message || 'Failed to activate task');
       }
     });
   }
@@ -191,12 +262,11 @@ export class TaskDetailsComponent implements OnInit {
   deactivateTask(): void {
     this.taskService.deactivateTask(this.householdId, this.taskId).subscribe({
       next: () => {
-        this.successMessage = 'Task deactivated successfully';
+        this.toastService.success('Task deactivated successfully');
         this.loadTaskDetails();
-        this.autoHideMessage();
       },
       error: (error) => {
-        this.error = error.message || 'Failed to deactivate task';
+        this.toastService.error(error.message || 'Failed to deactivate task');
       }
     });
   }
@@ -230,15 +300,13 @@ export class TaskDetailsComponent implements OnInit {
     return this.taskDetails.permissions.canDelete;
   }
 
+  ngOnDestroy(): void {
+    // Clear household context when leaving
+    this.householdContext.clearHousehold();
+  }
+
   get isOwner(): boolean {
     if (!this.taskDetails) return false;
     return this.taskDetails.permissions.isOwner;
-  }
-
-  private autoHideMessage(): void {
-    setTimeout(() => {
-      this.successMessage = null;
-      this.error = null;
-    }, 5000);
   }
 }

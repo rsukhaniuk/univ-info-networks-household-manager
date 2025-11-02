@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HouseholdService } from '../services/household.service';
+import { HouseholdContext } from '../services/household-context';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
@@ -12,11 +13,12 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './household-form.component.html',
   styleUrl: './household-form.component.scss'
 })
-export class HouseholdFormComponent implements OnInit {
+export class HouseholdFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private householdService = inject(HouseholdService);
+  private householdContext = inject(HouseholdContext);
   private toastService = inject(ToastService);
   private location = inject(Location);
 
@@ -53,6 +55,13 @@ export class HouseholdFormComponent implements OnInit {
           this.form.patchValue({
             name: response.data.household.name,
             description: response.data.household.description
+          });
+
+          // Set household context for navigation
+          this.householdContext.setHousehold({
+            id: response.data.household.id,
+            name: response.data.household.name,
+            isOwner: response.data.isOwner
           });
         }
       },
@@ -120,5 +129,10 @@ export class HouseholdFormComponent implements OnInit {
 
   get description() {
     return this.form.get('description');
+  }
+
+  ngOnDestroy(): void {
+    // Clear household context when leaving
+    this.householdContext.clearHousehold();
   }
 }

@@ -93,20 +93,26 @@ export class ExecutionService {
 
   /**
    * Complete task (with optional photo)
+   * Always sends multipart/form-data since the API expects it
    */
   completeTask(
     request: CompleteTaskRequest,
     photo?: File
   ): Observable<ApiResponse<ExecutionDto>> {
+    const formData = new FormData();
+    formData.append('taskId', request.taskId);
+    if (request.notes) {
+      formData.append('notes', request.notes);
+    }
+    if (request.completedAt) {
+      formData.append('completedAt', request.completedAt.toISOString());
+    }
     if (photo) {
-      return this.api.upload<ExecutionDto>('/executions/complete', photo, 'photo', {
-        taskId: request.taskId,
-        notes: request.notes,
-        completedAt: request.completedAt?.toISOString()
-      });
+      formData.append('photo', photo);
     }
 
-    return this.api.post<ExecutionDto>('/executions/complete', request);
+    // Post FormData directly
+    return this.api.post<ExecutionDto>('/executions/complete', formData);
   }
 
   /**

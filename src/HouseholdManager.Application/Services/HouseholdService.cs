@@ -19,6 +19,10 @@ namespace HouseholdManager.Application.Services
         private readonly IHouseholdRepository _householdRepository;
         private readonly IHouseholdMemberRepository _memberRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IRoomRepository _roomRepository;
+        private readonly ITaskRepository _taskRepository;
+        private readonly IExecutionRepository _executionRepository;
+        private readonly IFileUploadService _fileUploadService;
         private readonly ILogger<HouseholdService> _logger;
         private readonly IMapper _mapper;
 
@@ -26,12 +30,20 @@ namespace HouseholdManager.Application.Services
             IHouseholdRepository householdRepository,
             IHouseholdMemberRepository memberRepository,
             IUserRepository userRepository,
+            IRoomRepository roomRepository,
+            ITaskRepository taskRepository,
+            IExecutionRepository executionRepository,
+            IFileUploadService fileUploadService,
             IMapper mapper,
             ILogger<HouseholdService> logger)
         {
             _householdRepository = householdRepository;
             _memberRepository = memberRepository;
             _userRepository = userRepository;
+            _roomRepository = roomRepository;
+            _taskRepository = taskRepository;
+            _executionRepository = executionRepository;
+            _fileUploadService = fileUploadService;
             _mapper = mapper;
             _logger = logger;
         }
@@ -126,6 +138,38 @@ namespace HouseholdManager.Application.Services
         {
             await ValidateOwnerAccessAsync(id, requestingUserId, cancellationToken);
 
+            // Delete all tasks and their executions first (due to Restrict on Task->Room)
+            var tasks = await _taskRepository.GetByHouseholdIdAsync(id, cancellationToken);
+            foreach (var task in tasks)
+            {
+                // Delete task executions
+                var executions = await _executionRepository.GetByTaskIdAsync(task.Id, cancellationToken);
+                foreach (var execution in executions)
+                {
+                    // Delete execution photo if exists
+                    if (!string.IsNullOrEmpty(execution.PhotoPath))
+                    {
+                        await _fileUploadService.DeleteFileAsync(execution.PhotoPath, cancellationToken);
+                    }
+                    await _executionRepository.DeleteAsync(execution, cancellationToken);
+                }
+
+                // Delete the task
+                await _taskRepository.DeleteAsync(task, cancellationToken);
+            }
+            _logger.LogInformation("Deleted {TaskCount} tasks with their executions for household {HouseholdId}", tasks.Count, id);
+
+            // Delete all room photos
+            var rooms = await _roomRepository.GetByHouseholdIdAsync(id, cancellationToken);
+            foreach (var room in rooms)
+            {
+                if (!string.IsNullOrEmpty(room.PhotoPath))
+                {
+                    await _fileUploadService.DeleteFileAsync(room.PhotoPath, cancellationToken);
+                }
+            }
+
+            // Now delete the household (will cascade delete rooms and members)
             await _householdRepository.DeleteByIdAsync(id, cancellationToken);
             _logger.LogInformation("Deleted household {HouseholdId} by user {UserId}", id, requestingUserId);
         }

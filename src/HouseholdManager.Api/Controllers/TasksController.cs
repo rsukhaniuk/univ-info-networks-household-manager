@@ -78,8 +78,8 @@ namespace HouseholdManager.Api.Controllers
             // Validate member access
             await _householdService.ValidateUserAccessAsync(householdId, userId, cancellationToken);
 
-            // Get all active tasks
-            var allTasks = await _taskService.GetActiveHouseholdTasksAsync(householdId, cancellationToken);
+            // Get all tasks (not just active ones, because we have IsActive filter)
+            var allTasks = await _taskService.GetHouseholdTasksAsync(householdId, cancellationToken);
 
             // Apply filters in memory
             var filteredTasks = allTasks.AsEnumerable();

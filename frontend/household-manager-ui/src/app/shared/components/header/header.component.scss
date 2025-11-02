@@ -21,6 +21,15 @@
     vertical-align: middle;
   }
 
+  .household-name-item {
+    .nav-link {
+      cursor: default;
+      border-right: 1px solid #e9ecef;
+      margin-right: 0.5rem;
+      padding-right: 1rem;
+    }
+  }
+
   .dropdown-menu {
     min-width: 200px;
     margin-top: 0.5rem;

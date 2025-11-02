@@ -20,6 +20,8 @@ namespace HouseholdManager.Application.Services
         private readonly IRoomRepository _roomRepository;
         private readonly IHouseholdService _householdService;
         private readonly IFileUploadService _fileUploadService;
+        private readonly ITaskRepository _taskRepository;
+        private readonly IExecutionRepository _executionRepository;
         private readonly ILogger<RoomService> _logger;
         private readonly IMapper _mapper;
 
@@ -27,12 +29,16 @@ namespace HouseholdManager.Application.Services
             IRoomRepository roomRepository,
             IHouseholdService householdService,
             IFileUploadService fileUploadService,
+            ITaskRepository taskRepository,
+            IExecutionRepository executionRepository,
             IMapper mapper,
             ILogger<RoomService> logger)
         {
             _roomRepository = roomRepository;
             _householdService = householdService;
             _fileUploadService = fileUploadService;
+            _taskRepository = taskRepository;
+            _executionRepository = executionRepository;
             _mapper = mapper;
             _logger = logger;
         }
@@ -121,12 +127,34 @@ namespace HouseholdManager.Application.Services
             if (room == null)
                 throw new NotFoundException("Room", id);
 
+            // First, delete all tasks in this room (and their executions)
+            var tasks = await _taskRepository.GetByRoomIdAsync(id, cancellationToken);
+            foreach (var task in tasks)
+            {
+                // Delete task executions first
+                var executions = await _executionRepository.GetByTaskIdAsync(task.Id, cancellationToken);
+                foreach (var execution in executions)
+                {
+                    // Delete execution photo if exists
+                    if (!string.IsNullOrEmpty(execution.PhotoPath))
+                    {
+                        await _fileUploadService.DeleteFileAsync(execution.PhotoPath, cancellationToken);
+                    }
+                    await _executionRepository.DeleteAsync(execution, cancellationToken);
+                }
+
+                // Delete the task
+                await _taskRepository.DeleteAsync(task, cancellationToken);
+            }
+            _logger.LogInformation("Deleted {TaskCount} tasks with their executions for room {RoomId}", tasks.Count, id);
+
             // Delete room photo if exists
             if (!string.IsNullOrEmpty(room.PhotoPath))
             {
                 await _fileUploadService.DeleteFileAsync(room.PhotoPath, cancellationToken);
             }
 
+            // Finally delete the room
             await _roomRepository.DeleteByIdAsync(id, cancellationToken);
             _logger.LogInformation("Deleted room {RoomId}", id);
         }

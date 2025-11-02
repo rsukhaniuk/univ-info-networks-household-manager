@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
+import { HouseholdContext } from '../../households/services/household-context';
 
 @Component({
   selector: 'app-room-form',
@@ -12,12 +13,13 @@ import { HouseholdService } from '../../households/services/household.service';
   templateUrl: './room-form.component.html',
   styleUrl: './room-form.component.scss'
 })
-export class RoomFormComponent implements OnInit {
+export class RoomFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
+  private householdContext = inject(HouseholdContext);
   private location = inject(Location);
 
   form!: FormGroup;
@@ -26,6 +28,7 @@ export class RoomFormComponent implements OnInit {
   householdId: string = '';
   household: any = null;
   roomName: string = '';
+  isOwner = false;
   isSubmitting = false;
   error: string | null = null;
 
@@ -60,6 +63,14 @@ export class RoomFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.household = response.data.household;
+          this.isOwner = response.data.isOwner;
+
+          // Set household context for navigation
+          this.householdContext.setHousehold({
+            id: response.data.household.id,
+            name: response.data.household.name,
+            isOwner: response.data.isOwner
+          });
         }
       },
       error: (error) => {
@@ -199,6 +210,11 @@ export class RoomFormComponent implements OnInit {
 
   get submitIcon(): string {
     return this.isEditMode ? 'fas fa-save' : 'fas fa-plus';
+  }
+
+  ngOnDestroy(): void {
+    // Clear household context when leaving
+    this.householdContext.clearHousehold();
   }
 
   // Form getters

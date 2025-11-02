@@ -41,7 +41,7 @@ namespace HouseholdManager.Application.Mapping
             // HouseholdMember → HouseholdMemberDto
             CreateMap<HouseholdMember, HouseholdMemberDto>()
                 .ForMember(dest => dest.HouseholdId, opt => opt.MapFrom(src => src.HouseholdId))
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.FullName))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => GetUserDisplayName(src.User)))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
                 .ForMember(dest => dest.ActiveTaskCount, opt => opt.Ignore()) // Calculated by service
@@ -66,6 +66,44 @@ namespace HouseholdManager.Application.Mapping
                 .ForMember(dest => dest.Members, opt => opt.Ignore())
                 .ForMember(dest => dest.Rooms, opt => opt.Ignore())
                 .ForMember(dest => dest.Tasks, opt => opt.Ignore());
+        }
+
+        /// <summary>
+        /// Gets user display name with fallback chain: FullName -> FirstName -> LastName -> Email -> UserId
+        /// </summary>
+        private static string? GetUserDisplayName(ApplicationUser? user)
+        {
+            if (user == null)
+                return null;
+
+            var firstName = user.FirstName?.Trim();
+            var lastName = user.LastName?.Trim();
+
+            // Try full name
+            if (!string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
+                return $"{firstName} {lastName}";
+
+            // Try first name only
+            if (!string.IsNullOrEmpty(firstName))
+                return firstName;
+
+            // Try last name only
+            if (!string.IsNullOrEmpty(lastName))
+                return lastName;
+
+            // Fallback to email
+            var email = user.Email?.Trim();
+            if (!string.IsNullOrEmpty(email))
+                return email;
+
+            // Last resort: show abbreviated user ID
+            if (!string.IsNullOrEmpty(user.Id))
+            {
+                var shortId = user.Id.Length > 8 ? user.Id.Substring(0, 8) : user.Id;
+                return $"User {shortId}...";
+            }
+
+            return null;
         }
     }
 }

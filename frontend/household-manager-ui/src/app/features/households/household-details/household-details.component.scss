@@ -155,6 +155,31 @@
       }
     }
   }
+
+  // Outlined buttons with visible borders
+  .btn-outline-success {
+    border: 2px solid $success-color;
+    color: $success-color;
+    background-color: transparent;
+
+    &:hover {
+      background-color: $success-color;
+      border-color: $success-color;
+      color: white;
+    }
+  }
+
+  .btn-outline-info {
+    border: 2px solid $info-color;
+    color: $info-color;
+    background-color: transparent;
+
+    &:hover {
+      background-color: $info-color;
+      border-color: $info-color;
+      color: white;
+    }
+  }
 }
 
 // Responsive

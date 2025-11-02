@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HouseholdService } from '../services/household.service';
 import { HouseholdDetailsDto, HouseholdMemberDto } from '../../../core/models/household.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { HouseholdContext } from '../services/household-context';
 
 @Component({
   selector: 'app-household-details',
@@ -12,9 +13,10 @@ import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
   templateUrl: './household-details.component.html',
   styleUrl: './household-details.component.scss'
 })
-export class HouseholdDetailsComponent implements OnInit {
+export class HouseholdDetailsComponent implements OnInit, OnDestroy {
   private householdService = inject(HouseholdService);
   private route = inject(ActivatedRoute);
+  private householdContext = inject(HouseholdContext);
 
   household: HouseholdDetailsDto | null = null;
   isLoading = true;
@@ -25,6 +27,7 @@ export class HouseholdDetailsComponent implements OnInit {
   showInviteModal = false;
   removeMemberModal: HouseholdMemberDto | null = null;
   inviteCodeCopied = false;
+  showLeaveHouseholdModal = false;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -41,6 +44,13 @@ export class HouseholdDetailsComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.household = response.data;
+
+          // Set household context for navigation
+          this.householdContext.setHousehold({
+            id: this.household.household.id,
+            name: this.household.household.name,
+            isOwner: this.household.isOwner
+          });
         }
         this.isLoading = false;
       },
@@ -49,6 +59,11 @@ export class HouseholdDetailsComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    // Clear household context when leaving the page
+    this.householdContext.clearHousehold();
   }
 
   openInviteModal(): void {
@@ -120,6 +135,33 @@ export class HouseholdDetailsComponent implements OnInit {
       error: (error) => {
         this.error = error.message || 'Failed to remove member';
         this.removeMemberModal = null;
+      }
+    });
+  }
+
+  openLeaveHouseholdModal(): void {
+    this.showLeaveHouseholdModal = true;
+  }
+
+  closeLeaveHouseholdModal(): void {
+    this.showLeaveHouseholdModal = false;
+  }
+
+  confirmLeaveHousehold(): void {
+    if (!this.household) return;
+
+    this.householdService.leaveHousehold(this.household.household.id).subscribe({
+      next: () => {
+        this.successMessage = 'You have left the household successfully';
+        this.showLeaveHouseholdModal = false;
+        // Redirect to households list after a short delay
+        setTimeout(() => {
+          window.location.href = '/households';
+        }, 1500);
+      },
+      error: (error) => {
+        this.error = error.message || 'Failed to leave household';
+        this.showLeaveHouseholdModal = false;
       }
     });
   }
