@@ -22,8 +22,6 @@ namespace HouseholdManager.Application.Validators.User
                 .WithMessage("First name cannot exceed 50 characters")
                 .MinimumLength(1)
                 .WithMessage("First name must be at least 1 character")
-                .Matches(@"^[a-zA-Z\s\-']+$")
-                .WithMessage("First name can only contain letters, spaces, hyphens, and apostrophes")
                 .When(x => !string.IsNullOrEmpty(x.FirstName));
 
             // Last name validation (optional)
@@ -32,8 +30,6 @@ namespace HouseholdManager.Application.Validators.User
                 .WithMessage("Last name cannot exceed 50 characters")
                 .MinimumLength(1)
                 .WithMessage("Last name must be at least 1 character")
-                .Matches(@"^[a-zA-Z\s\-']+$")
-                .WithMessage("Last name can only contain letters, spaces, hyphens, and apostrophes")
                 .When(x => !string.IsNullOrEmpty(x.LastName));
 
             // At least one field must be provided

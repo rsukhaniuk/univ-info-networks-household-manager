@@ -9,21 +9,6 @@
     </div>
   </div>
 
-  <!-- Messages -->
-  @if (successMessage) {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
-      <button type="button" class="btn-close" (click)="successMessage = null"></button>
-    </div>
-  }
-
-  @if (error) {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-      <button type="button" class="btn-close" (click)="error = null"></button>
-    </div>
-  }
-
   <!-- Loading State -->
   @if (isLoading) {
     <div class="text-center py-5">
@@ -62,7 +47,7 @@
                   </div>
                 }
                 <div>
-                  <h5 class="mb-1">{{ auth0User.name || profile.user.fullName || 'No Name' }}</h5>
+                  <h5 class="mb-1">{{ profile.user.fullName || auth0User.name || 'No Name' }}</h5>
                   <p class="text-muted mb-0">
                     <i class="fas fa-envelope me-1"></i>
                     {{ auth0User.email || profile.user.email }}
@@ -156,75 +141,109 @@
           </div>
         </div>
 
-        <!-- My Households Card -->
+        <!-- Account Security Card -->
         <div class="card shadow-sm mb-4">
           <div class="card-header bg-light">
             <h5 class="card-title mb-0">
-              <i class="fas fa-home me-2"></i>My Households
-              <span class="badge bg-secondary ms-2">{{ profile.households.length }}</span>
+              <i class="fas fa-shield-alt me-2"></i>Account Security
             </h5>
           </div>
           <div class="card-body">
-            @if (profile.households.length === 0) {
-              <div class="text-center py-4 text-muted">
-                <i class="fas fa-home fa-2x mb-2"></i>
-                <p class="mb-3">You're not a member of any households yet</p>
-                <a routerLink="/households/create" class="btn btn-primary">
-                  <i class="fas fa-plus me-1"></i>Create Household
-                </a>
+            @if (connectionInfo) {
+              <!-- Connection Type Info -->
+              <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Connection Type:</strong> {{ connectionInfo.providerName }}
               </div>
-            } @else {
-              <div class="list-group list-group-flush">
-                @for (household of profile.households; track household.householdId) {
-                  <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div class="flex-grow-1">
-                        <h6 class="mb-1">
-                          <a [routerLink]="['/households', household.householdId]" 
-                             class="text-decoration-none">
-                            {{ household.householdName }}
-                          </a>
-                          @if (household.isCurrent) {
-                            <span class="badge bg-success ms-2">Current</span>
-                          }
-                          @if (household.role === 'Owner') {
-                            <span class="badge bg-warning ms-1">
-                              <i class="fas fa-crown me-1"></i>Owner
-                            </span>
-                          }
-                        </h6>
-                        <p class="mb-1 text-muted small">
-                          <i class="fas fa-tasks me-1"></i>
-                          {{ household.activeTaskCount }} active tasks
-                        </p>
-                        <p class="mb-0 text-muted small">
-                          <i class="fas fa-calendar me-1"></i>
-                          Joined {{ household.joinedAt | utcDate:'mediumDate' }}
-                        </p>
-                      </div>
 
-                      <div class="btn-group-vertical btn-group-sm">
-                        @if (!household.isCurrent) {
-                          <button type="button" 
-                                  class="btn btn-outline-primary"
-                                  (click)="setCurrentHousehold(household.householdId)">
-                            <i class="fas fa-check me-1"></i>Set as Current
-                          </button>
-                        } @else {
-                          <button type="button" 
-                                  class="btn btn-outline-secondary"
-                                  (click)="clearCurrentHousehold()">
-                            <i class="fas fa-times me-1"></i>Clear
-                          </button>
-                        }
-                        <a [routerLink]="['/households', household.householdId]" 
-                           class="btn btn-outline-info">
-                          <i class="fas fa-eye me-1"></i>View
-                        </a>
-                      </div>
+              <!-- Change Password Section -->
+              @if (connectionInfo.canChangePassword) {
+                <div class="mb-4 pb-4 border-bottom">
+                  <h6 class="mb-3">
+                    <i class="fas fa-key me-2"></i>Password
+                  </h6>
+                  <p class="text-muted mb-3">
+                    Change your password securely through Auth0's hosted page.
+                  </p>
+                  <button type="button"
+                          class="btn btn-outline-primary"
+                          (click)="onChangePassword()"
+                          [disabled]="isChangingPassword">
+                    @if (isChangingPassword) {
+                      <span class="spinner-border spinner-border-sm me-2"></span>
+                      Redirecting...
+                    } @else {
+                      <i class="fas fa-key me-2"></i>
+                      Change Password
+                    }
+                  </button>
+                </div>
+              } @else {
+                <div class="alert alert-warning mb-4">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Social Login:</strong> Password management is handled by {{ connectionInfo.providerName }}.
+                  Please change your password in your {{ connectionInfo.providerName }} account.
+                </div>
+              }
+
+              <!-- Change Email Section -->
+              @if (connectionInfo.canChangeEmail) {
+                <div>
+                  <h6 class="mb-3">
+                    <i class="fas fa-envelope me-2"></i>Email Address
+                  </h6>
+                  <p class="text-muted mb-3">
+                    Update your email address. You will be logged out to refresh your session.
+                  </p>
+                  <form [formGroup]="emailForm" (ngSubmit)="onChangeEmail()">
+                    <div class="mb-3">
+                      <label for="newEmail" class="form-label">New Email</label>
+                      <input type="email"
+                             id="newEmail"
+                             formControlName="newEmail"
+                             class="form-control"
+                             [class.is-invalid]="newEmail?.invalid && newEmail?.touched"
+                             placeholder="Enter new email address">
+                      @if (newEmail?.invalid && newEmail?.touched) {
+                        <div class="invalid-feedback">
+                          @if (newEmail?.errors?.['required']) {
+                            Email is required
+                          }
+                          @if (newEmail?.errors?.['email']) {
+                            Please enter a valid email address
+                          }
+                          @if (newEmail?.errors?.['maxlength']) {
+                            Email cannot exceed 255 characters
+                          }
+                        </div>
+                      }
                     </div>
-                  </div>
-                }
+                    <button type="submit"
+                            class="btn btn-outline-primary"
+                            [disabled]="isChangingEmail || emailForm.invalid || emailForm.pristine">
+                      @if (isChangingEmail) {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Changing Email...
+                      } @else {
+                        <i class="fas fa-envelope me-2"></i>
+                        Change Email
+                      }
+                    </button>
+                  </form>
+                </div>
+              } @else {
+                <div class="alert alert-warning">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Social Login:</strong> Email management is handled by {{ connectionInfo.providerName }}.
+                  Please change your email in your {{ connectionInfo.providerName }} account.
+                </div>
+              }
+            } @else {
+              <div class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-muted" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 mb-0">Loading account settings...</p>
               </div>
             }
           </div>
@@ -306,27 +325,6 @@
           </div>
         </div>
 
-        <!-- Quick Actions Card -->
-        <div class="card shadow-sm">
-          <div class="card-header bg-light">
-            <h5 class="card-title mb-0">
-              <i class="fas fa-bolt me-2"></i>Quick Actions
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="d-grid gap-2">
-              <a routerLink="/households/create" class="btn btn-success">
-                <i class="fas fa-plus me-2"></i>Create Household
-              </a>
-              <a routerLink="/households/join" class="btn btn-outline-success">
-                <i class="fas fa-key me-2"></i>Join Household
-              </a>
-              <a routerLink="/households" class="btn btn-outline-primary">
-                <i class="fas fa-home me-2"></i>My Households
-              </a>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   }

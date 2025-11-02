@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using HouseholdManager.Infrastructure.Configuration;
+using Microsoft.OpenApi.Models;
 using System.Reflection;
 
 namespace HouseholdManager.Api.Configuration

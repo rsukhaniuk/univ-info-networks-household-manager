@@ -121,13 +121,17 @@ namespace HouseholdManager.Infrastructure.Repositories
                     hasChanges = true;
                 }
 
-                if (user.FirstName != firstName)
+                // Only update FirstName if new value is not null OR if current value is null
+                // This prevents overwriting existing data with null from JWT
+                if (firstName != null && user.FirstName != firstName)
                 {
                     user.FirstName = firstName;
                     hasChanges = true;
                 }
 
-                if (user.LastName != lastName)
+                // Only update LastName if new value is not null OR if current value is null
+                // This prevents overwriting existing data with null from JWT
+                if (lastName != null && user.LastName != lastName)
                 {
                     user.LastName = lastName;
                     hasChanges = true;

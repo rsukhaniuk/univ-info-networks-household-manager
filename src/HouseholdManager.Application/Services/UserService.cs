@@ -23,6 +23,7 @@ namespace HouseholdManager.Application.Services
         private readonly IExecutionRepository _executionRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
+        private readonly Interfaces.ExternalServices.IAuth0ManagementApiClient? _auth0Client;
 
         public UserService(
             IUserRepository userRepository,
@@ -30,7 +31,8 @@ namespace HouseholdManager.Application.Services
             ITaskRepository taskRepository,
             IExecutionRepository executionRepository,
             IMapper mapper,
-            ILogger<UserService> logger)
+            ILogger<UserService> logger,
+            Interfaces.ExternalServices.IAuth0ManagementApiClient? auth0Client = null)
         {
             _userRepository = userRepository;
             _memberRepository = memberRepository;
@@ -38,6 +40,7 @@ namespace HouseholdManager.Application.Services
             _executionRepository = executionRepository;
             _mapper = mapper;
             _logger = logger;
+            _auth0Client = auth0Client;
         }
 
         #region User Queries
@@ -116,12 +119,31 @@ namespace HouseholdManager.Application.Services
             var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
                 ?? throw new NotFoundException("User", userId);
 
-            // Update profile fields
+            // Update profile fields in local database
             await _userRepository.UpdateProfileAsync(
                 userId,
                 request.FirstName,
                 request.LastName,
                 cancellationToken);
+
+            // Sync name to Auth0 (if Auth0 client is available)
+            if (_auth0Client != null && (!string.IsNullOrWhiteSpace(request.FirstName) || !string.IsNullOrWhiteSpace(request.LastName)))
+            {
+                var fullName = $"{request.FirstName} {request.LastName}".Trim();
+                if (!string.IsNullOrWhiteSpace(fullName))
+                {
+                    try
+                    {
+                        await _auth0Client.UpdateUserNameAsync(userId, fullName);
+                        _logger.LogInformation("Synced name to Auth0 for user {UserId}: '{FullName}'", userId, fullName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to sync name to Auth0 for user {UserId}. Profile still updated in local database.", userId);
+                        // Don't fail the whole operation if Auth0 sync fails
+                    }
+                }
+            }
 
             // Fetch updated user
             user = await _userRepository.GetByIdAsync(userId, cancellationToken);

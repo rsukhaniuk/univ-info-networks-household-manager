@@ -94,12 +94,12 @@ namespace HouseholdManager.Api.Middleware
             }
             else
             {
-                // User exists, update cache timestamp
-                _syncCache[userId] = DateTime.UtcNow;
-
+                // User exists, but sync anyway to update email/profile if changed
                 _logger.LogTrace(
-                    "User {UserId} already exists in database, updated cache",
+                    "User {UserId} already exists in database, syncing to update profile",
                     userId);
+
+                await PerformSyncAsync(context, userService, userId);
             }
         }
 

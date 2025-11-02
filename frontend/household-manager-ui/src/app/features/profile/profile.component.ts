@@ -4,7 +4,14 @@ import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from './services/user.service';
 import { AuthService } from '../../core/services/auth.service';
-import { UserProfileDto, UpdateProfileRequest } from '../../core/models/user.model';
+import { ToastService } from '../../core/services/toast.service';
+import {
+  UserProfileDto,
+  UpdateProfileRequest,
+  ConnectionInfo,
+  RequestPasswordChangeRequest,
+  ChangeEmailRequest
+} from '../../core/models/user.model';
 import { UtcDatePipe } from '../../shared/pipes/utc-date.pipe';
 
 @Component({
@@ -18,34 +25,61 @@ export class ProfileComponent implements OnInit {
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private toastService = inject(ToastService);
 
   // Data
   profile: UserProfileDto | null = null;
   auth0User$ = this.authService.user$;
+  connectionInfo: ConnectionInfo | null = null;
 
   // State
   isLoading = true;
   isSubmitting = false;
-  error: string | null = null;
-  successMessage: string | null = null;
+  isChangingPassword = false;
+  isChangingEmail = false;
 
-  // Form
+  // Forms
   profileForm: FormGroup;
+  emailForm: FormGroup;
 
   constructor() {
     this.profileForm = this.fb.group({
       firstName: ['', [Validators.maxLength(50)]],
       lastName: ['', [Validators.maxLength(50)]]
     });
+
+    this.emailForm = this.fb.group({
+      newEmail: ['', [Validators.required, Validators.email, Validators.maxLength(255)]]
+    });
   }
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadConnectionInfo();
+    this.checkPasswordChangeSuccess();
+  }
+
+  /**
+   * Check if user was redirected back from Auth0 password change
+   * Shows success message and prompts to re-login
+   */
+  checkPasswordChangeSuccess(): void {
+    // Check if there's a flag in sessionStorage indicating password was just changed
+    const passwordChanged = sessionStorage.getItem('passwordChangeInProgress');
+
+    if (passwordChanged === 'true') {
+      sessionStorage.removeItem('passwordChangeInProgress');
+      this.toastService.success('Password updated successfully! Please sign in again to refresh your session.', 5000);
+
+      // Auto-logout after 5 seconds
+      setTimeout(() => {
+        this.authService.logout();
+      }, 5000);
+    }
   }
 
   loadProfile(): void {
     this.isLoading = true;
-    this.error = null;
 
     this.userService.getMyProfile().subscribe({
       next: (response) => {
@@ -61,7 +95,7 @@ export class ProfileComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load profile';
+        this.toastService.error(error.message || 'Failed to load profile');
         this.isLoading = false;
       }
     });
@@ -74,8 +108,6 @@ export class ProfileComponent implements OnInit {
     }
 
     this.isSubmitting = true;
-    this.error = null;
-    this.successMessage = null;
 
     const request: UpdateProfileRequest = {
       firstName: this.profileForm.value.firstName || undefined,
@@ -85,14 +117,13 @@ export class ProfileComponent implements OnInit {
     this.userService.updateMyProfile(request).subscribe({
       next: (response) => {
         if (response.success) {
-          this.successMessage = 'Profile updated successfully';
+          this.toastService.success('Profile updated successfully');
           this.loadProfile(); // Reload to get updated data
-          this.autoHideMessage();
         }
         this.isSubmitting = false;
       },
       error: (error) => {
-        this.error = error.message || 'Failed to update profile';
+        // Error will be shown in global error banner by error interceptor
         this.isSubmitting = false;
       }
     });
@@ -101,12 +132,11 @@ export class ProfileComponent implements OnInit {
   setCurrentHousehold(householdId: string): void {
     this.userService.setCurrentHousehold({ householdId }).subscribe({
       next: () => {
-        this.successMessage = 'Current household updated successfully';
+        this.toastService.success('Current household updated successfully');
         this.loadProfile();
-        this.autoHideMessage();
       },
       error: (error) => {
-        this.error = error.message || 'Failed to set current household';
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }
@@ -114,12 +144,11 @@ export class ProfileComponent implements OnInit {
   clearCurrentHousehold(): void {
     this.userService.setCurrentHousehold({ householdId: undefined }).subscribe({
       next: () => {
-        this.successMessage = 'Current household cleared';
+        this.toastService.success('Current household cleared');
         this.loadProfile();
-        this.autoHideMessage();
       },
       error: (error) => {
-        this.error = error.message || 'Failed to clear current household';
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }
@@ -128,13 +157,87 @@ export class ProfileComponent implements OnInit {
     this.authService.logout();
   }
 
-  private autoHideMessage(): void {
-    setTimeout(() => {
-      this.successMessage = null;
-      this.error = null;
-    }, 5000);
+  // Account Management Methods
+
+  loadConnectionInfo(): void {
+    this.userService.getConnectionInfo().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.connectionInfo = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load connection info:', error);
+      }
+    });
+  }
+
+  onChangePassword(): void {
+    if (this.isChangingPassword || !this.connectionInfo?.canChangePassword) {
+      return;
+    }
+
+    this.isChangingPassword = true;
+
+    const request: RequestPasswordChangeRequest = {
+      // Use base URL without specific path - Auth0 is more permissive with base origins
+      resultUrl: window.location.origin + '/profile'
+
+    };
+
+    this.userService.requestPasswordChange(request).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Set flag before redirecting to Auth0
+          sessionStorage.setItem('passwordChangeInProgress', 'true');
+
+          // Redirect to Auth0 hosted password change page
+          window.location.href = response.data.ticketUrl;
+        }
+        this.isChangingPassword = false;
+      },
+      error: (error) => {
+        // Error will be shown in global error banner by error interceptor
+        this.isChangingPassword = false;
+      }
+    });
+  }
+
+  onChangeEmail(): void {
+    if (this.emailForm.invalid || this.isChangingEmail || !this.connectionInfo?.canChangeEmail) {
+      this.emailForm.markAllAsTouched();
+      return;
+    }
+
+    this.isChangingEmail = true;
+
+    const request: ChangeEmailRequest = {
+      newEmail: this.emailForm.value.newEmail,
+      verifyEmail: false // Admin operation, no verification
+    };
+
+    this.userService.changeEmail(request).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.toastService.success('Email changed successfully! You will be logged out in 3 seconds to refresh your session...', 5000);
+          this.emailForm.reset();
+
+          // Logout after 3 seconds to force re-login with new email
+          setTimeout(() => {
+            this.authService.logout();
+          }, 3000);
+        }
+        this.isChangingEmail = false;
+      },
+      error: (error) => {
+        console.error('Email change error:', error);
+        // Error will be shown in global error banner by error interceptor
+        this.isChangingEmail = false;
+      }
+    });
   }
 
   get firstName() { return this.profileForm.get('firstName'); }
   get lastName() { return this.profileForm.get('lastName'); }
+  get newEmail() { return this.emailForm.get('newEmail'); }
 }

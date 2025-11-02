@@ -17,6 +17,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return auth.getAccessTokenSilently().pipe(
     take(1),
     switchMap(token => {
+      if (!token) {
+        console.error('Auth token is empty!');
+      }
       const authReq = req.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -25,7 +28,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return next(authReq);
     }),
     catchError(err => {
-      console.warn('Could not get auth token:', err.message || err);
+      console.error('Failed to get auth token:', err);
+      // If we can't get token, the user is not authenticated
+      // Let the request go through without token so API returns proper 401
       return next(req);
     })
   );

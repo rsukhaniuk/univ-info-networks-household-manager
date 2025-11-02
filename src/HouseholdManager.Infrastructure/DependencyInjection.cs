@@ -1,6 +1,9 @@
-﻿using HouseholdManager.Application.Interfaces.Repositories;
+﻿using HouseholdManager.Application.Interfaces.ExternalServices;
+using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
+using HouseholdManager.Infrastructure.Configuration;
 using HouseholdManager.Infrastructure.Data;
+using HouseholdManager.Infrastructure.ExternalServices.Auth0;
 using HouseholdManager.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -35,6 +38,13 @@ namespace HouseholdManager.Infrastructure
             services.AddScoped<IExecutionRepository, ExecutionRepository>();
             services.AddScoped<IHouseholdMemberRepository, HouseholdMemberRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+
+            // HttpClient (required for Auth0ManagementApiClient)
+            services.AddHttpClient();
+
+            // External Services - Auth0
+            services.Configure<Auth0Settings>(configuration.GetSection("Auth0"));
+            services.AddScoped<IAuth0ManagementApiClient, Auth0ManagementApiClient>();
 
             // Data Seeder
             services.AddScoped<DataSeeder>();

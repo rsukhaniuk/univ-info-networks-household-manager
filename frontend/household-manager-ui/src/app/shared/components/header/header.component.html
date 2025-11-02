@@ -100,7 +100,7 @@
                   } @else {
                     <i class="fas fa-user-circle me-2 fs-5"></i>
                   }
-                  <span>{{ user.name || user.email }}</span>
+                  <span>{{ userDisplayName$ | async }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>

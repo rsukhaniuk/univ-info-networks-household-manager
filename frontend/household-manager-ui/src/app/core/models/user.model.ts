@@ -57,3 +57,25 @@ export interface UserQueryParameters {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
+
+// Account Management Models
+export interface RequestPasswordChangeRequest {
+  resultUrl: string;
+}
+
+export interface PasswordChangeTicketResponse {
+  ticketUrl: string;
+  message: string;
+}
+
+export interface ChangeEmailRequest {
+  newEmail: string;
+  verifyEmail?: boolean;
+}
+
+export interface ConnectionInfo {
+  connection: string;
+  canChangePassword: boolean;
+  canChangeEmail: boolean;
+  providerName: string;
+}

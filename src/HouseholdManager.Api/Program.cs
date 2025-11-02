@@ -6,12 +6,14 @@ using HouseholdManager.Api.Services;
 using HouseholdManager.Application;
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Infrastructure;
+using HouseholdManager.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
+using Auth0Settings = HouseholdManager.Infrastructure.Configuration.Auth0Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -151,7 +153,7 @@ builder.Services.AddAuthorization(options =>
 // Api Layer Services (Infrastructure implementations at Api layer)
 builder.Services.AddScoped<IFileSystemService, FileSystemService>();
 
-// Application Layer
+// Application Layer  
 builder.Services.AddApplication();
 
 // Infrastructure Layer  
