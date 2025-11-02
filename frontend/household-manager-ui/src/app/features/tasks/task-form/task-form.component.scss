@@ -2,8 +2,13 @@
 @use '../../../shared/styles/flatpickr-theme' as flatpickr;
 
 // ==========================================
-// COMPONENT-SPECIFIC STYLES ONLY
+// COMPONENT-SPECIFIC STYLES
 // ==========================================
+
+// Task form container
+.task-form-container {
+  padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
+}
 
 // Readonly input for date picker (component-specific behavior)
 input[readonly].form-control {

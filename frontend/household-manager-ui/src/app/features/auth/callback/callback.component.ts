@@ -41,15 +41,15 @@ export class CallbackComponent implements OnInit {
   ngOnInit(): void {
     // Wait for auth state and redirect
     this.auth.appState$.pipe(take(1)).subscribe(appState => {
-      const target = appState?.target || '/dashboard';
+      const target = appState?.target || '/households';
       this.router.navigate([target]);
     });
 
-    // Fallback: if no appState after 3 seconds, redirect to dashboard
+    // Fallback: if no appState after 3 seconds, redirect to households
     setTimeout(() => {
       this.auth.isAuthenticated$.pipe(take(1)).subscribe(isAuth => {
         if (isAuth) {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/households']);
         } else {
           this.router.navigate(['/']);
         }

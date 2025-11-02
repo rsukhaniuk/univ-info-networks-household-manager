@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { TableModule } from 'primeng/table';
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
@@ -14,7 +15,7 @@ import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 @Component({
   selector: 'app-room-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, ConfirmationDialogComponent, UtcDatePipe],
+  imports: [CommonModule, RouterModule, TableModule, ConfirmationDialogComponent, UtcDatePipe],
   templateUrl: './room-details.component.html',
   styleUrl: './room-details.component.scss',
 })
@@ -223,6 +224,12 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
       this.successMessage = null;
       this.error = null;
     }, 5000);
+  }
+
+  getWeekdayName(weekday: number | null | undefined): string {
+    if (weekday === null || weekday === undefined) return 'N/A';
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[weekday] || 'N/A';
   }
 
   ngOnDestroy(): void {

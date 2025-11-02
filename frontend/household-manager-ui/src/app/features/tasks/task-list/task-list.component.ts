@@ -21,7 +21,7 @@ import { HouseholdDto } from '../../../core/models/household.model';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
-type SortBy = 'title' | 'priority' | 'createdAt' | 'dueDate';
+type SortBy = 'title' | 'priority' | 'createdAt' | 'dueDate' | 'roomName' | 'type' | 'isActive' | 'assignedUserName';
 type SortOrder = 'asc' | 'desc';
 
 @Component({
@@ -367,5 +367,29 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   getStatusBadgeClass(isActive: boolean): string {
     return isActive ? 'bg-success' : 'bg-secondary';
+  }
+
+  getWeekdayName(weekday: DayOfWeek | null | undefined): string {
+    if (weekday === null || weekday === undefined) {
+      return 'N/A';
+    }
+    switch (weekday) {
+      case DayOfWeek.Monday:
+        return 'Monday';
+      case DayOfWeek.Tuesday:
+        return 'Tuesday';
+      case DayOfWeek.Wednesday:
+        return 'Wednesday';
+      case DayOfWeek.Thursday:
+        return 'Thursday';
+      case DayOfWeek.Friday:
+        return 'Friday';
+      case DayOfWeek.Saturday:
+        return 'Saturday';
+      case DayOfWeek.Sunday:
+        return 'Sunday';
+      default:
+        return 'N/A';
+    }
   }
 }

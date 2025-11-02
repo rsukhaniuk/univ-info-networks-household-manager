@@ -54,7 +54,7 @@ export class AuthService {
   /**
    * Login with redirect
    */
-  login(redirectPath: string = '/dashboard'): void {
+  login(redirectPath: string = '/households'): void {
     this.auth0.loginWithRedirect({
       appState: { target: redirectPath }
     });
@@ -68,7 +68,7 @@ export class AuthService {
       authorizationParams: {
         screen_hint: 'signup'
       },
-      appState: { target: '/dashboard' }
+      appState: { target: '/households' }
     });
   }
 

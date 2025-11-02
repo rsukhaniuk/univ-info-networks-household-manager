@@ -33,7 +33,7 @@
         <!-- Title -->
         <div>
           <h1 class="h3 mb-1 d-flex align-items-center">
-            <i class="fas fa-tasks text-primary me-2"></i>
+            <i class="fas fa-tasks text-info me-2"></i>
             @if (household) {
             <span>Tasks in {{ household.name }}</span>
             } @else {
@@ -50,7 +50,7 @@
         @if (canManageTasks) {
         <a
           [routerLink]="['/tasks', householdId, 'create']"
-          class="btn btn-warning"
+          class="btn btn-info"
         >
           <i class="fas fa-plus me-1"></i>Add Task
         </a>
@@ -224,7 +224,7 @@
     <div class="col-lg-10">
       <div class="card shadow-sm">
         <div class="card-body text-center py-5">
-          <i class="fas fa-tasks fa-4x text-warning mb-3 opacity-50"></i>
+          <i class="fas fa-tasks fa-4x text-info mb-3 opacity-50"></i>
           <h4 class="text-muted mb-3">No Tasks Found</h4>
           <p class="text-muted mb-4">
             This household doesn't have any tasks yet.<br />
@@ -234,7 +234,7 @@
           @if (canManageTasks) {
           <a
             [routerLink]="['/tasks', householdId, 'create']"
-            class="btn btn-warning btn-lg"
+            class="btn btn-info btn-lg"
           >
             <i class="fas fa-plus me-1"></i>Add First Task
           </a>
@@ -281,25 +281,27 @@
                 <!-- Task Title Column -->
                 <th pResizableColumn pSortableColumn="title" style="width: 25%">
                   <div class="d-flex align-items-center">
-                    <i class="fas fa-tasks text-warning me-2"></i>
+                    <i class="fas fa-tasks text-info me-2"></i>
                     <span>Task</span>
                     <p-sortIcon field="title"></p-sortIcon>
                   </div>
                 </th>
 
                 <!-- Room Column -->
-                <th style="width: 12%">
+                <th pSortableColumn="roomName" style="width: 12%">
                   <div class="d-flex align-items-center">
                     <i class="fas fa-door-open text-success me-2"></i>
                     <span>Room</span>
+                    <p-sortIcon field="roomName"></p-sortIcon>
                   </div>
                 </th>
 
                 <!-- Type Column -->
-                <th style="width: 10%">
+                <th pSortableColumn="type" style="width: 10%">
                   <div class="d-flex align-items-center">
                     <i class="fas fa-tag text-primary me-2"></i>
                     <span>Type</span>
+                    <p-sortIcon field="type"></p-sortIcon>
                   </div>
                 </th>
 
@@ -313,18 +315,20 @@
                 </th>
 
                 <!-- Status Column -->
-                <th style="width: 10%">
+                <th pSortableColumn="isActive" style="width: 10%">
                   <div class="d-flex align-items-center">
                     <i class="fas fa-toggle-on text-info me-2"></i>
                     <span>Status</span>
+                    <p-sortIcon field="isActive"></p-sortIcon>
                   </div>
                 </th>
 
                 <!-- Assigned Column -->
-                <th style="width: 13%">
+                <th pSortableColumn="assignedUserName" style="width: 13%">
                   <div class="d-flex align-items-center">
                     <i class="fas fa-user text-info me-2"></i>
                     <span>Assigned</span>
+                    <p-sortIcon field="assignedUserName"></p-sortIcon>
                   </div>
                 </th>
 
@@ -383,12 +387,12 @@
                 <!-- Type -->
                 <td>
                   @if (task.type === TaskType.OneTime) {
-                  <span class="badge bg-info rounded-pill px-3 py-2">
+                  <span class="badge bg-primary rounded-pill px-3 py-2">
                     <i class="fas fa-clock me-1"></i>
                     One-Time
                   </span>
                   } @else {
-                  <span class="badge bg-primary rounded-pill px-3 py-2">
+                  <span class="badge bg-info rounded-pill px-3 py-2">
                     <i class="fas fa-redo me-1"></i>
                     Regular
                   </span>
@@ -438,9 +442,17 @@
                     {{ task.dueDate | utcDate : 'MMM d, y' }}
                   </small>
                   } @else if (task.type === TaskType.Regular) {
-                  <small class="text-muted">
-                    <i class="fas fa-redo me-1"></i>Regular
-                  </small>
+                  <div>
+                    @if (task.isCompletedThisWeek) {
+                    <small class="text-success fw-bold">
+                      <i class="fas fa-check-circle me-1"></i>Done this week
+                    </small>
+                    } @else {
+                    <small class="text-muted">
+                      <i class="fas fa-redo me-1"></i>{{ getWeekdayName(task.scheduledWeekday) }}
+                    </small>
+                    }
+                  </div>
                   } @else {
                   <span class="text-muted">N/A</span>
                   }

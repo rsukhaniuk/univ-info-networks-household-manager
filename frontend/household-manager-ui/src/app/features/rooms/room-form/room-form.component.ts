@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
@@ -15,7 +15,6 @@ import { HouseholdContext } from '../../households/services/household-context';
 })
 export class RoomFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private roomService = inject(RoomService);
   private householdService = inject(HouseholdService);
@@ -166,16 +165,16 @@ export class RoomFormComponent implements OnInit, OnDestroy {
           if (this.selectedFile) {
             this.roomService.uploadPhoto(this.householdId, roomId, this.selectedFile).subscribe({
               next: () => {
-                this.navigateToRoomDetails(roomId);
+                this.location.back();
               },
               error: (error) => {
                 // Room created/updated but photo upload failed
                 console.error('Photo upload failed:', error);
-                this.navigateToRoomDetails(roomId);
+                this.location.back();
               }
             });
           } else {
-            this.navigateToRoomDetails(roomId);
+            this.location.back();
           }
         }
       },
@@ -183,12 +182,6 @@ export class RoomFormComponent implements OnInit, OnDestroy {
         this.error = error.message || 'Failed to save room';
         this.isSubmitting = false;
       }
-    });
-  }
-
-  private navigateToRoomDetails(roomId: string): void {
-    this.router.navigate(['/rooms', roomId], {
-      queryParams: { householdId: this.householdId }
     });
   }
 

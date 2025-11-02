@@ -1,24 +1,25 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 
 import { FlatpickrDirective, FlatpickrDefaults } from 'angularx-flatpickr';
+import { english } from 'flatpickr/dist/l10n/default';
 
 // Services
 import { TaskService } from '../services/task.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
 import { RoomService } from '../../rooms/services/room.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 // Models
-import { 
-  TaskDto, 
-  UpsertTaskRequest, 
-  TaskPriority, 
+import {
+  UpsertTaskRequest,
+  TaskPriority,
   TaskType,
   DayOfWeek,
-  TaskDetailsDto 
+  TaskDetailsDto
 } from '../../../core/models/task.model';
 import { RoomDto } from '../../../core/models/room.model';
 import { HouseholdMemberDto } from '../../../core/models/household.model';
@@ -42,8 +43,8 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   private householdContext = inject(HouseholdContext);
   private roomService = inject(RoomService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private location = inject(Location);
+  private toastService = inject(ToastService);
 
   // Data
   householdId: string = '';
@@ -59,7 +60,6 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   // State
   isLoading = true;
   isSubmitting = false;
-  error: string | null = null;
 
   // Enums
   TaskPriority = TaskPriority;
@@ -68,6 +68,21 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   TaskTypeKeys = Object.keys(TaskType).filter(k => isNaN(Number(k)));
   DayOfWeekEnum = DayOfWeek;
   DayOfWeekKeys = Object.keys(DayOfWeek).filter(k => isNaN(Number(k)));
+
+  // Helper: parse backend UTC string into a local Date
+  // Some API responses may omit the trailing 'Z'. In that case
+  // JS parses it as local time (no TZ shift). To keep behavior
+  // consistent with the details view pipe (utcDate), we normalize
+  // strings to UTC by appending 'Z' when no TZ info is present.
+  private parseUtcToLocal(value: string | Date | null | undefined): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+
+    const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(value);
+    const normalized = hasTz ? value : value + 'Z';
+    const d = new Date(normalized);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
   // ✅ Custom validator for future date/time
   futureDateValidator(): ValidatorFn {
@@ -99,16 +114,16 @@ export class TaskFormComponent implements OnInit, OnDestroy {
     defaultHour: 12,
     defaultMinute: 0,
     locale: {
+      ...english,
       firstDayOfWeek: 1
     },
     // Update minDate every time picker opens to prevent selecting past times
-    onOpen: (selectedDates: Date[], dateStr: string, instance: any) => {
+    onOpen: (_selectedDates: Date[], _dateStr: string, instance: any) => {
       const now = new Date();
       instance.set('minDate', now);
-      instance.set('time_24hr', true);
     },
     // Validate that selected time is not in the past
-    onChange: (selectedDates: Date[], dateStr: string, instance: any) => {
+    onChange: (selectedDates: Date[], _dateStr: string, instance: any) => {
       if (selectedDates.length > 0) {
         const selected = selectedDates[0];
         const now = new Date();
@@ -149,13 +164,19 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
     // ✅ Validate householdId
     if (!this.householdId) {
-      this.error = 'Household ID is missing from the route. Please navigate from a household page.';
+      this.toastService.error('Household ID is missing from the route. Please navigate from a household page.');
       this.isLoading = false;
       console.error('Missing householdId in route params:', this.route.snapshot.paramMap);
       return;
     }
 
     console.log('Task form initialized with householdId:', this.householdId);
+
+    // ✅ Check if roomId is provided in query params (coming from room details)
+    const preselectedRoomId = this.route.snapshot.queryParamMap.get('roomId');
+    if (preselectedRoomId && !this.isEdit) {
+      this.form.patchValue({ roomId: preselectedRoomId });
+    }
 
     this.loadFormData();
   }
@@ -170,7 +191,8 @@ export class TaskFormComponent implements OnInit, OnDestroy {
     ]).then(() => {
       this.isLoading = false;
     }).catch(error => {
-      this.error = error.message || 'Failed to load form data';
+      const errorMessage = error.message || 'Failed to load form data';
+      this.toastService.error(errorMessage);
       this.isLoading = false;
     });
   }
@@ -228,6 +250,9 @@ export class TaskFormComponent implements OnInit, OnDestroy {
             const taskDetails: TaskDetailsDto = response.data;
             const task = taskDetails.task;
             
+            // Convert UTC dueDate to local time for display in flatpickr
+            const localDueDate = this.parseUtcToLocal(task.dueDate as any);
+
             this.form.patchValue({
               title: task.title,
               description: task.description,
@@ -237,7 +262,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
               estimatedMinutes: task.estimatedMinutes,
               assignedUserId: task.assignedUserId,
               isActive: task.isActive,
-              dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : null,
+              dueDate: localDueDate,
               scheduledWeekday: task.scheduledWeekday,
               rowVersion: task.rowVersion
             });
@@ -280,22 +305,21 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
     if (this.form.invalid || this.isSubmitting) {
       this.form.markAllAsTouched();
-      
+
       // Show specific error message for past date
       if (this.form.get('dueDate')?.errors?.['pastDate']) {
-        this.error = 'Due date must be in the future. Please select a later time.';
+        this.toastService.error('Due date must be in the future. Please select a later time.');
       }
       return;
     }
 
     // ✅ Validate householdId
     if (!this.householdId) {
-      this.error = 'Household ID is required. Please navigate from a household.';
+      this.toastService.error('Household ID is required. Please navigate from a household.');
       return;
     }
 
     this.isSubmitting = true;
-    this.error = null;
 
     const formValue = this.form.value;
     
@@ -330,11 +354,18 @@ export class TaskFormComponent implements OnInit, OnDestroy {
     operation.subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.router.navigate(['/tasks', this.householdId, response.data.id]);
+          // Show success toast
+          const action = this.isEdit ? 'updated' : 'created';
+          this.toastService.success(`Task ${action} successfully`);
+
+          // Navigate back to task list instead of task details
+          this.location.back();
         }
       },
       error: (error) => {
-        this.error = error.message || `Failed to ${this.isEdit ? 'update' : 'create'} task`;
+        const action = this.isEdit ? 'update' : 'create';
+        const errorMessage = error.message || `Failed to ${action} task`;
+        this.toastService.error(errorMessage);
         this.isSubmitting = false;
       }
     });

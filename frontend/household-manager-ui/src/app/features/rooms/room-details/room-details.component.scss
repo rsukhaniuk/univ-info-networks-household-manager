@@ -67,6 +67,36 @@
   }
 }
 
+// Task info styling (matching task-list)
+.task-info {
+  flex: 1;
+  min-width: 0;
+
+  h6 {
+    @include text-truncate;
+    margin-bottom: 0;
+    font-size: 0.95rem;
+
+    a {
+      color: $text-primary;
+      text-decoration: none;
+      font-weight: $font-weight-semibold;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $info-color;
+      }
+    }
+  }
+
+  small {
+    @include text-truncate;
+    display: block;
+    color: $text-muted;
+    font-size: $font-size-sm;
+  }
+}
+
 // Photo modal
 .photo-modal {
   .current-photo-display {

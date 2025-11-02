@@ -77,13 +77,25 @@ namespace HouseholdManager.Application.Services
             // Load navigation properties for DTO mapping
             createdTask = await _taskRepository.GetByIdWithRelationsAsync(createdTask.Id, cancellationToken);
 
-            return _mapper.Map<TaskDto>(createdTask);
+            var dto = _mapper.Map<TaskDto>(createdTask);
+            
+            // Set IsCompletedThisWeek
+            dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(createdTask.Id, cancellationToken);
+            
+            return dto;
         }
 
         public async Task<TaskDto?> GetTaskAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var task = await _taskRepository.GetByIdWithRelationsAsync(id, cancellationToken);
-            return task == null ? null : _mapper.Map<TaskDto>(task);
+            if (task == null) return null;
+            
+            var dto = _mapper.Map<TaskDto>(task);
+            
+            // Set IsCompletedThisWeek
+            dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(id, cancellationToken);
+            
+            return dto;
         }
 
         public async Task<TaskDetailsDto?> GetTaskWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
@@ -92,6 +104,9 @@ namespace HouseholdManager.Application.Services
             if (task == null) return null;
 
             var dto = _mapper.Map<TaskDetailsDto>(task);
+            
+            // Set IsCompletedThisWeek for the nested Task property
+            dto.Task.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(id, cancellationToken);
 
             var members = await _householdMemberService.GetHouseholdMembersAsync(task.HouseholdId, cancellationToken);
             dto.AvailableAssignees = members.Select(m => new TaskAssigneeDto
@@ -118,7 +133,15 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             var tasks = await _taskRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
-            return _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            
+            // Set IsCompletedThisWeek for each task
+            foreach (var dto in dtos)
+            {
+                dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
+            }
+            
+            return dtos;
         }
 
         public async Task<IReadOnlyList<TaskDto>> GetActiveHouseholdTasksAsync(
@@ -126,7 +149,15 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             var tasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
-            return _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            
+            // Set IsCompletedThisWeek for each task
+            foreach (var dto in dtos)
+            {
+                dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
+            }
+            
+            return dtos;
         }
 
         public async Task<TaskDto> UpdateTaskAsync(
@@ -158,7 +189,12 @@ namespace HouseholdManager.Application.Services
             // Reload with relations for DTO
             task = await _taskRepository.GetByIdWithRelationsAsync(id, cancellationToken);
 
-            return _mapper.Map<TaskDto>(task);
+            var dto = _mapper.Map<TaskDto>(task);
+            
+            // Set IsCompletedThisWeek
+            dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(id, cancellationToken);
+            
+            return dto;
         }
 
         public async Task DeleteTaskAsync(Guid id, string requestingUserId, CancellationToken cancellationToken = default)
@@ -190,7 +226,15 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             var tasks = await _taskRepository.GetByRoomIdAsync(roomId, cancellationToken);
-            return _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            
+            // Set IsCompletedThisWeek for each task
+            foreach (var dto in dtos)
+            {
+                dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
+            }
+            
+            return dtos;
         }
 
         public async Task<IReadOnlyList<TaskDto>> GetUserTasksAsync(
@@ -198,7 +242,15 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             var tasks = await _taskRepository.GetByAssignedUserIdAsync(userId, cancellationToken);
-            return _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            
+            // Set IsCompletedThisWeek for each task
+            foreach (var dto in dtos)
+            {
+                dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
+            }
+            
+            return dtos;
         }
 
         public async Task<IReadOnlyList<TaskDto>> GetOverdueTasksAsync(
@@ -206,7 +258,15 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             var tasks = await _taskRepository.GetOverdueTasksAsync(householdId, cancellationToken);
-            return _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            
+            // Set IsCompletedThisWeek for each task
+            foreach (var dto in dtos)
+            {
+                dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
+            }
+            
+            return dtos;
         }
 
         public async Task<IReadOnlyList<TaskDto>> GetTasksForWeekdayAsync(
@@ -215,7 +275,15 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             var tasks = await _taskRepository.GetRegularTasksByWeekdayAsync(householdId, weekday, cancellationToken);
-            return _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
+            
+            // Set IsCompletedThisWeek for each task
+            foreach (var dto in dtos)
+            {
+                dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
+            }
+            
+            return dtos;
         }
 
         // Assignment operations - delegate to TaskAssignmentService
@@ -252,7 +320,12 @@ namespace HouseholdManager.Application.Services
             // Reload with relations
             task = await _taskRepository.GetByIdWithRelationsAsync(taskId, cancellationToken);
 
-            return _mapper.Map<TaskDto>(task);
+            var dto = _mapper.Map<TaskDto>(task);
+            
+            // Set IsCompletedThisWeek
+            dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(taskId, cancellationToken);
+            
+            return dto;
         }
 
         public async Task UnassignTaskAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default)

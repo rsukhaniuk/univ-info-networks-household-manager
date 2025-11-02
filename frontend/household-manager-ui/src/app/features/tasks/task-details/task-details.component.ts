@@ -10,7 +10,7 @@ import { ExecutionHistoryComponent } from '../../executions/execution-history/ex
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TaskDetailsDto, TaskPriority, TaskType } from '../../../core/models/task.model';
+import { TaskDetailsDto, TaskPriority, TaskType, DayOfWeek } from '../../../core/models/task.model';
 import { CompleteTaskRequest } from '../../../core/models/execution.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
@@ -189,7 +189,10 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
           this.toastService.success('Task completed successfully!');
           this.completeForm.reset();
           this.removePhoto();
+          
+          // Reload task details to get updated isCompletedThisWeek and stats
           this.loadTaskDetails();
+          
           // Reload execution history
           if (this.executionHistory) {
             this.executionHistory.loadExecutions();
@@ -271,6 +274,39 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
+  invalidateExecutionThisWeek(): void {
+    if (!this.taskDetails) return;
+
+    this.showConfirmDialog = true;
+    this.confirmDialogData = {
+      title: 'Reset Task Completion',
+      message: `Are you sure you want to reset the completion status for "${this.taskDetails.task.title}" this week?\n\nThis will allow the task to be completed again this week. The previous execution will remain in the history but will no longer count toward completion.`,
+      confirmText: 'Reset',
+      cancelText: 'Cancel',
+      confirmClass: 'warning',
+      icon: 'fa-redo',
+      iconClass: 'text-warning'
+    };
+
+    this.pendingAction = () => {
+      this.showConfirmDialog = false;
+      this.taskService.invalidateExecutionThisWeek(this.householdId, this.taskId).subscribe({
+        next: () => {
+          this.toastService.success('Task completion reset successfully. Task can now be completed again this week.');
+          this.loadTaskDetails();
+          
+          // Reload execution history
+          if (this.executionHistory) {
+            this.executionHistory.loadExecutions();
+          }
+        },
+        error: (error) => {
+          this.toastService.error(error.message || 'Failed to reset task completion');
+        }
+      });
+    };
+  }
+
   // Helpers
   getPriorityBadgeClass(priority: TaskPriority): string {
     switch (priority) {
@@ -308,5 +344,57 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
   get isOwner(): boolean {
     if (!this.taskDetails) return false;
     return this.taskDetails.permissions.isOwner;
+  }
+
+  // UI helpers
+  get canShowCompleteForm(): boolean {
+    if (!this.taskDetails) return false;
+    if (!this.canComplete) return false;
+    if (!this.taskDetails.task.isActive) return false;
+    if (this.taskDetails.task.type === TaskType.Regular) {
+      return !this.taskDetails.task.isCompletedThisWeek;
+    }
+    // One-time tasks: hide form if already completed at least once
+    return !this.taskDetails.stats?.lastCompleted;
+  }
+
+  get hasCompletedThisWeek(): boolean {
+    return !!(
+      this.taskDetails &&
+      this.taskDetails.task.type === TaskType.Regular &&
+      this.taskDetails.task.isCompletedThisWeek
+    );
+  }
+
+  get isOneTimeCompleted(): boolean {
+    return !!(
+      this.taskDetails &&
+      this.taskDetails.task.type === TaskType.OneTime &&
+      this.taskDetails.stats?.lastCompleted
+    );
+  }
+
+  getWeekdayName(weekday: DayOfWeek | null | undefined): string {
+    if (weekday === null || weekday === undefined) {
+      return 'N/A';
+    }
+    switch (weekday) {
+      case DayOfWeek.Monday:
+        return 'Monday';
+      case DayOfWeek.Tuesday:
+        return 'Tuesday';
+      case DayOfWeek.Wednesday:
+        return 'Wednesday';
+      case DayOfWeek.Thursday:
+        return 'Thursday';
+      case DayOfWeek.Friday:
+        return 'Friday';
+      case DayOfWeek.Saturday:
+        return 'Saturday';
+      case DayOfWeek.Sunday:
+        return 'Sunday';
+      default:
+        return 'N/A';
+    }
   }
 }

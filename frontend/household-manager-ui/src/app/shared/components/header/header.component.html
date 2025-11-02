@@ -23,7 +23,7 @@
           @if (currentHousehold$ | async; as household) {
             <li class="nav-item household-name-item">
               <span class="nav-link fw-semibold text-primary">
-                <i class="fas fa-home me-1"></i>{{ household.name }}
+                <i class="fas fa-house-user me-1"></i>{{ household.name }}
               </span>
             </li>
             <li class="nav-item">
@@ -51,12 +51,6 @@
           } @else {
             <!-- Default Navigation (no household selected) -->
             @if (isAuthenticated$ | async) {
-              <li class="nav-item">
-                <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
-                  <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                </a>
-              </li>
-
               <li class="nav-item">
                 <a class="nav-link" routerLink="/households" routerLinkActive="active">
                   <i class="fas fa-house-user me-1"></i>

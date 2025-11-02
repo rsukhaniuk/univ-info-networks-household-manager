@@ -17,13 +17,9 @@ namespace HouseholdManager.Application.Validators.Task
     {
         public UpsertTaskRequestValidator()
         {
-            // Household ID validation (for update only - create gets it from route)
-            RuleFor(x => x.HouseholdId)
-                .NotEmpty()
-                .WithMessage("Household ID is required")
-                .Must(id => id != Guid.Empty)
-                .WithMessage("Invalid household ID")
-                .When(x => x.Id.HasValue); // Only validate on update
+            // Household ID validation (always required, set from route in controller)
+            // Note: Controller sets this from route, so we don't validate during model binding
+            // We only validate it's been set properly after controller processes it
 
             // Room ID validation
             RuleFor(x => x.RoomId)

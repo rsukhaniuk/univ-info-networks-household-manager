@@ -21,15 +21,18 @@ namespace HouseholdManager.Api.Controllers
     {
         private readonly IHouseholdTaskService _taskService;
         private readonly IHouseholdService _householdService;
+        private readonly ITaskExecutionService _taskExecutionService;
         private readonly ILogger<TasksController> _logger;
 
         public TasksController(
             IHouseholdTaskService taskService,
             IHouseholdService householdService,
+            ITaskExecutionService taskExecutionService,
             ILogger<TasksController> logger)
         {
             _taskService = taskService;
             _householdService = householdService;
+            _taskExecutionService = taskExecutionService;
             _logger = logger;
         }
 
@@ -44,18 +47,18 @@ namespace HouseholdManager.Api.Controllers
         /// <returns>Paginated list of tasks within the specified household</returns>
         /// <remarks>
         /// Query parameters:
-        /// - **Page**: Page number (default: 1)  
-        /// - **PageSize**: Number of items per page (default: 20, max: 100)  
-        /// - **SortBy**: Sort field (e.g., "Priority", "CreatedAt", "Name")  
-        /// - **SortOrder**: "asc" or "desc" (default: "desc")  
-        /// - **Search**: Search by task name or description  
-        /// - **RoomId**: Filter tasks belonging to a specific room (GUID)  
-        /// - **Type**: Filter by task type ("Regular" or "OneTime")  
-        /// - **Priority**: Filter by task priority ("Low", "Medium", "High")  
-        /// - **AssignedUserId**: Filter by assigned user (Auth0 user ID)  
-        /// - **IsActive**: Filter active/inactive tasks (true/false)  
-        /// - **IsOverdue**: Filter overdue tasks (true/false) — applies to OneTime tasks  
-        /// - **ScheduledWeekday**: Filter by scheduled weekday (e.g., "Monday") — applies to Regular tasks  
+        /// - **Page**: Page number (default: 1)
+        /// - **PageSize**: Number of items per page (default: 20, max: 100)
+        /// - **SortBy**: Sort field (e.g., "Title", "Priority", "CreatedAt", "DueDate", "RoomName", "Type", "IsActive", "AssignedUserName")
+        /// - **SortOrder**: "asc" or "desc" (default: "desc")
+        /// - **Search**: Search by task name or description
+        /// - **RoomId**: Filter tasks belonging to a specific room (GUID)
+        /// - **Type**: Filter by task type ("Regular" or "OneTime")
+        /// - **Priority**: Filter by task priority ("Low", "Medium", "High")
+        /// - **AssignedUserId**: Filter by assigned user (Auth0 user ID)
+        /// - **IsActive**: Filter active/inactive tasks (true/false)
+        /// - **IsOverdue**: Filter overdue tasks (true/false) — applies to OneTime tasks
+        /// - **ScheduledWeekday**: Filter by scheduled weekday (e.g., "Monday") — applies to Regular tasks
         ///
         /// Example:  
         /// `GET /api/households/{householdId}/tasks?page=1&amp;pageSize=10&amp;sortBy=Priority&amp;sortOrder=desc&amp;type=Regular&amp;isActive=true`
@@ -150,6 +153,18 @@ namespace HouseholdManager.Api.Controllers
                 "createdat" => queryParameters.IsAscending
                     ? filteredTasks.OrderBy(t => t.CreatedAt)
                     : filteredTasks.OrderByDescending(t => t.CreatedAt),
+                "roomname" => queryParameters.IsAscending
+                    ? filteredTasks.OrderBy(t => t.RoomName)
+                    : filteredTasks.OrderByDescending(t => t.RoomName),
+                "type" => queryParameters.IsAscending
+                    ? filteredTasks.OrderBy(t => t.Type)
+                    : filteredTasks.OrderByDescending(t => t.Type),
+                "isactive" => queryParameters.IsAscending
+                    ? filteredTasks.OrderBy(t => t.IsActive)
+                    : filteredTasks.OrderByDescending(t => t.IsActive),
+                "assignedusername" => queryParameters.IsAscending
+                    ? filteredTasks.OrderBy(t => t.AssignedUserName ?? string.Empty)
+                    : filteredTasks.OrderByDescending(t => t.AssignedUserName ?? string.Empty),
                 _ => queryParameters.IsAscending
                     ? filteredTasks.OrderBy(t => t.Priority)
                     : filteredTasks.OrderByDescending(t => t.Priority)
@@ -492,6 +507,7 @@ namespace HouseholdManager.Api.Controllers
                 task,
                 $"Task reassigned to {task.AssignedUserName}"));
         }
+
         #endregion
 
         #region Status Operations
@@ -557,6 +573,54 @@ namespace HouseholdManager.Api.Controllers
 
             return Ok(ApiResponse<TaskDto>.SuccessResponse(task, "Task deactivated successfully"));
         }
+
+        /// <summary>
+        /// Invalidate this week's execution for a Regular task (Owner-only)
+        /// This uncounts the execution but preserves history, allowing the task to be completed again this week
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="taskId">Task ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Success message</returns>
+        /// <response code="200">Execution invalidated successfully</response>
+        /// <response code="400">Bad Request - task is not a Regular task or not completed this week</response>
+        /// <response code="401">Unauthorized</response>
+        /// <response code="403">Forbidden - only owners can invalidate executions</response>
+        /// <response code="404">Not Found</response>
+        /// <remarks>
+        /// This endpoint is useful when:
+        /// - A task was marked as completed by mistake
+        /// - A task needs to be completed again this week
+        /// - The quality of work was not acceptable and needs to be redone
+        /// 
+        /// **Important:** This does NOT delete the execution from history.  
+        /// It only sets `IsCountedForCompletion = false`, allowing the task to be recompleted.  
+        /// The original execution remains visible in history.
+        /// 
+        /// Only Regular tasks can be invalidated. OneTime tasks cannot be reset.  
+        /// Only household owners can invalidate executions.
+        /// </remarks>
+        [HttpPost("{taskId:guid}/invalidate-execution")]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<string>>> InvalidateExecutionThisWeek(
+            [FromRoute] Guid householdId,
+            [FromRoute] Guid taskId,
+            CancellationToken cancellationToken = default)
+        {
+            var userId = GetCurrentUserId();
+            _logger.LogInformation("User {UserId} invalidating execution for task {TaskId} this week", userId, taskId);
+
+            await _taskExecutionService.InvalidateExecutionThisWeekAsync(taskId, userId, cancellationToken);
+
+            return Ok(ApiResponse<string>.SuccessResponse(
+                "Execution invalidated successfully. Task can now be completed again this week. Previous execution remains in history.",
+                "Execution invalidated successfully"));
+        }
+
         #endregion
 
         #region Calendar View

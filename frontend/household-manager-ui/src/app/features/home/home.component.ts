@@ -19,14 +19,14 @@ export class HomeComponent {
   user$ = this.authService.user$;
 
   login(): void {
-    this.authService.login('/dashboard');
+    this.authService.login('/households');
   }
 
   signup(): void {
     this.authService.signup();
   }
 
-  goToDashboard(): void {
-    this.router.navigate(['/dashboard']);
+  goToHouseholds(): void {
+    this.router.navigate(['/households']);
   }
 }

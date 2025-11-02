@@ -29,20 +29,12 @@ export const routes: Routes = [
   // Privacy policy
   {
     path: 'privacy',
-    loadComponent: () => 
+    loadComponent: () =>
       import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
     title: 'Privacy Policy - Household Manager'
   },
 
-//   // Protected routes (require authentication)
-//   {
-//     path: 'dashboard',
-//     loadComponent: () => 
-//       import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-//     canActivate: [AuthGuard],
-//     title: 'Dashboard - Household Manager'
-//   },
-
+  // Protected routes (require authentication)
   {
     path: 'households',
     loadChildren: () => 

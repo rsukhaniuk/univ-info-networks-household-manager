@@ -10,10 +10,10 @@
         </p>
 
         @if (isAuthenticated$ | async) {
-          <button 
-            class="btn btn-light btn-lg me-3" 
-            (click)="goToDashboard()">
-            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+          <button
+            class="btn btn-light btn-lg me-3"
+            (click)="goToHouseholds()">
+            <i class="fas fa-house-user me-2"></i>My Households
           </button>
         } @else {
           @if (isLoading$ | async) {

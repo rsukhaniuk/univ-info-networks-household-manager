@@ -49,6 +49,14 @@ namespace HouseholdManager.Domain.Entities
         /// </summary>
         public DateTime WeekStarting { get; set; }
 
+        /// <summary>
+        /// Indicates if this execution counts toward task completion for the week.
+        /// Owner can set this to false to allow task recompletion while preserving history.
+        /// NULL is treated as true (for backward compatibility with existing records).
+        /// Default: null (treated as true)
+        /// </summary>
+        public bool? IsCountedForCompletion { get; set; }
+
         // Denormalized fields for faster queries without joins
         /// <summary>
         /// Denormalized household ID for performance

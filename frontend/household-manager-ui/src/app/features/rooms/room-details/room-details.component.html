@@ -165,88 +165,130 @@
           </a>
           }
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
           @if (roomDetails.activeTasks.length > 0) {
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-light">
-                <tr>
-                  <th>Task Name</th>
-                  <th>Type</th>
-                  <th>Priority</th>
-                  <th>Assigned To</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (task of roomDetails.activeTasks; track task.id) {
-                <tr [class.table-secondary]="!task.isActive">
-                  <td>
-                    <h6 class="mb-0">{{ task.title }}</h6>
+          <p-table
+            [value]="roomDetails.activeTasks"
+            [tableStyle]="{ 'min-width': '100%' }"
+            styleClass="p-datatable-sm p-datatable-striped"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 25%">Task</th>
+                <th style="width: 10%">Type</th>
+                <th style="width: 10%">Priority</th>
+                <th style="width: 10%">Status</th>
+                <th style="width: 15%">Assigned To</th>
+                <th style="width: 15%">Due Date / Schedule</th>
+                <th style="width: 15%" class="text-center">Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-task>
+              <tr>
+                <td>
+                  <div class="task-info">
+                    <h6 class="mb-0">
+                      <a [routerLink]="['/tasks', householdId, task.id]">
+                        {{ task.title }}
+                      </a>
+                    </h6>
                     @if (task.description) {
-                    <small class="text-muted">{{ task.description }}</small>
+                    <small class="text-muted">
+                      {{ task.description.length > 50 ? task.description.substring(0, 50) + '...' : task.description }}
+                    </small>
                     }
-                  </td>
-                  <td>
-                    @if (task.type === 0) {
-                    <span class="badge bg-primary">Regular</span>
-                    } @else {
-                    <span class="badge bg-info">One-time</span>
+                  </div>
+                </td>
+                <td>
+                  @if (task.type === 1) {
+                  <span class="badge bg-primary rounded-pill px-3 py-2">
+                    <i class="fas fa-clock me-1"></i>One-Time
+                  </span>
+                  } @else {
+                  <span class="badge bg-info rounded-pill px-3 py-2">
+                    <i class="fas fa-redo me-1"></i>Regular
+                  </span>
+                  }
+                </td>
+                <td>
+                  @switch (task.priority) {
+                  @case (3) {
+                  <span class="badge bg-danger rounded-pill px-3 py-2">
+                    <i class="fas fa-exclamation-circle me-1"></i>High
+                  </span>
+                  }
+                  @case (2) {
+                  <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                    <i class="fas fa-exclamation-circle me-1"></i>Medium
+                  </span>
+                  }
+                  @case (1) {
+                  <span class="badge bg-success rounded-pill px-3 py-2">
+                    <i class="fas fa-exclamation-circle me-1"></i>Low
+                  </span>
+                  }
+                  }
+                </td>
+                <td>
+                  @if (task.isActive) {
+                  <span class="badge bg-success rounded-pill px-3 py-2">
+                    <i class="fas fa-check-circle me-1"></i>Active
+                  </span>
+                  } @else {
+                  <span class="badge bg-secondary rounded-pill px-3 py-2">
+                    <i class="fas fa-times-circle me-1"></i>Inactive
+                  </span>
+                  }
+                </td>
+                <td>
+                  @if (task.assignedUserName) {
+                  <i class="fas fa-user text-muted me-1"></i>
+                  <span>{{ task.assignedUserName }}</span>
+                  } @else {
+                  <span class="text-muted fst-italic">
+                    <i class="fas fa-user-slash me-1"></i>Unassigned
+                  </span>
+                  }
+                </td>
+                <td>
+                  @if (task.type === 1 && task.dueDate) {
+                  <small>
+                    <i class="far fa-calendar-alt me-1"></i>
+                    {{ task.dueDate | utcDate : 'MMM d, y HH:mm' }}
+                  </small>
+                  } @else if (task.type === 0 && task.scheduledWeekday !== null && task.scheduledWeekday !== undefined) {
+                  <small class="text-muted">
+                    <i class="fas fa-redo me-1"></i>{{ getWeekdayName(task.scheduledWeekday) }}
+                  </small>
+                  } @else {
+                  <span class="text-muted">N/A</span>
+                  }
+                </td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a
+                      [routerLink]="['/tasks', householdId, task.id]"
+                      class="btn btn-primary"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    @if (canManageRoom) {
+                    <a
+                      [routerLink]="['/tasks', householdId, task.id, 'edit']"
+                      class="btn btn-warning"
+                      title="Edit"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </a>
                     }
-                  </td>
-                  <td>
-                    @switch (task.priority) { @case (3) {
-                    <span class="badge bg-danger">High</span>
-                    } @case (2) {
-                    <span class="badge bg-warning text-dark">Medium</span>
-                    } @case (1) {
-                    <span class="badge bg-success">Low</span>
-                    } }
-                  </td>
-                  <td>
-                    @if (task.assignedUserName) {
-                    <span>{{ task.assignedUserName }}</span>
-                    } @else {
-                    <span class="text-warning">
-                      <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
-                    </span>
-                    }
-                  </td>
-                  <td>
-                    @if (task.isActive) {
-                    <span class="badge bg-success">Active</span>
-                    } @else {
-                    <span class="badge bg-secondary">Inactive</span>
-                    }
-                  </td>
-                  <td>
-                    <div class="btn-group btn-group-sm">
-                      <a
-                        [routerLink]="['/tasks', householdId, task.id]"
-                        class="btn btn-outline-primary"
-                        title="View Details"
-                      >
-                        <i class="fas fa-eye"></i>
-                      </a>
-                      @if (canManageRoom) {
-                      <a
-                        [routerLink]="['/tasks', householdId, task.id, 'edit']"
-                        class="btn btn-outline-warning"
-                        title="Edit"
-                      >
-                        <i class="fas fa-edit"></i>
-                      </a>
-                      }
-                    </div>
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
           } @else {
-          <div class="text-center py-4">
+          <div class="text-center py-5">
             <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">No Tasks Yet</h5>
             <p class="text-muted mb-4">This room doesn't have any tasks.</p>
@@ -254,7 +296,7 @@
             <a
               [routerLink]="['/tasks', householdId, 'create']"
               [queryParams]="{ roomId: roomId }"
-              class="btn btn-sm btn-info"
+              class="btn btn-info"
             >
               <i class="fas fa-plus me-1"></i>Create First Task
             </a>

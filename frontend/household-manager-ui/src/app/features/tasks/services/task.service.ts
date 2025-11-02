@@ -167,4 +167,16 @@ export class TaskService {
       params
     );
   }
+
+  /**
+   * Invalidate execution for this week (allows task to be recompleted)
+   */
+  invalidateExecutionThisWeek(
+    householdId: string,
+    taskId: string
+  ): Observable<ApiResponse<string>> {
+    return this.api.postEmpty<string>(
+      `/households/${householdId}/tasks/${taskId}/invalidate-execution`
+    );
+  }
 }

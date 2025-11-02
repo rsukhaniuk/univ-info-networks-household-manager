@@ -27,7 +27,6 @@ namespace HouseholdManager.Application.DTOs.Task
         /// <summary>
         /// Household ID that this task belongs to
         /// </summary>
-        [Required(ErrorMessage = "Household ID is required")]
         [JsonIgnore] // не приймається з JSON
         [BindNever]  // не біндиться з запиту
         [SwaggerSchema(ReadOnly = true, Description = "Comes from route")]

@@ -167,5 +167,24 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task</returns>
         Task ValidateExecutionAccessAsync(Guid executionId, string userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Invalidates (uncounts) this week's execution for a Regular task, allowing it to be completed again.
+        /// The execution remains in history but is not counted for weekly completion tracking.
+        /// Only household Owner can invalidate executions.
+        /// </summary>
+        /// <param name="taskId">Task ID to reset</param>
+        /// <param name="requestingUserId">ID of user making the request (must be owner)</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Task</returns>
+        /// <remarks>
+        /// This operation:
+        /// - Validates the task is a Regular task
+        /// - Validates the user is a household owner
+        /// - Sets IsCountedForCompletion = false for this week's execution
+        /// - Preserves execution history and photos
+        /// - Allows task to be recompleted this week
+        /// </remarks>
+        Task InvalidateExecutionThisWeekAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default);
     }
 }

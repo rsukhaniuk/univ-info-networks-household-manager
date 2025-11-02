@@ -94,8 +94,13 @@ namespace HouseholdManager.Infrastructure.Repositories
         {
             var weekStart = TaskExecution.GetWeekStarting(DateTime.UtcNow);
 
+            // Only count executions that are marked as counted for completion
+            // NULL is treated as true (for backward compatibility)
             return await _dbSet
-                .AnyAsync(te => te.TaskId == taskId && te.WeekStarting == weekStart, cancellationToken);
+                .AnyAsync(te => te.TaskId == taskId && 
+                              te.WeekStarting == weekStart && 
+                              (te.IsCountedForCompletion == null || te.IsCountedForCompletion == true), 
+                          cancellationToken);
         }
 
         public async Task<TaskExecution?> GetLatestExecutionForTaskAsync(Guid taskId, CancellationToken cancellationToken = default)
