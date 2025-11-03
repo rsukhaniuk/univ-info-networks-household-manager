@@ -453,6 +453,35 @@ namespace HouseholdManager.Api.Controllers
         }
 
         /// <summary>
+        /// Preview how tasks would be auto-assigned without saving
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of preview assignments</returns>
+        /// <response code="200">Returns preview of task assignments</response>
+        /// <response code="401">Unauthorized</response>
+        /// <response code="403">Forbidden - only owners can preview</response>
+        /// <response code="404">Not Found</response>
+        [HttpPost("auto-assign/preview")]
+        [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<TaskAssignmentPreviewDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<IReadOnlyList<TaskAssignmentPreviewDto>>>> PreviewAutoAssignTasks(
+            [FromRoute] Guid householdId,
+            CancellationToken cancellationToken = default)
+        {
+            var userId = GetCurrentUserId();
+            _logger.LogInformation("User {UserId} previewing auto-assign for household {HouseholdId}", userId, householdId);
+
+            var preview = await _taskService.PreviewAutoAssignTasksAsync(householdId, userId, cancellationToken);
+
+            return Ok(ApiResponse<IReadOnlyList<TaskAssignmentPreviewDto>>.SuccessResponse(
+                preview,
+                $"Preview generated for {preview.Count} task assignments"));
+        }
+
+        /// <summary>
         /// Auto-assign all unassigned tasks in household using fair distribution
         /// </summary>
         /// <param name="householdId">Household ID</param>

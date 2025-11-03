@@ -139,3 +139,12 @@ export interface TaskStatsDto {
   lastCompletedBy?: string;
   averageCompletionTime?: number;
 }
+
+export interface TaskAssignmentPreviewDto {
+  taskId: string;
+  taskTitle: string;
+  priority: TaskPriority;
+  roomName?: string;
+  assignedUserId: string;
+  assignedUserName: string;
+}

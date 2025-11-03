@@ -1,0 +1,92 @@
+@if (show()) {
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5);">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-magic me-2"></i>
+          Auto-Assign Preview
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="onCancel()"></button>
+      </div>
+
+      <div class="modal-body">
+        @if (preview().length === 0) {
+          <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            No unassigned tasks found. All tasks are already assigned!
+          </div>
+        } @else {
+          <p class="text-muted mb-3">
+            <i class="fas fa-info-circle me-1"></i>
+            The following <strong>{{ preview().length }}</strong> task(s) will be assigned using fair distribution based on current workload:
+          </p>
+
+          <div class="table-responsive">
+            <table class="table table-hover table-sm">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 40%">
+                    <i class="fas fa-tasks text-primary me-1"></i>
+                    Task
+                  </th>
+                  <th style="width: 20%">
+                    <i class="fas fa-door-open text-success me-1"></i>
+                    Room
+                  </th>
+                  <th style="width: 15%">
+                    <i class="fas fa-exclamation-circle text-danger me-1"></i>
+                    Priority
+                  </th>
+                  <th style="width: 25%">
+                    <i class="fas fa-arrow-right text-info me-1"></i>
+                    Will be assigned to
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of preview(); track item.taskId) {
+                <tr>
+                  <td>
+                    <strong>{{ item.taskTitle }}</strong>
+                  </td>
+                  <td>
+                    @if (item.roomName) {
+                      <small>{{ item.roomName }}</small>
+                    } @else {
+                      <small class="text-muted fst-italic">N/A</small>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge rounded-pill px-2 py-1" [ngClass]="getPriorityBadgeClass(item.priority)">
+                      {{ getPriorityLabel(item.priority) }}
+                    </span>
+                  </td>
+                  <td>
+                    <i class="fas fa-user text-muted me-1"></i>
+                    <strong class="text-primary">{{ item.assignedUserName }}</strong>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">
+          <i class="fas fa-times me-1"></i>
+          Cancel
+        </button>
+        @if (preview().length > 0) {
+          <button type="button" class="btn btn-primary" (click)="onConfirm()">
+            <i class="fas fa-check me-1"></i>
+            Apply Assignments
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+}

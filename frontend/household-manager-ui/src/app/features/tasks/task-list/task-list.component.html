@@ -48,12 +48,22 @@
 
         <!-- Action Buttons -->
         @if (canManageTasks) {
-        <a
-          [routerLink]="['/tasks', householdId, 'create']"
-          class="btn btn-info"
-        >
-          <i class="fas fa-plus me-1"></i>Add Task
-        </a>
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="autoAssignTasks()"
+            title="Auto-assign all unassigned tasks"
+          >
+            <i class="fas fa-magic me-1"></i>Auto-Assign
+          </button>
+          <a
+            [routerLink]="['/tasks', householdId, 'create']"
+            class="btn btn-info"
+          >
+            <i class="fas fa-plus me-1"></i>Add Task
+          </a>
+        </div>
         }
       </div>
     </div>
@@ -538,4 +548,12 @@
     (confirmed)="onDialogConfirmed()"
     (cancelled)="onDialogCancelled()"
   ></app-confirmation-dialog>
+
+  <!-- Auto-Assign Preview Dialog -->
+  <app-auto-assign-preview-dialog
+    [show]="showAutoAssignPreview"
+    [preview]="autoAssignPreview"
+    (confirmed)="onAutoAssignPreviewConfirmed()"
+    (cancelled)="onAutoAssignPreviewCancelled()"
+  ></app-auto-assign-preview-dialog>
 </div>

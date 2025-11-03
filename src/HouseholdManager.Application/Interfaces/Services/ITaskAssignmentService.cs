@@ -26,6 +26,15 @@
         Task<Dictionary<Guid, string>> AutoAssignAllTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Previews how tasks would be auto-assigned without actually assigning them.
+        /// Uses the same fair distribution algorithm as AutoAssignAllTasksAsync.
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Dictionary of TaskId to assigned UserId (not saved to database)</returns>
+        Task<Dictionary<Guid, string>> PreviewAutoAssignAllTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Auto-assigns all unassigned regular (weekly) tasks grouped by weekday.
         /// Uses separate workload tracking for each day to ensure fair distribution across the week.
         /// </summary>

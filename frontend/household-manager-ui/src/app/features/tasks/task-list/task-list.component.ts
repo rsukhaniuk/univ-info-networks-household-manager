@@ -16,9 +16,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ServerErrorService } from '../../../core/services/server-error.service';
 import { LoadingService } from '../../../core/services/loading.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TaskDto, TaskPriority, TaskType, DayOfWeek } from '../../../core/models/task.model';
+import { TaskDto, TaskPriority, TaskType, DayOfWeek, TaskAssignmentPreviewDto } from '../../../core/models/task.model';
 import { HouseholdDto } from '../../../core/models/household.model';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { AutoAssignPreviewDialogComponent } from '../../../shared/components/auto-assign-preview-dialog/auto-assign-preview-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 type SortBy = 'title' | 'priority' | 'createdAt' | 'dueDate' | 'roomName' | 'type' | 'isActive' | 'assignedUserName';
@@ -35,6 +36,7 @@ type SortOrder = 'asc' | 'desc';
     ButtonModule,
     SkeletonModule,
     ConfirmationDialogComponent,
+    AutoAssignPreviewDialogComponent,
     UtcDatePipe
   ],
   templateUrl: './task-list.component.html',
@@ -96,6 +98,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
     confirmClass: 'danger'
   };
   private pendingAction: (() => void) | null = null;
+
+  // Auto-assign preview
+  showAutoAssignPreview = false;
+  autoAssignPreview: TaskAssignmentPreviewDto[] = [];
 
   // Enums for template
   TaskPriority = TaskPriority;
@@ -391,5 +397,49 @@ export class TaskListComponent implements OnInit, OnDestroy {
       default:
         return 'N/A';
     }
+  }
+
+  autoAssignTasks(): void {
+    this.loadingService.beginSuppress();
+
+    if (this.loadingTimer) {
+      clearTimeout(this.loadingTimer);
+      this.loadingTimer = null;
+    }
+    this.loading = false;
+
+    // Get preview first
+    this.taskService.previewAutoAssignTasks(this.householdId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.autoAssignPreview = response.data;
+          this.showAutoAssignPreview = true;
+        }
+        this.loadingService.endSuppress();
+      },
+      error: (err) => {
+        console.error('Failed to preview auto-assign:', err);
+        this.loadingService.endSuppress();
+      }
+    });
+  }
+
+  onAutoAssignPreviewConfirmed(): void {
+    this.showAutoAssignPreview = false;
+
+    // Apply the assignments
+    this.taskService.autoAssignTasks(this.householdId).subscribe({
+      next: (response) => {
+        this.toastService.success(response.message || 'Tasks auto-assigned successfully');
+        setTimeout(() => this.reload(), 150);
+      },
+      error: (err) => {
+        console.error('Failed to auto-assign tasks:', err);
+      }
+    });
+  }
+
+  onAutoAssignPreviewCancelled(): void {
+    this.showAutoAssignPreview = false;
   }
 }

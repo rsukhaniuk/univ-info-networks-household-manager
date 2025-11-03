@@ -127,7 +127,7 @@ namespace HouseholdManager.Application.Interfaces.Services
         Task UnassignTaskAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Auto-assigns all unassigned tasks in household using fair distribution. 
+        /// Auto-assigns all unassigned tasks in household using fair distribution.
         /// Delegates to ITaskAssignmentService.AutoAssignAllTasksAsync. Owner only.
         /// </summary>
         /// <param name="householdId">Household ID</param>
@@ -138,6 +138,16 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// TODO: Requires additional testing and validation
         /// </remarks>
         Task AutoAssignTasksAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Previews how tasks would be auto-assigned without saving to database.
+        /// Delegates to ITaskAssignmentService.PreviewAutoAssignAllTasksAsync. Owner only.
+        /// </summary>
+        /// <param name="householdId">Household ID</param>
+        /// <param name="requestingUserId">ID of user making the request</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of preview assignments with task and assignee details</returns>
+        Task<IReadOnlyList<TaskAssignmentPreviewDto>> PreviewAutoAssignTasksAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default);
 
         // Advanced assignment operations (delegate to TaskAssignmentService)
         /// <summary>

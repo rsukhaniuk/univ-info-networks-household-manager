@@ -7,7 +7,8 @@ import {
   UpsertTaskRequest,
   AssignTaskRequest,
   TaskCalendarDto,
-  TaskQueryParameters
+  TaskQueryParameters,
+  TaskAssignmentPreviewDto
 } from '../../../core/models/task.model';
 import { ApiResponse, PagedResult } from '../../../core/models/api-response.model';
 
@@ -104,6 +105,17 @@ export class TaskService {
   ): Observable<ApiResponse<TaskDto>> {
     return this.api.postEmpty<TaskDto>(
       `/households/${householdId}/tasks/${taskId}/unassign`
+    );
+  }
+
+  /**
+   * Preview how tasks would be auto-assigned
+   */
+  previewAutoAssignTasks(
+    householdId: string
+  ): Observable<ApiResponse<TaskAssignmentPreviewDto[]>> {
+    return this.api.postEmpty<TaskAssignmentPreviewDto[]>(
+      `/households/${householdId}/tasks/auto-assign/preview`
     );
   }
 

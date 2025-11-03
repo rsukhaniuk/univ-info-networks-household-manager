@@ -346,6 +346,41 @@ namespace HouseholdManager.Application.Services
                 assignments.Count, householdId, requestingUserId);
         }
 
+        public async Task<IReadOnlyList<TaskAssignmentPreviewDto>> PreviewAutoAssignTasksAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default)
+        {
+            await _householdService.ValidateOwnerAccessAsync(householdId, requestingUserId, cancellationToken);
+
+            // Get preview assignments from TaskAssignmentService
+            var assignments = await _taskAssignmentService.PreviewAutoAssignAllTasksAsync(householdId, cancellationToken);
+
+            // Build preview DTOs with task and user details
+            var previewList = new List<TaskAssignmentPreviewDto>();
+
+            foreach (var assignment in assignments)
+            {
+                var task = await _taskRepository.GetByIdWithRelationsAsync(assignment.Key, cancellationToken);
+                if (task == null) continue;
+
+                var member = await _householdMemberService.GetMemberAsync(householdId, assignment.Value, cancellationToken);
+                if (member == null) continue;
+
+                previewList.Add(new TaskAssignmentPreviewDto
+                {
+                    TaskId = task.Id,
+                    TaskTitle = task.Title,
+                    Priority = task.Priority,
+                    RoomName = task.Room?.Name,
+                    AssignedUserId = assignment.Value,
+                    AssignedUserName = member.UserName
+                });
+            }
+
+            _logger.LogInformation("Previewed auto-assignment of {Count} tasks in household {HouseholdId} by user {UserId}",
+                previewList.Count, householdId, requestingUserId);
+
+            return previewList.AsReadOnly();
+        }
+
         // Advanced assignment operations (delegate to TaskAssignmentService)
         public async Task<string> GetSuggestedAssigneeAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default)
         {

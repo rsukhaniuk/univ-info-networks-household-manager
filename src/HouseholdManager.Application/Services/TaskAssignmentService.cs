@@ -82,6 +82,47 @@ namespace HouseholdManager.Application.Services
             return assignments;
         }
 
+        public async Task<Dictionary<Guid, string>> PreviewAutoAssignAllTasksAsync(Guid householdId, CancellationToken cancellationToken = default)
+        {
+            var unassignedTasks = await _taskRepository.GetUnassignedTasksAsync(householdId, cancellationToken);
+            var activeMembers = await _memberRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+
+            if (!activeMembers.Any())
+            {
+                _logger.LogWarning("No active members found in household {HouseholdId}", householdId);
+                return new Dictionary<Guid, string>();
+            }
+
+            var assignments = new Dictionary<Guid, string>();
+            var memberUserIds = activeMembers.Select(m => m.UserId).ToList();
+
+            // Get current workload for fair distribution
+            var workloadStats = await GetWorkloadStatsAsync(householdId, cancellationToken);
+
+            // Sort members by current workload (ascending)
+            var sortedMembers = memberUserIds
+                .OrderBy(userId => workloadStats.GetValueOrDefault(userId, 0))
+                .ToList();
+
+            var memberIndex = 0;
+            foreach (var task in unassignedTasks.OrderBy(t => t.Priority).ThenBy(t => t.CreatedAt))
+            {
+                var assignedUserId = sortedMembers[memberIndex % sortedMembers.Count];
+                assignments[task.Id] = assignedUserId;
+
+                // Update workload counter for next iteration
+                workloadStats[assignedUserId] = workloadStats.GetValueOrDefault(assignedUserId, 0) + 1;
+
+                memberIndex++;
+            }
+
+            // DO NOT save to database - this is preview only
+            _logger.LogInformation("Previewed auto-assignment of {Count} tasks in household {HouseholdId}",
+                assignments.Count, householdId);
+
+            return assignments;
+        }
+
         public async Task<Dictionary<Guid, string>> AutoAssignWeeklyTasksAsync(Guid householdId, CancellationToken cancellationToken = default)
         {
             var assignments = new Dictionary<Guid, string>();
