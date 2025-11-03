@@ -74,3 +74,9 @@ yarn-error.log*
 /environments/environment*.ts
 /src/environments/environment*.ts
 
+# SSL certificates (local development only)
+*.pem
+*.key
+*.crt
+*.cert
+

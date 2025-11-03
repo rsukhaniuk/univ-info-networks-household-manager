@@ -43,7 +43,8 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
 
   // State
   isLoading = true;
-  
+  error: string | null = null;
+
   // Complete form
   completeForm: FormGroup;
   isSubmitting = false;
@@ -125,8 +126,8 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: (error) => {
-        this.toastService.error(error.message || 'Failed to load task details');
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
         this.isLoading = false;
       }
     });
@@ -140,7 +141,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.toastService.error('Photo must be less than 5MB');
+        this.error = 'Photo must be less than 5MB';
         input.value = '';
         return;
       }
@@ -148,11 +149,12 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        this.toastService.error('Only JPEG, PNG, GIF, and WebP images are allowed');
+        this.error = 'Only JPEG, PNG, GIF, and WebP images are allowed';
         input.value = '';
         return;
       }
 
+      this.error = null; // Clear any previous errors
       this.selectedPhoto = file;
 
       // Generate preview
@@ -189,10 +191,10 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
           this.toastService.success('Task completed successfully!');
           this.completeForm.reset();
           this.removePhoto();
-          
+
           // Reload task details to get updated isCompletedThisWeek and stats
           this.loadTaskDetails();
-          
+
           // Reload execution history
           if (this.executionHistory) {
             this.executionHistory.loadExecutions();
@@ -200,8 +202,8 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
         }
         this.isSubmitting = false;
       },
-      error: (error) => {
-        this.toastService.error(error.message || 'Failed to complete task');
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
         this.isSubmitting = false;
       }
     });
@@ -231,8 +233,8 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
             this.router.navigate(['/tasks', this.householdId]);
           }, 150);
         },
-        error: (error) => {
-          this.toastService.error(error.message || 'Failed to delete task');
+        error: () => {
+          // Error will be shown in global error banner by error interceptor
         }
       });
     };
@@ -256,8 +258,8 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
         this.toastService.success('Task activated successfully');
         this.loadTaskDetails();
       },
-      error: (error) => {
-        this.toastService.error(error.message || 'Failed to activate task');
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }
@@ -268,8 +270,8 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
         this.toastService.success('Task deactivated successfully');
         this.loadTaskDetails();
       },
-      error: (error) => {
-        this.toastService.error(error.message || 'Failed to deactivate task');
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }
@@ -294,14 +296,14 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
         next: () => {
           this.toastService.success('Task completion reset successfully. Task can now be completed again this week.');
           this.loadTaskDetails();
-          
+
           // Reload execution history
           if (this.executionHistory) {
             this.executionHistory.loadExecutions();
           }
         },
-        error: (error) => {
-          this.toastService.error(error.message || 'Failed to reset task completion');
+        error: () => {
+          // Error will be shown in global error banner by error interceptor
         }
       });
     };

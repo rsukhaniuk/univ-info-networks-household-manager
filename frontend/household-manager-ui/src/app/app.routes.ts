@@ -37,35 +37,35 @@ export const routes: Routes = [
   // Protected routes (require authentication)
   {
     path: 'households',
-    loadChildren: () => 
+    loadChildren: () =>
       import('./features/households/households.routes').then(m => m.householdsRoutes),
     canActivate: [AuthGuard]
   },
 
   {
     path: 'rooms',
-    loadChildren: () => 
+    loadChildren: () =>
       import('./features/rooms/rooms.routes').then(m => m.roomsRoutes),
     canActivate: [AuthGuard]
   },
 
   {
     path: 'tasks',
-    loadChildren: () => 
+    loadChildren: () =>
       import('./features/tasks/tasks.routes').then(m => m.tasksRoutes),
     canActivate: [AuthGuard]
   },
 
   {
     path: 'executions',
-    loadChildren: () => 
+    loadChildren: () =>
       import('./features/executions/executions.routes').then(m => m.executionsRoutes),
     canActivate: [AuthGuard]
   },
 
   {
     path: 'profile',
-    loadComponent: () => 
+    loadComponent: () =>
       import('./features/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [AuthGuard],
     title: 'Profile - Household Manager'

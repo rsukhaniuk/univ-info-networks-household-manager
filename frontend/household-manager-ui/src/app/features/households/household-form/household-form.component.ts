@@ -66,7 +66,7 @@ export class HouseholdFormComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load household';
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }

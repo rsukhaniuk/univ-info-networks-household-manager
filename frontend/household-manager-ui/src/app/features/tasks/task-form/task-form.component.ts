@@ -60,6 +60,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   // State
   isLoading = true;
   isSubmitting = false;
+  error: string | null = null;
 
   // Enums
   TaskPriority = TaskPriority;
@@ -100,28 +101,37 @@ export class TaskFormComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ✅ Flatpickr options with date AND time (strict 24-hour format, no past times)
+  // Flatpickr options with date AND time (strict 24-hour format, no past times)
   flatpickrOptions: any = {
     enableTime: true,
     noCalendar: false,
+    time24hr: true,
     dateFormat: 'Y-m-d H:i',
-    time_24hr: true,
     minDate: new Date(),
     altInput: true,
     altFormat: 'j F Y, H:i',
     allowInput: false,
     minuteIncrement: 1,
-    defaultHour: 12,
-    defaultMinute: 0,
     locale: {
       ...english,
-      firstDayOfWeek: 1
+      firstDayOfWeek: 1,
+      // Force 24-hour format in Ukrainian locale
+      time24hr: true
     },
+
     // Update minDate every time picker opens to prevent selecting past times
     onOpen: (_selectedDates: Date[], _dateStr: string, instance: any) => {
-      const now = new Date();
-      instance.set('minDate', now);
+      instance.set('minDate', new Date());
+      instance.set('time24hr', true);
     },
+
+    onReady: (_sel: Date[], _str: string, inst: any) => {
+      inst.set('time24hr', true);
+      // Force 24-hour time format
+      inst.hourElement.setAttribute('max', '23');
+      inst.hourElement.step = '1';
+    },
+
     // Validate that selected time is not in the past
     onChange: (selectedDates: Date[], _dateStr: string, instance: any) => {
       if (selectedDates.length > 0) {
@@ -151,7 +161,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       rowVersion: [null]
     });
 
-    // ✅ Watch task type changes
+    // Watch task type changes
     this.form.get('type')?.valueChanges.subscribe(type => {
       this.onTaskTypeChange(type);
     });
@@ -162,9 +172,9 @@ export class TaskFormComponent implements OnInit, OnDestroy {
     this.taskId = this.route.snapshot.paramMap.get('taskId');
     this.isEdit = !!this.taskId;
 
-    // ✅ Validate householdId
+    // Validate householdId
     if (!this.householdId) {
-      this.toastService.error('Household ID is missing from the route. Please navigate from a household page.');
+      this.error = 'Household ID is missing from the route. Please navigate from a household page.';
       this.isLoading = false;
       console.error('Missing householdId in route params:', this.route.snapshot.paramMap);
       return;
@@ -172,7 +182,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
     console.log('Task form initialized with householdId:', this.householdId);
 
-    // ✅ Check if roomId is provided in query params (coming from room details)
+    // Check if roomId is provided in query params (coming from room details)
     const preselectedRoomId = this.route.snapshot.queryParamMap.get('roomId');
     if (preselectedRoomId && !this.isEdit) {
       this.form.patchValue({ roomId: preselectedRoomId });
@@ -190,9 +200,8 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       this.isEdit && this.taskId ? this.loadTask() : Promise.resolve()
     ]).then(() => {
       this.isLoading = false;
-    }).catch(error => {
-      const errorMessage = error.message || 'Failed to load form data';
-      this.toastService.error(errorMessage);
+    }).catch(() => {
+      // Error will be shown in global error banner by error interceptor
       this.isLoading = false;
     });
   }
@@ -202,7 +211,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       this.roomService.getRooms(this.householdId).subscribe({
         next: (response) => {
           if (response.success && response.data) {
-            // ✅ Handle both array and PagedResult
+            // Handle both array and PagedResult
             this.rooms = Array.isArray(response.data) 
               ? response.data 
               : (response.data as any).items || [];
@@ -305,17 +314,11 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
     if (this.form.invalid || this.isSubmitting) {
       this.form.markAllAsTouched();
-
-      // Show specific error message for past date
-      if (this.form.get('dueDate')?.errors?.['pastDate']) {
-        this.toastService.error('Due date must be in the future. Please select a later time.');
-      }
       return;
     }
 
     // ✅ Validate householdId
     if (!this.householdId) {
-      this.toastService.error('Household ID is required. Please navigate from a household.');
       return;
     }
 
@@ -362,10 +365,8 @@ export class TaskFormComponent implements OnInit, OnDestroy {
           this.location.back();
         }
       },
-      error: (error) => {
-        const action = this.isEdit ? 'update' : 'create';
-        const errorMessage = error.message || `Failed to ${action} task`;
-        this.toastService.error(errorMessage);
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
         this.isSubmitting = false;
       }
     });

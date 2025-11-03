@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-room-form',
@@ -20,6 +21,7 @@ export class RoomFormComponent implements OnInit, OnDestroy {
   private householdService = inject(HouseholdService);
   private householdContext = inject(HouseholdContext);
   private location = inject(Location);
+  private toastService = inject(ToastService);
 
   form!: FormGroup;
   isEditMode = false;
@@ -73,7 +75,7 @@ export class RoomFormComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load household';
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }
@@ -93,7 +95,7 @@ export class RoomFormComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load room';
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }
@@ -104,7 +106,7 @@ export class RoomFormComponent implements OnInit, OnDestroy {
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+      this.error = 'File size must be less than 5MB';
       event.target.value = '';
       return;
     }
@@ -112,12 +114,13 @@ export class RoomFormComponent implements OnInit, OnDestroy {
     // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type.toLowerCase())) {
-      alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
+      this.error = 'Please select a valid image file (JPG, PNG, GIF, or WebP)';
       event.target.value = '';
       return;
     }
 
     this.selectedFile = file;
+    this.error = null; // Clear any previous errors
 
     // Show preview
     const reader = new FileReader();
@@ -160,26 +163,30 @@ export class RoomFormComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && response.data) {
           const roomId = response.data.id;
+          const successMessage = this.isEditMode ? 'Room updated successfully' : 'Room created successfully';
 
           // Upload photo if selected
           if (this.selectedFile) {
             this.roomService.uploadPhoto(this.householdId, roomId, this.selectedFile).subscribe({
               next: () => {
+                this.toastService.success(successMessage);
                 this.location.back();
               },
               error: (error) => {
-                // Room created/updated but photo upload failed
-                console.error('Photo upload failed:', error);
+                // Room created/updated but photo upload failed - still show success for room
+                this.toastService.success(successMessage);
+                // Photo error will be shown in global error banner by error interceptor
                 this.location.back();
               }
             });
           } else {
+            this.toastService.success(successMessage);
             this.location.back();
           }
         }
       },
       error: (error) => {
-        this.error = error.message || 'Failed to save room';
+        // Error will be shown in global error banner by error interceptor
         this.isSubmitting = false;
       }
     });

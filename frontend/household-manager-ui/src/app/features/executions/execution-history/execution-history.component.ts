@@ -5,6 +5,7 @@ import { ExecutionService } from '../services/execution.service';
 import { ExecutionDto, ExecutionQueryParameters } from '../../../core/models/execution.model';
 import { PagedResult } from '../../../core/models/api-response.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-execution-history',
@@ -15,6 +16,7 @@ import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 })
 export class ExecutionHistoryComponent implements OnInit {
   private executionService = inject(ExecutionService);
+  private toastService = inject(ToastService);
 
   // Inputs for flexibility
   @Input() taskId?: string;           // Show executions for specific task
@@ -64,7 +66,7 @@ export class ExecutionHistoryComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.pagedResult = response.data;
-          
+
           // Apply limit if specified (for task details page)
           if (this.limit) {
             this.executions = response.data.items.slice(0, this.limit);
@@ -74,8 +76,8 @@ export class ExecutionHistoryComponent implements OnInit {
         }
         this.isLoading = false;
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to load execution history';
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
         this.isLoading = false;
       }
     });
@@ -92,10 +94,11 @@ export class ExecutionHistoryComponent implements OnInit {
 
     this.executionService.deleteExecution(execution.id).subscribe({
       next: () => {
+        this.toastService.success('Execution deleted successfully');
         this.loadExecutions();
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to delete execution';
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
       }
     });
   }

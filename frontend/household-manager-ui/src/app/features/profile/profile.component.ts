@@ -94,8 +94,8 @@ export class ProfileComponent implements OnInit {
         }
         this.isLoading = false;
       },
-      error: (error) => {
-        this.toastService.error(error.message || 'Failed to load profile');
+      error: () => {
+        // Error will be shown in global error banner by error interceptor
         this.isLoading = false;
       }
     });
@@ -180,9 +180,7 @@ export class ProfileComponent implements OnInit {
     this.isChangingPassword = true;
 
     const request: RequestPasswordChangeRequest = {
-      // Use base URL without specific path - Auth0 is more permissive with base origins
       resultUrl: window.location.origin + '/profile'
-
     };
 
     this.userService.requestPasswordChange(request).subscribe({

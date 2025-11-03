@@ -24,11 +24,41 @@
 
     .flatpickr-prev-month,
     .flatpickr-next-month {
-      fill: white;
+      // Set fill and color on the arrow element itself
+      fill: white !important;
+      color: white !important;
 
-      &:hover svg {
-        fill: rgba(255, 255, 255, 0.8);
+      svg {
+        fill: white !important;
+        width: 20px !important;
+        height: 20px !important;
       }
+
+      // Also target paths inside SVG
+      svg path {
+        fill: white !important;
+      }
+
+      &:hover {
+        fill: rgba(255, 255, 255, 0.9) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+
+        svg {
+          fill: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        svg path {
+          fill: rgba(255, 255, 255, 0.9) !important;
+        }
+      }
+
+      // Make the clickable area larger
+      padding: 10px !important;
+      height: 40px !important;
+      width: 40px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
   }
 

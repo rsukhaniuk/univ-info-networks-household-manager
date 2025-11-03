@@ -103,7 +103,10 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
                 var request = new PasswordChangeTicketRequest
                 {
                     UserId = userId,
-                    ResultUrl = resultUrl,
+                    //ResultUrl = resultUrl,
+                    MarkEmailAsVerified = true, // Ensure email is marked as verified after password change
+                    IncludeEmailInRedirect = false, // Don't include email in redirect URL
+                    ClientId = _auth0Settings.ClientId,
                     // TTL in seconds (default: 432000 = 5 days)
                     Ttl = 86400 // 24 hours
                 };
