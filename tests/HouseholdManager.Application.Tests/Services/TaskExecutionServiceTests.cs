@@ -286,7 +286,7 @@ namespace HouseholdManager.Application.Tests.Services
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.PhotoPath, Is.EqualTo(uploadedPhotoPath));
-            Assert.That(result.PhotoUrl, Is.EqualTo($"/uploads/{uploadedPhotoPath}"));
+            Assert.That(result.PhotoUrl, Is.EqualTo($"/{uploadedPhotoPath}"));
             Assert.That(result.HasPhoto, Is.True);
 
             _mockFileUploadService.Verify(x => x.UploadExecutionPhotoAsync(photoMock.Object, It.IsAny<CancellationToken>()), Times.Once);
@@ -556,7 +556,7 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(false);
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<UnauthorizedException>(
+            var exception = Assert.ThrowsAsync<ForbiddenException>(
                 async () => await _service.DeleteExecutionAsync(_executionId, unauthorizedUserId));
 
             Assert.That(exception.Message, Does.Contain("only delete your own executions"));
@@ -891,7 +891,7 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(false);
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(
+            var exception = Assert.ThrowsAsync<ForbiddenException>(
                 async () => await _service.ValidateExecutionAccessAsync(_executionId, unauthorizedUserId));
 
             Assert.That(exception.Message, Does.Contain("only access your own executions"));

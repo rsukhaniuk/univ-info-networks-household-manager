@@ -17,25 +17,6 @@
     </div>
   </nav>
 
-  <!-- Messages -->
-  <div class="row justify-content-center mb-4">
-    <div class="col-lg-10">
-      @if (successMessage) {
-        <div class="alert alert-success alert-dismissible fade show">
-          <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
-          <button type="button" class="btn-close" (click)="successMessage = null"></button>
-        </div>
-      }
-
-      @if (error) {
-        <div class="alert alert-danger alert-dismissible fade show">
-          <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-          <button type="button" class="btn-close" (click)="error = null"></button>
-        </div>
-      }
-    </div>
-  </div>
-
   <!-- Content -->
   @if (household) {
     <div class="row justify-content-center">
@@ -78,10 +59,16 @@
                        class="btn btn-warning">
                       <i class="fas fa-edit me-1"></i>Edit
                     </a>
-                    <button type="button" class="btn btn-info" (click)="openInviteModal()">
+                    <button type="button" class="btn btn-primary" (click)="openInviteModal()">
                       <i class="fas fa-share me-1"></i>Invite
                     </button>
                   </div>
+                } @else {
+                  <button type="button"
+                          class="btn btn-danger"
+                          (click)="confirmLeaveHousehold()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Leave
+                  </button>
                 }
               </div>
             </div>
@@ -123,9 +110,9 @@
                       } @else {
                         <span class="badge bg-secondary">Member</span>
                         @if (household.isOwner) {
-                          <button type="button" 
+                          <button type="button"
                                   class="btn btn-sm btn-outline-danger ms-2"
-                                  (click)="openRemoveMemberModal(member)"
+                                  (click)="confirmRemoveMember(member)"
                                   title="Remove member">
                             <i class="fas fa-user-minus"></i>
                           </button>
@@ -370,66 +357,10 @@
   </div>
 }
 
-<!-- Remove Member Modal -->
-@if (removeMemberModal && household) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title">
-            <i class="fas fa-user-minus me-2"></i>Remove Member
-          </h5>
-          <button type="button" class="btn-close btn-close-white" (click)="closeRemoveMemberModal()"></button>
-        </div>
-        <div class="modal-body">
-          <div class="alert alert-danger">
-            <strong>Warning:</strong> This will remove the member from the household.
-          </div>
-          <p>Remove <strong>{{ removeMemberModal.userName }}</strong> from this household?</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeRemoveMemberModal()">
-            Cancel
-          </button>
-          <button type="button" class="btn btn-danger" (click)="confirmRemoveMember()">
-            <i class="fas fa-user-minus me-1"></i>Remove Member
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Leave Household Modal -->
-@if (showLeaveHouseholdModal && household) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title">
-            <i class="fas fa-sign-out-alt me-2"></i>Leave Household
-          </h5>
-          <button type="button" class="btn-close btn-close-white" (click)="closeLeaveHouseholdModal()"></button>
-        </div>
-        <div class="modal-body">
-          <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Warning:</strong> You are about to leave this household.
-          </div>
-          <p>Are you sure you want to leave <strong>{{ household.household.name }}</strong>?</p>
-          <p class="text-muted mb-0">
-            <small>You will lose access to all rooms, tasks, and data associated with this household. You can only rejoin if you receive a new invite.</small>
-          </p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeLeaveHouseholdModal()">
-            Cancel
-          </button>
-          <button type="button" class="btn btn-danger" (click)="confirmLeaveHousehold()">
-            <i class="fas fa-sign-out-alt me-1"></i>Leave Household
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
+<!-- Confirmation Dialog -->
+<app-confirmation-dialog
+  [show]="showConfirmDialog"
+  [data]="confirmDialogData"
+  (confirmed)="onDialogConfirmed()"
+  (cancelled)="onDialogCancelled()"
+></app-confirmation-dialog>

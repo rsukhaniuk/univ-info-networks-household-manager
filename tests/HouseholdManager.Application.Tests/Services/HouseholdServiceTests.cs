@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using HouseholdManager.Application.DTOs.Household;
 using HouseholdManager.Application.Interfaces.Repositories;
+using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Application.Mapping;
 using HouseholdManager.Application.Services;
 using HouseholdManager.Domain.Entities;
@@ -18,6 +19,10 @@ namespace HouseholdManager.Application.Tests.Services
         private Mock<IHouseholdMemberRepository> _mockMemberRepository;
         private Mock<ILogger<HouseholdService>> _mockLogger;
         private Mock<IUserRepository> _mockUserRepository;
+        private Mock<IRoomRepository> _mockRoomRepository;
+        private Mock<ITaskRepository> _mockTaskRepository;
+        private Mock<IExecutionRepository> _mockExecutionRepository;
+        private Mock<IFileUploadService> _mockFileUploadService;
         private IMapper _mapper; // Реальний AutoMapper
         private HouseholdService _householdService;
 
@@ -27,6 +32,10 @@ namespace HouseholdManager.Application.Tests.Services
             _mockHouseholdRepository = new Mock<IHouseholdRepository>();
             _mockMemberRepository = new Mock<IHouseholdMemberRepository>();
             _mockUserRepository = new Mock<IUserRepository>();
+            _mockRoomRepository = new Mock<IRoomRepository>();
+            _mockTaskRepository = new Mock<ITaskRepository>();
+            _mockExecutionRepository = new Mock<IExecutionRepository>();
+            _mockFileUploadService = new Mock<IFileUploadService>();
             _mockLogger = new Mock<ILogger<HouseholdService>>();
 
 
@@ -43,6 +52,10 @@ namespace HouseholdManager.Application.Tests.Services
                 _mockHouseholdRepository.Object,
                 _mockMemberRepository.Object,
                 _mockUserRepository.Object,
+                _mockRoomRepository.Object,
+                _mockTaskRepository.Object,
+                _mockExecutionRepository.Object,
+                _mockFileUploadService.Object,
                 _mapper,
                 _mockLogger.Object);
         }
@@ -395,8 +408,16 @@ namespace HouseholdManager.Application.Tests.Services
             var householdId = Guid.NewGuid();
             var requestingUserId = "owner123";
 
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId, Name = "Test Household" });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
             _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(HouseholdRole.Owner);
+            _mockTaskRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<HouseholdTask>());
+            _mockRoomRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Room>());
             _mockHouseholdRepository.Setup(r => r.DeleteByIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
@@ -416,11 +437,15 @@ namespace HouseholdManager.Application.Tests.Services
             var householdId = Guid.NewGuid();
             var requestingUserId = "user123";
 
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId, Name = "Test Household" });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
             _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(HouseholdRole.Member);
 
             // Act & Assert
-            Assert.ThrowsAsync<UnauthorizedException>(
+            Assert.ThrowsAsync<ForbiddenException>(
                 async () => await _householdService.DeleteHouseholdAsync(householdId, requestingUserId));
         }
 

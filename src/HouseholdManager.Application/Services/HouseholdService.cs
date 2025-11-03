@@ -184,7 +184,7 @@ namespace HouseholdManager.Application.Services
             return household == null ? null : _mapper.Map<HouseholdDto>(household);
         }
 
-        public async Task<Guid> RegenerateInviteCodeAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default)
+        public async Task<RegenerateInviteCodeResponse> RegenerateInviteCodeAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default)
         {
             await ValidateOwnerAccessAsync(householdId, requestingUserId, cancellationToken);
 
@@ -205,7 +205,12 @@ namespace HouseholdManager.Application.Services
             await _householdRepository.UpdateAsync(household, cancellationToken);
 
             _logger.LogInformation("Regenerated invite code for household {HouseholdId} with new expiration", householdId);
-            return newInviteCode;
+
+            return new RegenerateInviteCodeResponse
+            {
+                InviteCode = newInviteCode,
+                InviteCodeExpiresAt = household.InviteCodeExpiresAt
+            };
         }
 
         public async Task<HouseholdDto> JoinHouseholdAsync(

@@ -5,11 +5,14 @@ import { HouseholdService } from '../services/household.service';
 import { HouseholdDetailsDto, HouseholdMemberDto } from '../../../core/models/household.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 import { HouseholdContext } from '../services/household-context';
+import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { ToastService } from '../../../core/services/toast.service';
+import { ServerErrorService } from '../../../core/services/server-error.service';
 
 @Component({
   selector: 'app-household-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, UtcDatePipe],
+  imports: [CommonModule, RouterModule, UtcDatePipe, ConfirmationDialogComponent],
   templateUrl: './household-details.component.html',
   styleUrl: './household-details.component.scss'
 })
@@ -17,17 +20,26 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
   private householdService = inject(HouseholdService);
   private route = inject(ActivatedRoute);
   private householdContext = inject(HouseholdContext);
+  private toastService = inject(ToastService);
+  private errorService = inject(ServerErrorService);
 
   household: HouseholdDetailsDto | null = null;
   isLoading = true;
-  error: string | null = null;
-  successMessage: string | null = null;
 
   // Modal state
   showInviteModal = false;
-  removeMemberModal: HouseholdMemberDto | null = null;
   inviteCodeCopied = false;
-  showLeaveHouseholdModal = false;
+
+  // Confirmation dialog
+  showConfirmDialog = false;
+  confirmDialogData: ConfirmDialogData = {
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmClass: 'danger'
+  };
+  private pendingAction: (() => void) | null = null;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -38,7 +50,6 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
 
   loadHousehold(id: string): void {
     this.isLoading = true;
-    this.error = null;
 
     this.householdService.getHouseholdById(id).subscribe({
       next: (response) => {
@@ -54,8 +65,8 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to load household details';
+      error: (err) => {
+        console.error('Failed to load household details:', err);
         this.isLoading = false;
       }
     });
@@ -100,76 +111,85 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
     this.householdService.regenerateInviteCode(this.household.household.id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.household!.household.inviteCode = response.data;
-          this.successMessage = 'Invite code regenerated successfully';
-          this.autoHideMessage();
+          this.household!.household.inviteCode = response.data.inviteCode;
+          this.household!.household.inviteCodeExpiresAt = response.data.inviteCodeExpiresAt;
+          this.toastService.success('Invite code regenerated successfully');
         }
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to regenerate invite code';
+      error: (err) => {
+        console.error('Failed to regenerate invite code:', err);
       }
     });
   }
 
-  openRemoveMemberModal(member: HouseholdMemberDto): void {
-    this.removeMemberModal = member;
-  }
+  confirmRemoveMember(member: HouseholdMemberDto): void {
+    this.showConfirmDialog = true;
+    this.confirmDialogData = {
+      title: 'Remove Member',
+      message: `Are you sure you want to remove ${member.userName} from this household?\n\nThey will lose access to all rooms, tasks, and data.`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      confirmClass: 'danger'
+    };
+    this.pendingAction = () => {
+      if (!this.household) return;
 
-  closeRemoveMemberModal(): void {
-    this.removeMemberModal = null;
-  }
-
-  confirmRemoveMember(): void {
-    if (!this.removeMemberModal || !this.household) return;
-
-    this.householdService.removeMember(
-      this.household.household.id,
-      this.removeMemberModal.userId
-    ).subscribe({
-      next: () => {
-        this.successMessage = `${this.removeMemberModal!.userName} removed successfully`;
-        this.removeMemberModal = null;
-        this.loadHousehold(this.household!.household.id);
-        this.autoHideMessage();
-      },
-      error: (error) => {
-        this.error = error.message || 'Failed to remove member';
-        this.removeMemberModal = null;
-      }
-    });
-  }
-
-  openLeaveHouseholdModal(): void {
-    this.showLeaveHouseholdModal = true;
-  }
-
-  closeLeaveHouseholdModal(): void {
-    this.showLeaveHouseholdModal = false;
+      this.householdService.removeMember(
+        this.household.household.id,
+        member.userId
+      ).subscribe({
+        next: () => {
+          this.toastService.success(`${member.userName} removed successfully`);
+          this.loadHousehold(this.household!.household.id);
+        },
+        error: (err) => {
+          console.error('Failed to remove member:', err);
+        }
+      });
+    };
   }
 
   confirmLeaveHousehold(): void {
     if (!this.household) return;
 
-    this.householdService.leaveHousehold(this.household.household.id).subscribe({
-      next: () => {
-        this.successMessage = 'You have left the household successfully';
-        this.showLeaveHouseholdModal = false;
-        // Redirect to households list after a short delay
-        setTimeout(() => {
-          window.location.href = '/households';
-        }, 1500);
-      },
-      error: (error) => {
-        this.error = error.message || 'Failed to leave household';
-        this.showLeaveHouseholdModal = false;
-      }
-    });
+    this.showConfirmDialog = true;
+    this.confirmDialogData = {
+      title: 'Leave Household',
+      message: `Are you sure you want to leave "${this.household.household.name}"?\n\nYou will lose access to all rooms, tasks, and data. You can only rejoin if you receive a new invite.`,
+      confirmText: 'Leave',
+      cancelText: 'Cancel',
+      confirmClass: 'danger',
+      icon: 'fa-sign-out-alt',
+      iconClass: 'text-danger'
+    };
+    this.pendingAction = () => {
+      if (!this.household) return;
+
+      this.householdService.leaveHousehold(this.household.household.id).subscribe({
+        next: () => {
+          this.toastService.success(`You have left "${this.household!.household.name}"`);
+          // Redirect to households list after a short delay
+          setTimeout(() => {
+            window.location.href = '/households';
+          }, 1500);
+        },
+        error: (err) => {
+          console.error('Failed to leave household:', err);
+        }
+      });
+    };
   }
 
-  private autoHideMessage(): void {
-    setTimeout(() => {
-      this.successMessage = null;
-      this.error = null;
-    }, 5000);
+  onDialogConfirmed(): void {
+    this.showConfirmDialog = false;
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
+    }
+  }
+
+  onDialogCancelled(): void {
+    this.showConfirmDialog = false;
+    this.pendingAction = null;
   }
 }

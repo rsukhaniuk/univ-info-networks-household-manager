@@ -90,10 +90,10 @@ export class TaskService {
     taskId: string,
     request: AssignTaskRequest
   ): Observable<ApiResponse<TaskDto>> {
-    return this.api.post<TaskDto>(
-      `/households/${householdId}/tasks/${taskId}/assign`,
-      request
-    );
+    // Backend expects userId as query parameter, not body
+    const url = `/households/${householdId}/tasks/${taskId}/assign` +
+      (request.userId ? `?userId=${request.userId}` : '');
+    return this.api.post<TaskDto>(url, null);
   }
 
   /**

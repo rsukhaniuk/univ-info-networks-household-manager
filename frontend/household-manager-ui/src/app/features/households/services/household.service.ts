@@ -6,7 +6,8 @@ import {
   HouseholdDetailsDto,
   UpsertHouseholdRequest,
   JoinHouseholdRequest,
-  HouseholdQueryParameters
+  HouseholdQueryParameters,
+  RegenerateInviteCodeResponse
 } from '../../../core/models/household.model';
 import { ApiResponse, PagedResult } from '../../../core/models/api-response.model';
 
@@ -63,14 +64,14 @@ export class HouseholdService {
    * Join household using invite code
    */
   joinHousehold(request: JoinHouseholdRequest): Observable<ApiResponse<HouseholdDto>> {
-    return this.api.post<HouseholdDto>(`${this.endpoint}/join`, request);
+    return this.api.post<HouseholdDto>(`${this.endpoint}/join?inviteCode=${request.inviteCode}`, null);
   }
 
   /**
    * Regenerate invite code
    */
-  regenerateInviteCode(id: string): Observable<ApiResponse<string>> {
-    return this.api.postEmpty<string>(`${this.endpoint}/${id}/regenerate-invite`);
+  regenerateInviteCode(id: string): Observable<ApiResponse<RegenerateInviteCodeResponse>> {
+    return this.api.postEmpty<RegenerateInviteCodeResponse>(`${this.endpoint}/${id}/regenerate-invite`);
   }
 
   /**

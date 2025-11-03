@@ -16,11 +16,11 @@ namespace HouseholdManager.Application.Validators.Household
         public JoinHouseholdRequestValidator()
         {
             // Invite code validation
+            // Note: ASP.NET Core model binding will fail if the string cannot be parsed to Guid
+            // This validator only checks that the successfully bound Guid is not empty
             RuleFor(x => x.InviteCode)
-                .NotEmpty()
-                .WithMessage("Invite code is required")
                 .Must(code => code != Guid.Empty)
-                .WithMessage("Invalid invite code format");
+                .WithMessage("Invite code is required");
         }
     }
 }

@@ -395,6 +395,8 @@ namespace HouseholdManager.Api.Controllers
         /// <response code="403">Forbidden - only owners can assign</response>
         /// <response code="404">Not Found</response>
         /// <response code="422">Validation failed - user is not a member</response>
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [NonAction]
         [HttpPost("{taskId:guid}/assign")]
         [ProducesResponseType(typeof(ApiResponse<TaskDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -432,6 +434,8 @@ namespace HouseholdManager.Api.Controllers
         /// <response code="401">Unauthorized</response>
         /// <response code="403">Forbidden - only owners can unassign</response>
         /// <response code="404">Not Found</response>
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [NonAction]
         [HttpPost("{taskId:guid}/unassign")]
         [ProducesResponseType(typeof(ApiResponse<TaskDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -519,6 +523,8 @@ namespace HouseholdManager.Api.Controllers
         /// <response code="401">Unauthorized</response>
         /// <response code="403">Forbidden - only owners can reassign</response>
         /// <response code="404">Not Found</response>
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [NonAction]
         [HttpPost("{taskId:guid}/reassign")]
         [ProducesResponseType(typeof(ApiResponse<TaskDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -669,6 +675,8 @@ namespace HouseholdManager.Api.Controllers
         /// <response code="401">Unauthorized</response>
         /// <response code="403">Forbidden - user is not a member</response>
         /// <response code="404">Not Found</response>
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [NonAction]
         [HttpGet("calendar")]
         [ProducesResponseType(typeof(ApiResponse<TaskCalendarDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

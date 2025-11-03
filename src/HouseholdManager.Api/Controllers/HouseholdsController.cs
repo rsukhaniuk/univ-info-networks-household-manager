@@ -109,6 +109,9 @@ namespace HouseholdManager.Api.Controllers
                 "membercount" => queryParameters.IsAscending
                     ? filteredHouseholds.OrderBy(h => h.MemberCount)
                     : filteredHouseholds.OrderByDescending(h => h.MemberCount),
+                "role" => queryParameters.IsAscending
+                    ? filteredHouseholds.OrderBy(h => h.Role)
+                    : filteredHouseholds.OrderByDescending(h => h.Role),
                 _ => queryParameters.IsAscending
                     ? filteredHouseholds.OrderBy(h => h.CreatedAt)
                     : filteredHouseholds.OrderByDescending(h => h.CreatedAt)
@@ -346,18 +349,18 @@ namespace HouseholdManager.Api.Controllers
         /// </summary>
         /// <param name="id">Household ID (GUID)</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>New invite code</returns>
+        /// <returns>New invite code and expiration date</returns>
         /// <remarks>
         /// This will invalidate the old invite code. Use this if the invite code was compromised.
         /// </remarks>
         [HttpPost("{id:guid}/regenerate-invite")]
-        [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<RegenerateInviteCodeResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<Guid>>> RegenerateInviteCode(
+        public async Task<ActionResult<ApiResponse<RegenerateInviteCodeResponse>>> RegenerateInviteCode(
             Guid id,
             CancellationToken cancellationToken = default)
         {
@@ -366,13 +369,13 @@ namespace HouseholdManager.Api.Controllers
             _logger.LogInformation("User {UserId} regenerating invite code for household {HouseholdId}",
                 userId, id);
 
-            var newInviteCode = await _householdService.RegenerateInviteCodeAsync(
+            var response = await _householdService.RegenerateInviteCodeAsync(
                 id,
                 userId,
                 cancellationToken);
 
-            return Ok(ApiResponse<Guid>.SuccessResponse(
-                newInviteCode,
+            return Ok(ApiResponse<RegenerateInviteCodeResponse>.SuccessResponse(
+                response,
                 "Invite code regenerated successfully"));
         }
 

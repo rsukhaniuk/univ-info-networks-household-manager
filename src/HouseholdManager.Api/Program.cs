@@ -125,12 +125,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             OnChallenge = context =>
             {
-                var logger = context.HttpContext.RequestServices
-                    .GetRequiredService<ILogger<Program>>();
-                logger.LogWarning(
-                    "JWT authentication challenge: {Error}, {ErrorDescription}",
-                    context.Error,
-                    context.ErrorDescription);
+                // Only log if there's an actual error (not just null challenge)
+                if (!string.IsNullOrEmpty(context.Error) || !string.IsNullOrEmpty(context.ErrorDescription))
+                {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILogger<Program>>();
+                    logger.LogWarning(
+                        "JWT authentication challenge: {Error}, {ErrorDescription}",
+                        context.Error,
+                        context.ErrorDescription);
+                }
                 return Task.CompletedTask;
             }
         };

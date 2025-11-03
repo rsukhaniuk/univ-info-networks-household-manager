@@ -20,6 +20,8 @@ namespace HouseholdManager.Application.Tests.Services
         private Mock<IRoomRepository> _mockRoomRepository;
         private Mock<IHouseholdService> _mockHouseholdService;
         private Mock<IFileUploadService> _mockFileUploadService;
+        private Mock<ITaskRepository> _mockTaskRepository;
+        private Mock<IExecutionRepository> _mockExecutionRepository;
         private Mock<ILogger<RoomService>> _mockLogger;
         private IMapper _mapper;
         private RoomService _roomService;
@@ -30,6 +32,8 @@ namespace HouseholdManager.Application.Tests.Services
             _mockRoomRepository = new Mock<IRoomRepository>();
             _mockHouseholdService = new Mock<IHouseholdService>();
             _mockFileUploadService = new Mock<IFileUploadService>();
+            _mockTaskRepository = new Mock<ITaskRepository>();
+            _mockExecutionRepository = new Mock<IExecutionRepository>();
             _mockLogger = new Mock<ILogger<RoomService>>();
 
             var loggerFactory = LoggerFactory.Create(b => { });
@@ -45,6 +49,8 @@ namespace HouseholdManager.Application.Tests.Services
                 _mockRoomRepository.Object,
                 _mockHouseholdService.Object,
                 _mockFileUploadService.Object,
+                _mockTaskRepository.Object,
+                _mockExecutionRepository.Object,
                 _mapper,
                 _mockLogger.Object);
         }
@@ -438,6 +444,10 @@ namespace HouseholdManager.Application.Tests.Services
             _mockHouseholdService
                 .Setup(s => s.ValidateOwnerAccessAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
+
+            _mockTaskRepository
+                .Setup(r => r.GetByRoomIdAsync(roomId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<HouseholdTask>());
 
             _mockFileUploadService
                 .Setup(f => f.DeleteFileAsync(room.PhotoPath, It.IsAny<CancellationToken>()))

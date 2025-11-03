@@ -55,6 +55,13 @@ namespace HouseholdManager.Api.Filters
                         kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
                     );
 
+                // Log validation errors
+                _logger.LogWarning(
+                    "Validation failed for {ActionName}. Errors: {Errors}",
+                    context.ActionDescriptor.DisplayName,
+                    string.Join("; ", errors.SelectMany(kvp => kvp.Value.Select(msg => $"{kvp.Key}: {msg}")))
+                );
+
                 var problem = new ValidationProblemDetails(errors)
                 {
                     Status = StatusCodes.Status422UnprocessableEntity,

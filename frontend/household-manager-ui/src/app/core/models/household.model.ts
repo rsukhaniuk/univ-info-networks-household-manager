@@ -52,6 +52,11 @@
     inviteCode: string;
   }
 
+  export interface RegenerateInviteCodeResponse {
+    inviteCode: string;
+    inviteCodeExpiresAt?: Date;
+  }
+
   export interface HouseholdQueryParameters extends BaseQueryParameters {
     userId?: string;           // Filter by user membership
     ownedByUser?: boolean;     // Show only owned households

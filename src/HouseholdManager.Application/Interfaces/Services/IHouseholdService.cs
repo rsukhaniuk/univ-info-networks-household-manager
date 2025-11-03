@@ -21,7 +21,7 @@ namespace HouseholdManager.Application.Interfaces.Services
 
         // Invite operations
         Task<HouseholdDto?> GetHouseholdByInviteCodeAsync(Guid inviteCode, CancellationToken cancellationToken = default);
-        Task<Guid> RegenerateInviteCodeAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default);
+        Task<RegenerateInviteCodeResponse> RegenerateInviteCodeAsync(Guid householdId, string requestingUserId, CancellationToken cancellationToken = default);
         Task<HouseholdDto> JoinHouseholdAsync(JoinHouseholdRequest request, string userId, CancellationToken cancellationToken = default);
 
 

@@ -1,4 +1,6 @@
+using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace HouseholdManager.Application.DTOs.User
 {
@@ -36,6 +38,7 @@ namespace HouseholdManager.Application.DTOs.User
         /// If true, user must verify the email before it becomes active
         /// If false (default), email is changed immediately without verification (admin operation)
         /// </summary>
+        [SwaggerIgnore]
         public bool VerifyEmail { get; set; } = false;
     }
 

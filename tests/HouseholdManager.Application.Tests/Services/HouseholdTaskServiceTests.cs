@@ -26,6 +26,8 @@ namespace HouseholdManager.Application.Tests.Services
         private Mock<IRoomService> _mockRoomService;
         private Mock<IHouseholdMemberService> _mockHouseholdMemberService;
         private Mock<ITaskAssignmentService> _mockTaskAssignmentService;
+        private Mock<IExecutionRepository> _mockExecutionRepository;
+        private Mock<IFileUploadService> _mockFileUploadService;
         private Mock<ILogger<HouseholdTaskService>> _mockLogger;
         private IMapper _mapper;
         private HouseholdTaskService _householdTaskService;
@@ -38,6 +40,8 @@ namespace HouseholdManager.Application.Tests.Services
             _mockRoomService = new Mock<IRoomService>();
             _mockHouseholdMemberService = new Mock<IHouseholdMemberService>();
             _mockTaskAssignmentService = new Mock<ITaskAssignmentService>();
+            _mockExecutionRepository = new Mock<IExecutionRepository>();
+            _mockFileUploadService = new Mock<IFileUploadService>();
             _mockLogger = new Mock<ILogger<HouseholdTaskService>>();
 
             var loggerFactory = LoggerFactory.Create(b => { });
@@ -58,6 +62,8 @@ namespace HouseholdManager.Application.Tests.Services
                 _mockRoomService.Object,
                 _mockHouseholdMemberService.Object,
                 _mockTaskAssignmentService.Object,
+                _mockExecutionRepository.Object,
+                _mockFileUploadService.Object,
                 _mapper,
                 _mockLogger.Object);
         }
@@ -421,6 +427,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(existingTask);
             _mockHouseholdService.Setup(s => s.ValidateOwnerAccessAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
+            _mockExecutionRepository.Setup(r => r.GetByTaskIdAsync(taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
             _mockTaskRepository.Setup(r => r.DeleteByIdAsync(taskId, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 

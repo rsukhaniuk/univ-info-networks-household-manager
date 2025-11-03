@@ -17,7 +17,7 @@ import { HouseholdDto, HouseholdRole } from '../../../core/models/household.mode
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
-type SortBy = 'name' | 'createdAt' | 'memberCount';
+type SortBy = 'name' | 'createdAt' | 'memberCount' | 'role';
 type SortOrder = 'asc' | 'desc';
 
 @Component({
@@ -237,9 +237,9 @@ export class HouseholdListComponent implements OnInit, OnDestroy {
       message: `Are you sure you want to leave "${household.name}"?\n\nYou will no longer have access to this household's rooms, tasks, and data.`,
       confirmText: 'Leave',
       cancelText: 'Cancel',
-      confirmClass: 'warning',
+      confirmClass: 'danger',
       icon: 'fa-sign-out-alt',
-      iconClass: 'text-warning'
+      iconClass: 'text-danger'
     };
 
     this.pendingAction = () => {

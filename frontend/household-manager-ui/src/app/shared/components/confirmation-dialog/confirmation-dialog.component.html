@@ -58,12 +58,13 @@
           }"
           (click)="onConfirm()"
         >
-          <i 
+          <i
             class="fas me-1"
             [ngClass]="{
-              'fa-trash': data.confirmClass === 'danger',
-              'fa-sign-out-alt': data.confirmClass === 'warning',
-              'fa-check': data.confirmClass === 'success' || data.confirmClass === 'primary'
+              'fa-trash': data.icon === 'fa-trash-alt',
+              'fa-sign-out-alt': data.icon === 'fa-sign-out-alt',
+              'fa-user-minus': data.icon === 'fa-user-minus',
+              'fa-check': !data.icon || (data.confirmClass === 'success' || data.confirmClass === 'primary')
             }"
           ></i>
           {{ data.confirmText || 'Confirm' }}
