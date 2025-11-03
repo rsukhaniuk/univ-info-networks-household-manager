@@ -323,7 +323,7 @@
                   <code class="fs-3 fw-bold text-primary me-3">
                     {{ household.household.inviteCode }}
                   </code>
-                  <button type="button" 
+                  <button type="button"
                           class="btn btn-sm"
                           [class.btn-outline-primary]="!inviteCodeCopied"
                           [class.btn-success]="inviteCodeCopied"
@@ -332,6 +332,14 @@
                     {{ inviteCodeCopied ? 'Copied!' : 'Copy' }}
                   </button>
                 </div>
+                @if (household.household.inviteCodeExpiresAt) {
+                  <div class="mt-3">
+                    <small class="text-muted">
+                      <i class="fas fa-clock me-1"></i>
+                      Expires: {{ household.household.inviteCodeExpiresAt | utcDate:'medium' }}
+                    </small>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -339,6 +347,9 @@
           <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i>
             Share this code with people you want to add to your household.
+            @if (household.household.inviteCodeExpiresAt) {
+              <br><strong>Note:</strong> This code is valid for 24 hours.
+            }
           </div>
 
           <div class="text-center">

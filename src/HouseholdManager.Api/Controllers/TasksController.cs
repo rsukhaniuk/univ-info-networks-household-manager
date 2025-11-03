@@ -22,17 +22,20 @@ namespace HouseholdManager.Api.Controllers
         private readonly IHouseholdTaskService _taskService;
         private readonly IHouseholdService _householdService;
         private readonly ITaskExecutionService _taskExecutionService;
+        private readonly IUserService _userService;
         private readonly ILogger<TasksController> _logger;
 
         public TasksController(
             IHouseholdTaskService taskService,
             IHouseholdService householdService,
             ITaskExecutionService taskExecutionService,
+            IUserService userService,
             ILogger<TasksController> logger)
         {
             _taskService = taskService;
             _householdService = householdService;
             _taskExecutionService = taskExecutionService;
+            _userService = userService;
             _logger = logger;
         }
 
@@ -214,17 +217,18 @@ namespace HouseholdManager.Api.Controllers
             if (task != null)
             {
                 var isOwner = await _householdService.IsUserOwnerAsync(householdId, userId, cancellationToken);
+                var isSystemAdmin = await _userService.IsSystemAdminAsync(userId, cancellationToken);
                 var isAssigned = task.Task.AssignedUserId == userId;
 
                 task.Permissions = new TaskPermissionsDto
                 {
                     IsOwner = isOwner,
-                    IsSystemAdmin = false, // Set by auth middleware if needed
+                    IsSystemAdmin = isSystemAdmin,
                     IsAssignedToCurrentUser = isAssigned,
-                    CanEdit = isOwner,
-                    CanDelete = isOwner,
-                    CanComplete = isOwner || isAssigned,
-                    CanAssign = isOwner
+                    CanEdit = isOwner || isSystemAdmin,
+                    CanDelete = isOwner || isSystemAdmin,
+                    CanComplete = isOwner || isAssigned || isSystemAdmin,
+                    CanAssign = isOwner || isSystemAdmin
                 };
             }
 

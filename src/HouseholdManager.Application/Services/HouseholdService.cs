@@ -56,6 +56,9 @@ namespace HouseholdManager.Application.Services
         {
             var household = _mapper.Map<Household>(request);
 
+            // Set invite code expiration (24 hours from now)
+            household.InviteCodeExpiresAt = DateTime.UtcNow.AddHours(24);
+
             // Create household
             var createdHousehold = await _householdRepository.AddAsync(household, cancellationToken);
 
@@ -196,9 +199,12 @@ namespace HouseholdManager.Application.Services
             } while (!await _householdRepository.IsInviteCodeUniqueAsync(newInviteCode, cancellationToken));
 
             household.InviteCode = newInviteCode;
+            // Reset expiration to 24 hours from now
+            household.InviteCodeExpiresAt = DateTime.UtcNow.AddHours(24);
+
             await _householdRepository.UpdateAsync(household, cancellationToken);
 
-            _logger.LogInformation("Regenerated invite code for household {HouseholdId}", householdId);
+            _logger.LogInformation("Regenerated invite code for household {HouseholdId} with new expiration", householdId);
             return newInviteCode;
         }
 
@@ -210,6 +216,13 @@ namespace HouseholdManager.Application.Services
             var household = await _householdRepository.GetByInviteCodeAsync(request.InviteCode, cancellationToken);
             if (household == null)
                 throw new NotFoundException("Invalid invite code");
+
+            // Check if invite code has expired
+            if (household.InviteCodeExpiresAt.HasValue && household.InviteCodeExpiresAt.Value < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Attempt to join household {HouseholdId} with expired invite code", household.Id);
+                throw new ValidationException("Invite code has expired. Please request a new invite code from the household owner.");
+            }
 
             // Check if user is already a member
             if (await _memberRepository.IsUserMemberAsync(household.Id, userId, cancellationToken))

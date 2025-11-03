@@ -3,6 +3,7 @@ using HouseholdManager.Application.DTOs.User;
 using HouseholdManager.Application.Interfaces.ExternalServices;
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Api.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -13,9 +14,9 @@ namespace HouseholdManager.Api.Controllers
     /// </summary>
     /// <remarks>
     /// Manages user profile information, current household selection, and dashboard statistics.
-    /// All endpoints require authentication (Auth0 JWT token in Phase 2).
+    /// All endpoints require authentication via Auth0 JWT token.
     /// </remarks>
-    // TODO Lab 3 Phase 2: Add [Authorize] after Auth0 integration
+    [Authorize]
     [ApiController]
     [Route("api/users")]
     [Produces("application/json")]

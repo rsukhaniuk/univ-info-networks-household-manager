@@ -7,11 +7,12 @@
     name: string;
     description?: string;
     inviteCode: string;
+    inviteCodeExpiresAt?: Date;
     createdAt: Date;
     memberCount: number;
     activeTaskCount: number;
     roomCount: number;
-    
+
     role?: HouseholdRole;
   }
 

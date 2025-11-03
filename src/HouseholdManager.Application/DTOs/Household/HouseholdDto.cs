@@ -33,6 +33,12 @@ namespace HouseholdManager.Application.DTOs.Household
         public Guid InviteCode { get; set; }
 
         /// <summary>
+        /// Date and time when the invite code expires (UTC)
+        /// Null means the code never expires (for legacy households)
+        /// </summary>
+        public DateTime? InviteCodeExpiresAt { get; set; }
+
+        /// <summary>
         /// When the household was created (UTC)
         /// </summary>
         public DateTime CreatedAt { get; set; }
