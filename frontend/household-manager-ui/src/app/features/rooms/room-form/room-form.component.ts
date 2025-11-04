@@ -6,6 +6,7 @@ import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
 import { ToastService } from '../../../core/services/toast.service';
+import { ServerErrorService } from '../../../core/services/server-error.service';
 
 @Component({
   selector: 'app-room-form',
@@ -22,6 +23,7 @@ export class RoomFormComponent implements OnInit, OnDestroy {
   private householdContext = inject(HouseholdContext);
   private location = inject(Location);
   private toastService = inject(ToastService);
+  private errors = inject(ServerErrorService);
 
   form!: FormGroup;
   isEditMode = false;
@@ -106,7 +108,7 @@ export class RoomFormComponent implements OnInit, OnDestroy {
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      this.error = 'File size must be less than 5MB';
+      this.errors.setErrors(['File size must be less than 5MB']);
       event.target.value = '';
       return;
     }
@@ -114,13 +116,12 @@ export class RoomFormComponent implements OnInit, OnDestroy {
     // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type.toLowerCase())) {
-      this.error = 'Please select a valid image file (JPG, PNG, GIF, or WebP)';
+      this.errors.setErrors(['Please select a valid image file (JPG, PNG, GIF, or WebP)']);
       event.target.value = '';
       return;
     }
 
     this.selectedFile = file;
-    this.error = null; // Clear any previous errors
 
     // Show preview
     const reader = new FileReader();

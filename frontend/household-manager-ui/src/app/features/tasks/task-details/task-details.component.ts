@@ -10,6 +10,7 @@ import { ExecutionHistoryComponent } from '../../executions/execution-history/ex
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ServerErrorService } from '../../../core/services/server-error.service';
 import { TaskDetailsDto, TaskPriority, TaskType, DayOfWeek } from '../../../core/models/task.model';
 import { CompleteTaskRequest } from '../../../core/models/execution.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
@@ -30,6 +31,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
   private executionService = inject(ExecutionService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private errors = inject(ServerErrorService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -141,7 +143,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.error = 'Photo must be less than 5MB';
+        this.errors.setErrors(['Photo must be less than 5MB']);
         input.value = '';
         return;
       }
@@ -149,12 +151,11 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        this.error = 'Only JPEG, PNG, GIF, and WebP images are allowed';
+        this.errors.setErrors(['Only JPEG, PNG, GIF, and WebP images are allowed']);
         input.value = '';
         return;
       }
 
-      this.error = null; // Clear any previous errors
       this.selectedPhoto = file;
 
       // Generate preview

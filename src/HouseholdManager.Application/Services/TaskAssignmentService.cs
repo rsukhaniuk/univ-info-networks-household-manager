@@ -1,5 +1,8 @@
 ﻿using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
+using HouseholdManager.Domain.Entities;
+using HouseholdManager.Domain.Enums;
+using HouseholdManager.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace HouseholdManager.Application.Services
@@ -27,11 +30,11 @@ namespace HouseholdManager.Application.Services
         {
             var task = await _taskRepository.GetByIdWithRelationsAsync(taskId, cancellationToken);
             if (task == null)
-                throw new InvalidOperationException($"Task with ID {taskId} not found");
+                throw new NotFoundException("Task", taskId);
 
             var suggestedUserId = await GetSuggestedAssigneeAsync(taskId, cancellationToken);
             if (suggestedUserId == null)
-                throw new InvalidOperationException("No available users to assign the task");
+                throw new ValidationException("No available users to assign the task");
 
             await _taskRepository.AssignTaskAsync(taskId, suggestedUserId, cancellationToken);
 
@@ -56,15 +59,44 @@ namespace HouseholdManager.Application.Services
             // Get current workload for fair distribution
             var workloadStats = await GetWorkloadStatsAsync(householdId, cancellationToken);
 
+            // Get all active tasks for conflict checking
+            var activeTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
+            // Include unassigned tasks we're about to process as well, so conflicts among new assignments are detected
+            var allRelevantTasks = activeTasks.Concat(unassignedTasks).ToList();
+
             // Sort members by current workload (ascending)
             var sortedMembers = memberUserIds
                 .OrderBy(userId => workloadStats.GetValueOrDefault(userId, 0))
                 .ToList();
 
             var memberIndex = 0;
-            foreach (var task in unassignedTasks.OrderBy(t => t.Priority).ThenBy(t => t.CreatedAt))
+            // Process higher priority tasks first so that in conflict situations they win
+            foreach (var task in unassignedTasks
+                .OrderByDescending(t => t.Priority)
+                .ThenBy(t => t.CreatedAt))
             {
-                var assignedUserId = sortedMembers[memberIndex % sortedMembers.Count];
+                string? assignedUserId = null;
+
+                // Try to find a user without time conflict
+                for (int i = 0; i < sortedMembers.Count; i++)
+                {
+                    var candidateUserId = sortedMembers[(memberIndex + i) % sortedMembers.Count];
+                    
+                    if (!HasTimeConflict(allRelevantTasks, task, candidateUserId, assignments))
+                    {
+                        assignedUserId = candidateUserId;
+                        break;
+                    }
+                }
+
+                // If no user without conflict found, SKIP assignment for this task (keep unassigned)
+                if (assignedUserId == null)
+                {
+                    _logger.LogWarning("Task {TaskId} skipped auto-assign due to time conflicts with all members", task.Id);
+                    memberIndex++;
+                    continue;
+                }
+
                 assignments[task.Id] = assignedUserId;
 
                 // Update workload counter for next iteration
@@ -99,15 +131,44 @@ namespace HouseholdManager.Application.Services
             // Get current workload for fair distribution
             var workloadStats = await GetWorkloadStatsAsync(householdId, cancellationToken);
 
+            // Get all active tasks for conflict checking
+            var activeTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
+            // Include unassigned tasks we're about to process as well, so conflicts among new assignments are detected
+            var allRelevantTasks = activeTasks.Concat(unassignedTasks).ToList();
+
             // Sort members by current workload (ascending)
             var sortedMembers = memberUserIds
                 .OrderBy(userId => workloadStats.GetValueOrDefault(userId, 0))
                 .ToList();
 
             var memberIndex = 0;
-            foreach (var task in unassignedTasks.OrderBy(t => t.Priority).ThenBy(t => t.CreatedAt))
+            // Process higher priority tasks first so preview reflects that they win in conflicts
+            foreach (var task in unassignedTasks
+                .OrderByDescending(t => t.Priority)
+                .ThenBy(t => t.CreatedAt))
             {
-                var assignedUserId = sortedMembers[memberIndex % sortedMembers.Count];
+                string? assignedUserId = null;
+
+                // Try to find a user without time conflict
+                for (int i = 0; i < sortedMembers.Count; i++)
+                {
+                    var candidateUserId = sortedMembers[(memberIndex + i) % sortedMembers.Count];
+                    
+                    if (!HasTimeConflict(allRelevantTasks, task, candidateUserId, assignments))
+                    {
+                        assignedUserId = candidateUserId;
+                        break;
+                    }
+                }
+
+                // If no user without conflict found, mark as unassigned in preview (omit from result)
+                if (assignedUserId == null)
+                {
+                    _logger.LogWarning("Task {TaskId} would be skipped in preview due to time conflicts with all members", task.Id);
+                    memberIndex++;
+                    continue;
+                }
+
                 assignments[task.Id] = assignedUserId;
 
                 // Update workload counter for next iteration
@@ -180,13 +241,13 @@ namespace HouseholdManager.Application.Services
         {
             var task = await _taskRepository.GetByIdWithRelationsAsync(taskId, cancellationToken);
             if (task == null)
-                throw new InvalidOperationException($"Task with ID {taskId} not found");
+                throw new NotFoundException("Task", taskId);
 
             var activeMembers = await _memberRepository.GetByHouseholdIdAsync(task.HouseholdId, cancellationToken);
             var memberUserIds = activeMembers.Select(m => m.UserId).ToList();
 
             if (!memberUserIds.Any())
-                throw new InvalidOperationException("No active members in household");
+                throw new ValidationException("No active members in household");
 
             if (memberUserIds.Count == 1)
             {
@@ -252,6 +313,76 @@ namespace HouseholdManager.Application.Services
             }
 
             return workloadStats;
+        }
+
+        /// <summary>
+        /// Check if assigning a task to a user would create a time conflict
+        /// Only applies to OneTime tasks with DueDate
+        /// <summary>
+        /// Check if assigning a task to a user would create a time conflict
+        /// Only applies to OneTime tasks with DueDate
+        /// </summary>
+        private bool HasTimeConflict(
+            IReadOnlyList<HouseholdTask> existingTasks,
+            HouseholdTask newTask,
+            string userId,
+            Dictionary<Guid, string> pendingAssignments)
+        {
+            // Only check conflicts for OneTime tasks with DueDate
+            if (newTask.Type != TaskType.OneTime || !newTask.DueDate.HasValue)
+                return false;
+
+            var newStart = newTask.DueDate.Value;
+            var newDuration = Math.Max(1, newTask.EstimatedMinutes); // enforce minimal duration to detect conflicts
+            var newEnd = newStart.AddMinutes(newDuration);
+
+            // Check existing assigned tasks
+            var userTasks = existingTasks.Where(t =>
+                t.AssignedUserId == userId &&
+                t.Type == TaskType.OneTime &&
+                t.DueDate.HasValue);
+
+            foreach (var existing in userTasks)
+            {
+                var existingStart = existing.DueDate.Value;
+                var existingDuration = Math.Max(1, existing.EstimatedMinutes);
+                var existingEnd = existingStart.AddMinutes(existingDuration);
+
+                // Check if time intervals overlap
+                if (newStart < existingEnd && newEnd > existingStart)
+                {
+                    _logger.LogDebug(
+                        "Time conflict detected: Task {NewTaskId} ({NewStart}-{NewEnd}) conflicts with {ExistingTaskId} ({ExistingStart}-{ExistingEnd}) for user {UserId}",
+                        newTask.Id, newStart, newEnd, existing.Id, existingStart, existingEnd, userId);
+                    return true;
+                }
+            }
+
+            // Check pending assignments from current auto-assign operation
+            var pendingTasksForUser = pendingAssignments
+                .Where(kv => kv.Value == userId)
+                .Select(kv => existingTasks.FirstOrDefault(t => t.Id == kv.Key))
+                .Where(t => t != null && t.Type == TaskType.OneTime && t.DueDate.HasValue);
+
+            foreach (var pending in pendingTasksForUser)
+            {
+                if (pending == null) continue;
+
+                var pendingStart = pending.DueDate!.Value;
+                var pendingDuration = Math.Max(1, pending.EstimatedMinutes);
+                var pendingEnd = pendingStart.AddMinutes(pendingDuration);
+
+                // Check if time intervals overlap
+                if (newStart < pendingEnd && newEnd > pendingStart)
+                {
+                    _logger.LogDebug(
+                        "Time conflict detected with pending assignment: Task {NewTaskId} ({NewStart}-{NewEnd}) conflicts with pending {PendingTaskId} ({PendingStart}-{PendingEnd}) for user {UserId}",
+                        newTask.Id, newStart, newEnd, pending.Id, pendingStart, pendingEnd, userId);
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

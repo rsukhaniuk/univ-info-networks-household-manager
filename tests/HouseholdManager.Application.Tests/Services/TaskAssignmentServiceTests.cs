@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HouseholdManager.Application.Services;
+using HouseholdManager.Domain.Exceptions;
 
 namespace HouseholdManager.Application.Tests.Services
 {
@@ -84,10 +85,10 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync((HouseholdTask)null);
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            var exception = Assert.ThrowsAsync<NotFoundException>(
                 async () => await _taskAssignmentService.AssignTaskAsync(taskId));
 
-            Assert.That(exception.Message, Is.EqualTo($"Task with ID {taskId} not found"));
+            Assert.That(exception.Message, Is.EqualTo($"Task with ID '{taskId}' was not found"));
         }
 
         [Test]
@@ -238,7 +239,7 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(new List<HouseholdMember>());
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            var exception = Assert.ThrowsAsync<ValidationException>(
                 async () => await _taskAssignmentService.ReassignTaskToNextUserAsync(taskId));
 
             Assert.That(exception.Message, Is.EqualTo("No active members in household"));
@@ -428,7 +429,7 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(new List<HouseholdMember>());
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            var exception = Assert.ThrowsAsync<ValidationException>(
                 async () => await _taskAssignmentService.AssignTaskAsync(taskId));
 
             Assert.That(exception.Message, Is.EqualTo("No available users to assign the task"));
