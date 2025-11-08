@@ -27,7 +27,6 @@ export class HouseholdFormComponent implements OnInit, OnDestroy {
   householdId: string | null = null;
   householdName: string | null = null;
   isSubmitting = false;
-  error: string | null = null;
 
   ngOnInit(): void {
     this.householdId = this.route.snapshot.paramMap.get('id');
@@ -78,7 +77,6 @@ export class HouseholdFormComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmitting = true;
-    this.error = null;
 
     const request = {
       name: this.form.value.name,

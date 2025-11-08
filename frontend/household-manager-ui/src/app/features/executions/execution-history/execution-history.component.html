@@ -8,13 +8,6 @@
     </div>
   }
 
-  <!-- Error State -->
-  @else if (error) {
-    <div class="alert alert-danger">
-      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-    </div>
-  }
-
   <!-- Empty State -->
   @else if (executions.length === 0) {
     <div class="text-center py-4 text-muted">

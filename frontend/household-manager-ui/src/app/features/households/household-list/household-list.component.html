@@ -38,21 +38,6 @@
   </div>
 
   <!-- ========================================
-       ERROR MESSAGES
-       ======================================== -->
-  <!-- <div class="row justify-content-center">
-    <div class="col-lg-10">
-      @if (errors$ | async; as errors) { @for (error of errors; track error) {
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        {{ error }}
-        <button type="button" class="btn-close" (click)="errors.length = 0"></button>
-      </div>
-      } }
-    </div>
-  </div> -->
-
-  <!-- ========================================
        EMPTY STATE
        ======================================== -->
   @if (!loading && totalRecords === 0 && !searchQuery) {

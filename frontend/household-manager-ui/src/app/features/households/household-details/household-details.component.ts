@@ -7,7 +7,6 @@ import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 import { HouseholdContext } from '../services/household-context';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { ToastService } from '../../../core/services/toast.service';
-import { ServerErrorService } from '../../../core/services/server-error.service';
 
 @Component({
   selector: 'app-household-details',
@@ -21,7 +20,6 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private householdContext = inject(HouseholdContext);
   private toastService = inject(ToastService);
-  private errorService = inject(ServerErrorService);
 
   household: HouseholdDetailsDto | null = null;
   isLoading = true;
@@ -65,8 +63,8 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Failed to load household details:', err);
+      error: () => {
+        // Error will be shown by error interceptor
         this.isLoading = false;
       }
     });
@@ -116,8 +114,8 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
           this.toastService.success('Invite code regenerated successfully');
         }
       },
-      error: (err) => {
-        console.error('Failed to regenerate invite code:', err);
+      error: () => {
+        // Error will be shown by error interceptor
       }
     });
   }
@@ -142,8 +140,8 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
           this.toastService.success(`${member.userName} removed successfully`);
           this.loadHousehold(this.household!.household.id);
         },
-        error: (err) => {
-          console.error('Failed to remove member:', err);
+        error: () => {
+          // Error will be shown by error interceptor
         }
       });
     };
@@ -173,8 +171,8 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
             window.location.href = '/households';
           }, 1500);
         },
-        error: (err) => {
-          console.error('Failed to leave household:', err);
+        error: () => {
+          // Error will be shown by error interceptor
         }
       });
     };

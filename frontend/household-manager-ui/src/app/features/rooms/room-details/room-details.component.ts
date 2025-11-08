@@ -35,8 +35,6 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
   isSystemAdmin = false;
   canManageRoom = false;
   isLoading = true;
-  error: string | null = null;
-  successMessage: string | null = null;
 
   // Modal state
   showPhotoModal = false;
@@ -90,7 +88,6 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
 
   loadRoom(): void {
     this.isLoading = true;
-    this.error = null;
 
     this.roomService.getRoomById(this.householdId, this.roomId).subscribe({
       next: (response) => {
@@ -101,7 +98,7 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       },
       error: (error) => {
-        this.error = error.message || 'Failed to load room details';
+        this.toastService.error(error.message || 'Failed to load room details');
         this.isLoading = false;
       },
     });
@@ -127,13 +124,13 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
 
     // Validate
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+      this.toastService.error('File size must be less than 5MB');
       return;
     }
 
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type.toLowerCase())) {
-      alert('Please select a valid image file');
+      this.toastService.error('Please select a valid image file (JPG, PNG, GIF, or WebP)');
       return;
     }
 
@@ -146,14 +143,13 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
     this.isUploadingPhoto = true;
     this.roomService.uploadPhoto(this.householdId, this.roomId, this.selectedPhotoFile).subscribe({
       next: () => {
-        this.successMessage = 'Photo uploaded successfully';
+        this.toastService.success('Photo uploaded successfully');
         this.closePhotoModal();
         this.loadRoom();
-        this.autoHideMessage();
         this.isUploadingPhoto = false;
       },
       error: (error) => {
-        this.error = error.message || 'Failed to upload photo';
+        this.toastService.error(error.message || 'Failed to upload photo');
         this.isUploadingPhoto = false;
       },
     });
@@ -164,13 +160,12 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
 
     this.roomService.deletePhoto(this.householdId, this.roomId).subscribe({
       next: () => {
-        this.successMessage = 'Photo deleted successfully';
+        this.toastService.success('Photo deleted successfully');
         this.closePhotoModal();
         this.loadRoom();
-        this.autoHideMessage();
       },
       error: (error) => {
-        this.error = error.message || 'Failed to delete photo';
+        this.toastService.error(error.message || 'Failed to delete photo');
       },
     });
   }
@@ -217,13 +212,6 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
   onDialogCancelled(): void {
     this.pendingAction = null;
     this.showConfirmDialog = false;
-  }
-
-  private autoHideMessage(): void {
-    setTimeout(() => {
-      this.successMessage = null;
-      this.error = null;
-    }, 5000);
   }
 
   getWeekdayName(weekday: number | null | undefined): string {

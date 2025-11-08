@@ -12,7 +12,6 @@ import { RoomService } from '../services/room.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
 import { AuthService } from '../../../core/services/auth.service';
-import { ServerErrorService } from '../../../core/services/server-error.service';
 import { LoadingService } from '../../../core/services/loading.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { RoomDto } from '../../../core/models/room.model';
@@ -45,12 +44,10 @@ export class RoomListComponent implements OnInit, OnDestroy {
   private householdContext = inject(HouseholdContext);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
-  private errors = inject(ServerErrorService);
   private loadingService = inject(LoadingService);
   private toastService = inject(ToastService);
 
   isSystemAdmin$ = this.auth.isSystemAdmin$();
-  errors$ = this.errors.errors$;
 
   householdId: string = '';
   household: HouseholdDto | null = null;
@@ -127,7 +124,7 @@ export class RoomListComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Failed to load household:', error);
+        // Error will be shown by error interceptor
       }
     });
   }
@@ -196,7 +193,7 @@ export class RoomListComponent implements OnInit, OnDestroy {
           this.totalRecords = res.data?.totalCount ?? 0;
         },
         error: (err) => {
-          console.error('Failed to load rooms:', err);
+          // Error will be shown by error interceptor
           this.items = [];
           this.totalRecords = 0;
         }
@@ -250,7 +247,7 @@ export class RoomListComponent implements OnInit, OnDestroy {
           setTimeout(() => this.reload(), 150);
         },
         error: (err) => {
-          console.error('Failed to delete room:', err);
+          // Error will be shown by error interceptor
         }
       });
     };

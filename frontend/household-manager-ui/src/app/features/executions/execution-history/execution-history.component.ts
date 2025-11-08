@@ -29,7 +29,6 @@ export class ExecutionHistoryComponent implements OnInit {
 
   // State
   isLoading = true;
-  error: string | null = null;
 
   // Query params
   queryParams: ExecutionQueryParameters = {
@@ -45,7 +44,6 @@ export class ExecutionHistoryComponent implements OnInit {
 
   loadExecutions(): void {
     this.isLoading = true;
-    this.error = null;
 
     // Determine which endpoint to use
     let observable;
@@ -57,7 +55,7 @@ export class ExecutionHistoryComponent implements OnInit {
       // Load executions for household
       observable = this.executionService.getHouseholdExecutions(this.householdId, this.queryParams);
     } else {
-      this.error = 'Either taskId or householdId must be provided';
+      this.toastService.error('Either taskId or householdId must be provided');
       this.isLoading = false;
       return;
     }

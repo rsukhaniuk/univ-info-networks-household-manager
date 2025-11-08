@@ -10,7 +10,6 @@ import { Subject, debounceTime, finalize } from 'rxjs';
 
 import { HouseholdService } from '../services/household.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ServerErrorService } from '../../../core/services/server-error.service';
 import { LoadingService } from '../../../core/services/loading.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { HouseholdDto, HouseholdRole } from '../../../core/models/household.model';
@@ -39,12 +38,10 @@ type SortOrder = 'asc' | 'desc';
 export class HouseholdListComponent implements OnInit, OnDestroy {
   private service = inject(HouseholdService);
   private auth = inject(AuthService);
-  private errors = inject(ServerErrorService);
   private loadingService = inject(LoadingService);
   private toastService = inject(ToastService);
 
   isSystemAdmin$ = this.auth.isSystemAdmin$();
-  errors$ = this.errors.errors$;
 
   loading = true;
   private loadingDelayMs = 400; // Збільшено затримку, щоб уникнути мерехтіння
@@ -148,8 +145,8 @@ export class HouseholdListComponent implements OnInit, OnDestroy {
           this.items = res.data?.items ?? [];
           this.totalRecords = res.data?.totalCount ?? 0;
         },
-        error: (err) => {
-          console.error('Failed to load households:', err);
+        error: () => {
+          // Error will be shown by error interceptor
           this.items = [];
           this.totalRecords = 0;
         }
@@ -214,8 +211,8 @@ export class HouseholdListComponent implements OnInit, OnDestroy {
           this.toastService.success(`Household "${household.name}" deleted successfully`);
           setTimeout(() => this.reload(), 150);
         },
-        error: (err) => {
-          console.error('Failed to delete household:', err);
+        error: () => {
+          // Error will be shown by error interceptor
         }
       });
     };
@@ -252,8 +249,8 @@ export class HouseholdListComponent implements OnInit, OnDestroy {
           this.toastService.success(`You have left "${household.name}"`);
           setTimeout(() => this.reload(), 150);
         },
-        error: (err) => {
-          console.error('Failed to leave household:', err);
+        error: () => {
+          // Error will be shown by error interceptor
         }
       });
     };

@@ -60,7 +60,6 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   // State
   isLoading = true;
   isSubmitting = false;
-  error: string | null = null;
 
   // Enums
   TaskPriority = TaskPriority;
@@ -174,7 +173,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
     // Validate householdId
     if (!this.householdId) {
-      this.error = 'Household ID is missing from the route. Please navigate from a household page.';
+      this.toastService.error('Household ID is missing from the route. Please navigate from a household page.');
       this.isLoading = false;
       console.error('Missing householdId in route params:', this.route.snapshot.paramMap);
       return;

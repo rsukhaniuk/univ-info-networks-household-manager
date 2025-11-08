@@ -2,6 +2,7 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ServerErrorService } from '../services/server-error.service';
+import { ToastService } from '../services/toast.service';
 import { catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -9,6 +10,7 @@ import { environment } from '../../../environments/environment';
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const serverErrorService = inject(ServerErrorService);
+  const toastService = inject(ToastService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -78,11 +80,24 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           extracted.push(getStatusMessage(error.status));
         }
 
-        if (!shouldSkipError) {
-          serverErrorService.setErrors(extracted);
-        }
-
         errorMessage = extracted[0];
+
+        // Route errors based on severity
+        if (!shouldSkipError) {
+          const isCriticalError = error.status === 0 || // Network error
+                                  error.status === 403 || // Forbidden
+                                  error.status >= 500; // Server errors
+
+          if (isCriticalError) {
+            // Show critical errors in global banner (persistent)
+            serverErrorService.setErrors(extracted);
+          } else {
+            // Show feature-specific errors in toast (auto-hide)
+            // Join multiple messages with line breaks if needed
+            const toastMessage = extracted.join('\n');
+            toastService.error(toastMessage, 4000);
+          }
+        }
 
         if (!environment.production && !shouldSkipError) {
           console.error('[HTTP Error]', {

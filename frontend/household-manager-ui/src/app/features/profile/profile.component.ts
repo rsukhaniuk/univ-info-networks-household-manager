@@ -166,8 +166,8 @@ export class ProfileComponent implements OnInit {
           this.connectionInfo = response.data;
         }
       },
-      error: (error) => {
-        console.error('Failed to load connection info:', error);
+      error: () => {
+        // Error will be shown by error interceptor
       }
     });
   }
@@ -194,8 +194,8 @@ export class ProfileComponent implements OnInit {
         }
         this.isChangingPassword = false;
       },
-      error: (error) => {
-        // Error will be shown in global error banner by error interceptor
+      error: () => {
+        // Error will be shown by error interceptor
         this.isChangingPassword = false;
       }
     });
@@ -227,9 +227,8 @@ export class ProfileComponent implements OnInit {
         }
         this.isChangingEmail = false;
       },
-      error: (error) => {
-        console.error('Email change error:', error);
-        // Error will be shown in global error banner by error interceptor
+      error: () => {
+        // Error will be shown by error interceptor
         this.isChangingEmail = false;
       }
     });
