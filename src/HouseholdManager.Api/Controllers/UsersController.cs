@@ -3,6 +3,7 @@ using HouseholdManager.Application.DTOs.User;
 using HouseholdManager.Application.Interfaces.ExternalServices;
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Api.Middleware;
+using HouseholdManager.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -242,9 +243,11 @@ namespace HouseholdManager.Api.Controllers
         /// 
         /// </remarks>
         [HttpPost("me/password-reset-ticket")]
+        [RequireFreshAuth(MaxAuthAgeSeconds = 300)] // Require authentication within last 5 minutes
         [ProducesResponseType(typeof(ApiResponse<PasswordChangeTicketResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<PasswordChangeTicketResponse>>> RequestPasswordChange(

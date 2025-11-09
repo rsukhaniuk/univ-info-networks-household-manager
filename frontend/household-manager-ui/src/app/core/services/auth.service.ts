@@ -56,7 +56,7 @@ export class AuthService {
    */
   login(redirectPath: string = '/households'): void {
     this.auth0.loginWithRedirect({
-      appState: { target: redirectPath }
+      appState: { target: redirectPath, action: 'login' }
     });
   }
 
@@ -68,7 +68,7 @@ export class AuthService {
       authorizationParams: {
         screen_hint: 'signup'
       },
-      appState: { target: '/households' }
+      appState: { target: '/households', action: 'signup' }
     });
   }
 
@@ -80,6 +80,20 @@ export class AuthService {
       logoutParams: {
         returnTo: window.location.origin
       }
+    });
+  }
+
+  /**
+   * Re-authenticate user with prompt=login
+   * Used for sensitive operations like password change
+   */
+  reauthenticate(appState: any): void {
+    this.auth0.loginWithRedirect({
+      authorizationParams: {
+        prompt: 'login', // Force user to re-enter credentials
+        screen_hint: 'login'
+      },
+      appState: appState
     });
   }
 

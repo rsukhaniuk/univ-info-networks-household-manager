@@ -179,25 +179,12 @@ export class ProfileComponent implements OnInit {
 
     this.isChangingPassword = true;
 
-    const request: RequestPasswordChangeRequest = {
+    // Force re-authentication before allowing password change
+    // This ensures the user proves they know their current credentials
+    this.authService.reauthenticate({
+      target: '/profile',
+      action: 'password-change',
       resultUrl: window.location.origin + '/profile'
-    };
-
-    this.userService.requestPasswordChange(request).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          // Set flag before redirecting to Auth0
-          sessionStorage.setItem('passwordChangeInProgress', 'true');
-
-          // Redirect to Auth0 hosted password change page
-          window.location.href = response.data.ticketUrl;
-        }
-        this.isChangingPassword = false;
-      },
-      error: () => {
-        // Error will be shown by error interceptor
-        this.isChangingPassword = false;
-      }
     });
   }
 
