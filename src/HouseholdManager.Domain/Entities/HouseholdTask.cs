@@ -52,9 +52,30 @@ namespace HouseholdManager.Domain.Entities
         public DateTime? DueDate { get; set; }
 
         /// <summary>
-        /// Scheduled weekday for Regular tasks only
+        /// iCalendar RRULE format for recurrence patterns
+        /// Example: "FREQ=WEEKLY;BYDAY=MO" for every Monday, "FREQ=DAILY" for daily tasks
+        /// Required for Regular tasks, not allowed for OneTime tasks
         /// </summary>
-        public DayOfWeek? ScheduledWeekday { get; set; }
+        [StringLength(500)]
+        public string? RecurrenceRule { get; set; }
+
+        /// <summary>
+        /// End date for recurring tasks (stored in UTC)
+        /// Defines when a recurring task should stop generating occurrences
+        /// </summary>
+        public DateTime? RecurrenceEndDate { get; set; }
+
+        /// <summary>
+        /// External calendar synchronization ID (for future bidirectional sync)
+        /// Stores the event ID from external calendar providers (Google, Outlook, etc.)
+        /// </summary>
+        [StringLength(255)]
+        public string? ExternalCalendarId { get; set; }
+
+        /// <summary>
+        /// Last synchronization timestamp with external calendar (UTC)
+        /// </summary>
+        public DateTime? LastSyncedAt { get; set; }
 
         /// <summary>
         /// Foreign key to Household
@@ -123,11 +144,12 @@ namespace HouseholdManager.Domain.Entities
         {
             if (Type == TaskType.Regular)
             {
-                if (ScheduledWeekday == null)
+                // Regular tasks must have RecurrenceRule
+                if (string.IsNullOrWhiteSpace(RecurrenceRule))
                 {
                     yield return new ValidationResult(
-                        "Regular tasks must have a scheduled weekday.",
-                        new[] { nameof(ScheduledWeekday) });
+                        "Regular tasks must have a recurrence rule.",
+                        new[] { nameof(RecurrenceRule) });
                 }
                 if (DueDate != null)
                 {
@@ -144,11 +166,17 @@ namespace HouseholdManager.Domain.Entities
                         "One-time tasks must have a due date.",
                         new[] { nameof(DueDate) });
                 }
-                if (ScheduledWeekday != null)
+                if (!string.IsNullOrWhiteSpace(RecurrenceRule))
                 {
                     yield return new ValidationResult(
-                        "One-time tasks should not have a scheduled weekday.",
-                        new[] { nameof(ScheduledWeekday) });
+                        "One-time tasks should not have a recurrence rule.",
+                        new[] { nameof(RecurrenceRule) });
+                }
+                if (RecurrenceEndDate != null)
+                {
+                    yield return new ValidationResult(
+                        "One-time tasks should not have a recurrence end date.",
+                        new[] { nameof(RecurrenceEndDate) });
                 }
             }
         }

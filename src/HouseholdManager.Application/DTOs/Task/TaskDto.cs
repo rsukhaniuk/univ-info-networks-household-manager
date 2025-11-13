@@ -71,9 +71,24 @@ namespace HouseholdManager.Application.DTOs.Task
         public DateTime? DueDate { get; set; }
 
         /// <summary>
-        /// Scheduled weekday for Regular tasks
+        /// iCalendar RRULE format for recurrence patterns
         /// </summary>
-        public DayOfWeek? ScheduledWeekday { get; set; }
+        public string? RecurrenceRule { get; set; }
+
+        /// <summary>
+        /// End date for recurring tasks (UTC)
+        /// </summary>
+        public DateTime? RecurrenceEndDate { get; set; }
+
+        /// <summary>
+        /// External calendar synchronization ID
+        /// </summary>
+        public string? ExternalCalendarId { get; set; }
+
+        /// <summary>
+        /// Last synchronization timestamp with external calendar (UTC)
+        /// </summary>
+        public DateTime? LastSyncedAt { get; set; }
 
         /// <summary>
         /// Assigned user ID

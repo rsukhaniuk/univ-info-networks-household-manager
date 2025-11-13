@@ -97,9 +97,21 @@ namespace HouseholdManager.Infrastructure.Repositories
             // Only count executions that are marked as counted for completion
             // NULL is treated as true (for backward compatibility)
             return await _dbSet
-                .AnyAsync(te => te.TaskId == taskId && 
-                              te.WeekStarting == weekStart && 
-                              (te.IsCountedForCompletion == null || te.IsCountedForCompletion == true), 
+                .AnyAsync(te => te.TaskId == taskId &&
+                              te.WeekStarting == weekStart &&
+                              (te.IsCountedForCompletion == null || te.IsCountedForCompletion == true),
+                          cancellationToken);
+        }
+
+        public async Task<bool> IsTaskCompletedInPeriodAsync(Guid taskId, DateTime periodStart, DateTime periodEnd, CancellationToken cancellationToken = default)
+        {
+            // Check if task has any counted executions within the specified period
+            // NULL is treated as true (for backward compatibility)
+            return await _dbSet
+                .AnyAsync(te => te.TaskId == taskId &&
+                              te.CompletedAt >= periodStart &&
+                              te.CompletedAt < periodEnd &&
+                              (te.IsCountedForCompletion == null || te.IsCountedForCompletion == true),
                           cancellationToken);
         }
 

@@ -60,11 +60,25 @@ namespace HouseholdManager.Application.Validators.Task
 
             // ===== TYPE-SPECIFIC VALIDATION =====
 
-            // Regular tasks MUST have ScheduledWeekday
-            RuleFor(x => x.ScheduledWeekday)
-                .NotNull()
-                .WithMessage("Regular tasks must have a scheduled weekday")
+            // Regular tasks MUST have RecurrenceRule
+            RuleFor(x => x.RecurrenceRule)
+                .NotEmpty()
+                .WithMessage("Regular tasks must have a recurrence rule")
                 .When(x => x.Type == TaskType.Regular);
+
+            // RecurrenceRule validation (optional, basic format check)
+            RuleFor(x => x.RecurrenceRule)
+                .MaximumLength(500)
+                .WithMessage("Recurrence rule cannot exceed 500 characters")
+                .Must(BeValidRrule)
+                .WithMessage("Recurrence rule must be a valid iCalendar RRULE format (e.g., 'FREQ=DAILY;INTERVAL=2')")
+                .When(x => !string.IsNullOrWhiteSpace(x.RecurrenceRule));
+
+            // RecurrenceEndDate validation (optional, must be in future)
+            RuleFor(x => x.RecurrenceEndDate)
+                .Must(date => date > DateTime.UtcNow)
+                .WithMessage("Recurrence end date must be in the future")
+                .When(x => x.RecurrenceEndDate.HasValue);
 
             // Regular tasks MUST NOT have DueDate
             RuleFor(x => x.DueDate)
@@ -80,10 +94,16 @@ namespace HouseholdManager.Application.Validators.Task
                 .WithMessage("Due date must be in the future")
                 .When(x => x.Type == TaskType.OneTime);
 
-            // OneTime tasks MUST NOT have ScheduledWeekday
-            RuleFor(x => x.ScheduledWeekday)
+            // OneTime tasks MUST NOT have RecurrenceRule
+            RuleFor(x => x.RecurrenceRule)
                 .Null()
-                .WithMessage("One-time tasks should not have a scheduled weekday")
+                .WithMessage("One-time tasks should not have a recurrence rule")
+                .When(x => x.Type == TaskType.OneTime);
+
+            // OneTime tasks MUST NOT have RecurrenceEndDate
+            RuleFor(x => x.RecurrenceEndDate)
+                .Null()
+                .WithMessage("One-time tasks should not have a recurrence end date")
                 .When(x => x.Type == TaskType.OneTime);
 
             // Assigned user ID validation (optional)
@@ -103,6 +123,26 @@ namespace HouseholdManager.Application.Validators.Task
                 .NotNull()
                 .WithMessage("Row version is required for updates to prevent concurrency conflicts")
                 .When(x => x.Id.HasValue);
+        }
+
+        /// <summary>
+        /// Validates that the RRULE format is correct (basic check)
+        /// </summary>
+        private bool BeValidRrule(string? rrule)
+        {
+            if (string.IsNullOrWhiteSpace(rrule))
+                return true; // Null/empty is valid (will be caught by required validation if needed)
+
+            // Basic RRULE format check: must contain FREQ=
+            if (!rrule.Contains("FREQ=", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // Valid frequency types
+            var validFrequencies = new[] { "DAILY", "WEEKLY", "MONTHLY", "YEARLY" };
+            var hasValidFrequency = validFrequencies.Any(freq =>
+                rrule.Contains($"FREQ={freq}", StringComparison.OrdinalIgnoreCase));
+
+            return hasValidFrequency;
         }
     }
 }

@@ -169,8 +169,9 @@ namespace HouseholdManager.Application.Interfaces.Services
         Task ValidateExecutionAccessAsync(Guid executionId, string userId, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Invalidates (uncounts) this week's execution for a Regular task, allowing it to be completed again.
-        /// The execution remains in history but is not counted for weekly completion tracking.
+        /// Invalidates (uncounts) the current period's execution for a Regular task, allowing it to be completed again.
+        /// The execution remains in history but is not counted for completion tracking.
+        /// Period is determined by the task's RecurrenceRule (daily, weekly, monthly, yearly).
         /// Only household Owner can invalidate executions.
         /// </summary>
         /// <param name="taskId">Task ID to reset</param>
@@ -181,10 +182,11 @@ namespace HouseholdManager.Application.Interfaces.Services
         /// This operation:
         /// - Validates the task is a Regular task
         /// - Validates the user is a household owner
-        /// - Sets IsCountedForCompletion = false for this week's execution
+        /// - Determines the period based on RecurrenceRule (today for DAILY, this week for WEEKLY, etc.)
+        /// - Sets IsCountedForCompletion = false for the current period's execution
         /// - Preserves execution history and photos
-        /// - Allows task to be recompleted this week
+        /// - Allows task to be recompleted in the current period
         /// </remarks>
-        Task InvalidateExecutionThisWeekAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default);
+        Task InvalidateExecutionInCurrentPeriodAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default);
     }
 }

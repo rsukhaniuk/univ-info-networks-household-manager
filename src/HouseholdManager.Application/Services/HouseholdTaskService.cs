@@ -2,9 +2,11 @@
 using HouseholdManager.Application.DTOs.Execution;
 using HouseholdManager.Application.DTOs.Room;
 using HouseholdManager.Application.DTOs.Task;
+using HouseholdManager.Application.Helpers;
 using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Domain.Entities;
+using HouseholdManager.Domain.Enums;
 using HouseholdManager.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using System;
@@ -274,15 +276,22 @@ namespace HouseholdManager.Application.Services
             DayOfWeek weekday,
             CancellationToken cancellationToken = default)
         {
-            var tasks = await _taskRepository.GetRegularTasksByWeekdayAsync(householdId, weekday, cancellationToken);
+            // Get all active Regular tasks and filter by weekday using RecurrenceRule
+            var allTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
+            var regularTasks = allTasks.Where(t => t.Type == TaskType.Regular).ToList();
+
+            // Group by weekday and get tasks for the requested day
+            var tasksByWeekday = RruleHelper.GroupTasksByWeekday(regularTasks);
+            var tasks = tasksByWeekday.ContainsKey(weekday) ? tasksByWeekday[weekday] : new List<HouseholdTask>();
+
             var dtos = _mapper.Map<IReadOnlyList<TaskDto>>(tasks);
-            
+
             // Set IsCompletedThisWeek for each task
             foreach (var dto in dtos)
             {
                 dto.IsCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(dto.Id, cancellationToken);
             }
-            
+
             return dtos;
         }
 

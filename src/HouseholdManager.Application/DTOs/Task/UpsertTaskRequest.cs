@@ -88,9 +88,35 @@ namespace HouseholdManager.Application.DTOs.Task
         public DateTime? DueDate { get; set; }
 
         /// <summary>
-        /// Scheduled weekday for Regular tasks
+        /// iCalendar RRULE format for recurrence patterns
+        /// Example: "FREQ=WEEKLY;BYDAY=MO" for every Monday
+        /// Required for Regular tasks, not allowed for OneTime tasks
         /// </summary>
-        public DayOfWeek? ScheduledWeekday { get; set; }
+        [StringLength(500, ErrorMessage = "Recurrence rule cannot exceed 500 characters")]
+        public string? RecurrenceRule { get; set; }
+
+        /// <summary>
+        /// End date for recurring tasks (UTC)
+        /// Defines when a recurring task should stop generating occurrences
+        /// </summary>
+        public DateTime? RecurrenceEndDate { get; set; }
+
+        /// <summary>
+        /// External calendar synchronization ID (for future bidirectional sync)
+        /// Managed internally, typically not set by client
+        /// </summary>
+        [SwaggerSchema(ReadOnly = true, Description = "Managed internally for calendar sync")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [StringLength(255, ErrorMessage = "External calendar ID cannot exceed 255 characters")]
+        public string? ExternalCalendarId { get; set; }
+
+        /// <summary>
+        /// Last synchronization timestamp with external calendar (UTC)
+        /// Managed internally
+        /// </summary>
+        [SwaggerSchema(ReadOnly = true, Description = "Managed internally")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public DateTime? LastSyncedAt { get; set; }
 
         /// <summary>
         /// Concurrency control for optimistic locking

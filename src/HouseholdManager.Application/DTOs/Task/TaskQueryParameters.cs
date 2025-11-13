@@ -52,9 +52,9 @@ namespace HouseholdManager.Application.DTOs.Task
         public bool? IsOverdue { get; set; }
 
         /// <summary>
-        /// Filter by scheduled weekday (for Regular tasks)
+        /// Filter by weekday (for Regular tasks with weekly recurrence)
         /// </summary>
-        public DayOfWeek? ScheduledWeekday { get; set; }
+        public DayOfWeek? Weekday { get; set; }
 
         /// <summary>
         /// Constructor with default sorting

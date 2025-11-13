@@ -87,7 +87,7 @@ namespace HouseholdManager.Application.Tests.Services
                 Type = TaskType.Regular,
                 Priority = TaskPriority.High,
                 EstimatedMinutes = 60,
-                ScheduledWeekday = DayOfWeek.Monday,
+                RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO",
                 HouseholdId = householdId,
                 RoomId = roomId,
                 IsActive = true
@@ -108,7 +108,7 @@ namespace HouseholdManager.Application.Tests.Services
                 Type = request.Type,
                 Priority = request.Priority,
                 EstimatedMinutes = request.EstimatedMinutes,
-                ScheduledWeekday = request.ScheduledWeekday,
+                RecurrenceRule = request.RecurrenceRule,
                 HouseholdId = householdId,
                 RoomId = roomId,
                 CreatedAt = DateTime.UtcNow,
@@ -608,28 +608,28 @@ namespace HouseholdManager.Application.Tests.Services
             // Arrange
             var householdId = Guid.NewGuid();
             var weekday = DayOfWeek.Monday;
-            var weekdayTasks = new List<HouseholdTask>
+            var allActiveTasks = new List<HouseholdTask>
             {
                 new HouseholdTask
                 {
                     Id = Guid.NewGuid(),
                     HouseholdId = householdId,
                     Type = TaskType.Regular,
-                    ScheduledWeekday = weekday,
+                    RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO",
                     Title = "Monday Task",
                     Room = new Room { Name = "Kitchen" }
                 }
             };
 
-            _mockTaskRepository.Setup(r => r.GetRegularTasksByWeekdayAsync(householdId, weekday, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(weekdayTasks);
+            _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(allActiveTasks);
 
             // Act
             var result = await _householdTaskService.GetTasksForWeekdayAsync(householdId, weekday);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result.First().ScheduledWeekday, Is.EqualTo(weekday));
+            Assert.That(result.First().Title, Is.EqualTo("Monday Task"));
         }
 
         #endregion

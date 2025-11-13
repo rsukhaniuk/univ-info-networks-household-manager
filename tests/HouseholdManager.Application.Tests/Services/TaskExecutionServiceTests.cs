@@ -96,7 +96,7 @@ namespace HouseholdManager.Application.Tests.Services
                 EstimatedMinutes = 30,
                 IsActive = isActive,
                 CreatedAt = DateTime.UtcNow,
-                ScheduledWeekday = type == TaskType.Regular ? DayOfWeek.Monday : null,
+                RecurrenceRule = type == TaskType.Regular ? "FREQ=WEEKLY;BYDAY=MO" : null,
                 DueDate = type == TaskType.OneTime ? DateTime.UtcNow.AddDays(7) : null,
                 Household = new Household { Id = _householdId, Name = "Test Household" },
                 Room = new Room { Id = _roomId, Name = "Living Room", HouseholdId = _householdId },
@@ -163,7 +163,7 @@ namespace HouseholdManager.Application.Tests.Services
                 .Returns(Task.CompletedTask);
 
             _mockExecutionRepository
-                .Setup(x => x.IsTaskCompletedThisWeekAsync(_taskId, It.IsAny<CancellationToken>()))
+                .Setup(x => x.IsTaskCompletedInPeriodAsync(_taskId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
 
             var execution = CreateTestExecution(task, _userId);
@@ -261,7 +261,7 @@ namespace HouseholdManager.Application.Tests.Services
                 .Returns(Task.CompletedTask);
 
             _mockExecutionRepository
-                .Setup(x => x.IsTaskCompletedThisWeekAsync(_taskId, It.IsAny<CancellationToken>()))
+                .Setup(x => x.IsTaskCompletedInPeriodAsync(_taskId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
 
             _mockFileUploadService
@@ -351,14 +351,14 @@ namespace HouseholdManager.Application.Tests.Services
                 .Returns(Task.CompletedTask);
 
             _mockExecutionRepository
-                .Setup(x => x.IsTaskCompletedThisWeekAsync(_taskId, It.IsAny<CancellationToken>()))
+                .Setup(x => x.IsTaskCompletedInPeriodAsync(_taskId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
             // Act & Assert
             var exception = Assert.ThrowsAsync<ValidationException>(
                 async () => await _service.CompleteTaskAsync(request, _userId));
 
-            Assert.That(exception.Message, Does.Contain("already been completed this week"));
+            Assert.That(exception.Message, Does.Contain("already been completed"));
         }
 
         #endregion

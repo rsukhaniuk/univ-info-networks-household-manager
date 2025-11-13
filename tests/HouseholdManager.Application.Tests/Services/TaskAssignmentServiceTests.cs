@@ -106,7 +106,8 @@ namespace HouseholdManager.Application.Tests.Services
                 {
                     Id = Guid.NewGuid(),
                     HouseholdId = householdId,
-                    ScheduledWeekday = DayOfWeek.Monday,
+                    Type = TaskType.Regular,
+                    RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO",
                     Priority = TaskPriority.High,
                     AssignedUserId = null
                 }
@@ -120,13 +121,6 @@ namespace HouseholdManager.Application.Tests.Services
             _mockMemberRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<HouseholdTask>());
-
-            _mockTaskRepository.Setup(r => r.GetRegularTasksByWeekdayAsync(householdId, It.IsAny<DayOfWeek>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<HouseholdTask>());
-
-            // Окремо для понеділка
-            _mockTaskRepository.Setup(r => r.GetRegularTasksByWeekdayAsync(householdId, DayOfWeek.Monday, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mondayTasks);
 
             _mockTaskRepository.Setup(r => r.BulkAssignTasksAsync(It.IsAny<Dictionary<Guid, string>>(), It.IsAny<CancellationToken>()))

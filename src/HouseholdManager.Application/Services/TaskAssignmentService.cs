@@ -1,4 +1,5 @@
-﻿using HouseholdManager.Application.Interfaces.Repositories;
+﻿using HouseholdManager.Application.Helpers;
+using HouseholdManager.Application.Interfaces.Repositories;
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Domain.Entities;
 using HouseholdManager.Domain.Enums;
@@ -198,15 +199,17 @@ namespace HouseholdManager.Application.Services
             var memberUserIds = activeMembers.Select(m => m.UserId).ToList();
             var workloadStats = await GetWorkloadStatsAsync(householdId, cancellationToken);
 
-            var daysOfWeek = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+            // NOTE: Auto-assignment only works for Regular tasks with FREQ=WEEKLY recurrence rules.
+            // Tasks with other recurrence patterns (DAILY, MONTHLY, etc.) cannot be auto-assigned by weekday.
+            var allTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
+            var regularTasks = allTasks.Where(t => t.Type == TaskType.Regular && t.AssignedUserId == null).ToList();
 
-            foreach (var day in daysOfWeek)
+            // Group tasks by weekday using RecurrenceRule (only weekly tasks with BYDAY)
+            var tasksByWeekday = RruleHelper.GroupTasksByWeekday(regularTasks);
+
+            foreach (var (day, dayTasks) in tasksByWeekday)
             {
-                var dayTasks = await _taskRepository.GetRegularTasksByWeekdayAsync(householdId, day, cancellationToken);
-                var unassignedDayTasks = dayTasks.Where(t => t.AssignedUserId == null).ToList();
-
-                if (!unassignedDayTasks.Any())
+                if (!dayTasks.Any())
                     continue;
 
                 // Sort members by current workload for this day
@@ -215,7 +218,7 @@ namespace HouseholdManager.Application.Services
                     .ToList();
 
                 var memberIndex = 0;
-                foreach (var task in unassignedDayTasks.OrderBy(t => t.Priority))
+                foreach (var task in dayTasks.OrderBy(t => t.Priority))
                 {
                     var assignedUserId = sortedMembers[memberIndex % sortedMembers.Count];
                     assignments[task.Id] = assignedUserId;

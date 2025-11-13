@@ -42,6 +42,11 @@
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Dictionary of TaskId to assigned UserId</returns>
         /// <remarks>
+        /// NOTE: This method only works for Regular tasks with ScheduledWeekday (weekly tasks).
+        /// Tasks with custom RecurrenceRule patterns are not auto-assigned by weekday
+        /// because they are not tied to specific days of the week.
+        /// Use AutoAssignAllTasksAsync instead to assign all types of tasks.
+        ///
         /// TODO: Requires additional testing and validation
         /// </remarks>
         Task<Dictionary<Guid, string>> AutoAssignWeeklyTasksAsync(Guid householdId, CancellationToken cancellationToken = default);

@@ -22,6 +22,7 @@ namespace HouseholdManager.Application.Interfaces.Repositories
 
         // Task completion tracking
         Task<bool> IsTaskCompletedThisWeekAsync(Guid taskId, CancellationToken cancellationToken = default);
+        Task<bool> IsTaskCompletedInPeriodAsync(Guid taskId, DateTime periodStart, DateTime periodEnd, CancellationToken cancellationToken = default);
         Task<TaskExecution?> GetLatestExecutionForTaskAsync(Guid taskId, CancellationToken cancellationToken = default);
 
         // Execution creation with denormalized fields

@@ -2,7 +2,9 @@
 using HouseholdManager.Application.DTOs.Common;
 using HouseholdManager.Application.DTOs.Task;
 using HouseholdManager.Application.Extensions;
+using HouseholdManager.Application.Helpers;
 using HouseholdManager.Application.Interfaces.Services;
+using HouseholdManager.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -61,7 +63,7 @@ namespace HouseholdManager.Api.Controllers
         /// - **AssignedUserId**: Filter by assigned user (Auth0 user ID)
         /// - **IsActive**: Filter active/inactive tasks (true/false)
         /// - **IsOverdue**: Filter overdue tasks (true/false) — applies to OneTime tasks
-        /// - **ScheduledWeekday**: Filter by scheduled weekday (e.g., "Monday") — applies to Regular tasks
+        /// - **Weekday**: Filter by weekday (e.g., "Monday") — applies to Regular tasks with weekly recurrence
         ///
         /// Example:  
         /// `GET /api/households/{householdId}/tasks?page=1&amp;pageSize=10&amp;sortBy=Priority&amp;sortOrder=desc&amp;type=Regular&amp;isActive=true`
@@ -136,12 +138,18 @@ namespace HouseholdManager.Api.Controllers
                     : filteredTasks.Where(t => !t.IsOverdue);
             }
 
-            // Scheduled weekday filter
-            if (queryParameters.ScheduledWeekday.HasValue)
+            // Weekday filter (for Regular tasks with weekly recurrence)
+            if (queryParameters.Weekday.HasValue)
             {
+                var targetWeekday = queryParameters.Weekday.Value;
                 filteredTasks = filteredTasks.Where(t =>
-                    t.ScheduledWeekday.HasValue &&
-                    t.ScheduledWeekday.Value == queryParameters.ScheduledWeekday.Value);
+                {
+                    if (t.Type != TaskType.Regular || string.IsNullOrWhiteSpace(t.RecurrenceRule))
+                        return false;
+
+                    var weekdays = RruleHelper.ExtractWeekdays(t.RecurrenceRule);
+                    return weekdays.Contains(targetWeekday);
+                });
             }
 
             // Sorting
@@ -248,13 +256,13 @@ namespace HouseholdManager.Api.Controllers
         /// - **Description**: Optional task description (max 1000 characters)  
         /// - **Type**: Task type ("Regular" or "OneTime")  
         /// - **Priority**: Task priority ("Low", "Medium", "High")  
-        /// - **RoomId**: ID of the room where this task is performed (required)  
-        /// - **AssignedUserId**: Optional Auth0 user ID of the assigned member  
-        /// - **IsActive**: Whether the task is active (true/false, default: true)  
-        /// - **DueDate**: Due date for OneTime tasks (UTC format, optional)  
-        /// - **ScheduledWeekday**: Weekday for Regular tasks (optional, e.g. "Monday")  
+        /// - **RoomId**: ID of the room where this task is performed (required)
+        /// - **AssignedUserId**: Optional Auth0 user ID of the assigned member
+        /// - **IsActive**: Whether the task is active (true/false, default: true)
+        /// - **DueDate**: Due date for OneTime tasks (UTC format, optional)
+        /// - **RecurrenceRule**: iCalendar RRULE for Regular tasks (e.g., "FREQ=WEEKLY;BYDAY=MO")
         ///
-        /// Example:  
+        /// Example:
         /// ```json
         /// {
         ///   "title": "Clean kitchen",
@@ -264,7 +272,7 @@ namespace HouseholdManager.Api.Controllers
         ///   "roomId": "bcd7b1e8-73f2-4a59-8eab-d7a7b6e1b4e2",
         ///   "assignedUserId": "auth0|690378562126962460b261ea",
         ///   "isActive": true,
-        ///   "scheduledWeekday": "Monday"
+        ///   "recurrenceRule": "FREQ=WEEKLY;BYDAY=MO"
         /// }
         /// ```
         /// </remarks>
@@ -614,29 +622,35 @@ namespace HouseholdManager.Api.Controllers
         }
 
         /// <summary>
-        /// Invalidate this week's execution for a Regular task (Owner-only)
-        /// This uncounts the execution but preserves history, allowing the task to be completed again this week
+        /// Invalidate current period's execution for a Regular task (Owner-only)
+        /// This uncounts the execution but preserves history, allowing the task to be completed again in the current period (daily/weekly/monthly/yearly)
         /// </summary>
         /// <param name="householdId">Household ID</param>
         /// <param name="taskId">Task ID</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Success message</returns>
         /// <response code="200">Execution invalidated successfully</response>
-        /// <response code="400">Bad Request - task is not a Regular task or not completed this week</response>
+        /// <response code="400">Bad Request - task is not a Regular task or not completed in current period</response>
         /// <response code="401">Unauthorized</response>
         /// <response code="403">Forbidden - only owners can invalidate executions</response>
         /// <response code="404">Not Found</response>
         /// <remarks>
         /// This endpoint is useful when:
         /// - A task was marked as completed by mistake
-        /// - A task needs to be completed again this week
+        /// - A task needs to be completed again in the current period
         /// - The quality of work was not acceptable and needs to be redone
-        /// 
-        /// **Important:** This does NOT delete the execution from history.  
-        /// It only sets `IsCountedForCompletion = false`, allowing the task to be recompleted.  
+        ///
+        /// **Important:** This does NOT delete the execution from history.
+        /// It only sets `IsCountedForCompletion = false`, allowing the task to be recompleted.
         /// The original execution remains visible in history.
-        /// 
-        /// Only Regular tasks can be invalidated. OneTime tasks cannot be reset.  
+        ///
+        /// The "current period" depends on the task's RecurrenceRule:
+        /// - FREQ=DAILY: today
+        /// - FREQ=WEEKLY: this week (Monday to Sunday)
+        /// - FREQ=MONTHLY: this month
+        /// - FREQ=YEARLY: this year
+        ///
+        /// Only Regular tasks can be invalidated. OneTime tasks cannot be reset.
         /// Only household owners can invalidate executions.
         /// </remarks>
         [HttpPost("{taskId:guid}/invalidate-execution")]
@@ -645,18 +659,18 @@ namespace HouseholdManager.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ApiResponse<string>>> InvalidateExecutionThisWeek(
+        public async Task<ActionResult<ApiResponse<string>>> InvalidateExecutionInCurrentPeriod(
             [FromRoute] Guid householdId,
             [FromRoute] Guid taskId,
             CancellationToken cancellationToken = default)
         {
             var userId = GetCurrentUserId();
-            _logger.LogInformation("User {UserId} invalidating execution for task {TaskId} this week", userId, taskId);
+            _logger.LogInformation("User {UserId} invalidating execution for task {TaskId} in current period", userId, taskId);
 
-            await _taskExecutionService.InvalidateExecutionThisWeekAsync(taskId, userId, cancellationToken);
+            await _taskExecutionService.InvalidateExecutionInCurrentPeriodAsync(taskId, userId, cancellationToken);
 
             return Ok(ApiResponse<string>.SuccessResponse(
-                "Execution invalidated successfully. Task can now be completed again this week. Previous execution remains in history.",
+                "Execution invalidated successfully. Task can now be completed again in the current period. Previous execution remains in history.",
                 "Execution invalidated successfully"));
         }
 

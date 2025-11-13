@@ -116,6 +116,7 @@ namespace HouseholdManager.Infrastructure.Repositories
         }
 
         // Task type specific queries
+        /*
         public async Task<IReadOnlyList<HouseholdTask>> GetRegularTasksByWeekdayAsync(Guid householdId, DayOfWeek weekday, CancellationToken cancellationToken = default)
         {
             return await _dbSet
@@ -129,6 +130,7 @@ namespace HouseholdManager.Infrastructure.Repositories
                 .ThenBy(t => t.Room.Name)
                 .ToListAsync(cancellationToken);
         }
+        */
 
         public async Task<IReadOnlyList<HouseholdTask>> GetOverdueTasksAsync(Guid householdId, CancellationToken cancellationToken = default)
         {

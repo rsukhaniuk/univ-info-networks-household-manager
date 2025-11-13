@@ -54,13 +54,14 @@ namespace HouseholdManager.Application.Services
             // Validate user has access to household
             await _householdService.ValidateUserAccessAsync(task.HouseholdId, userId, cancellationToken);
 
-            // Check if task is already completed this week (for regular tasks)
-            // IsTaskCompletedThisWeekAsync now only counts executions with IsCountedForCompletion = true
+            // Check if task is already completed in current period (for regular tasks)
+            // Only counts executions with IsCountedForCompletion = true
             if (task.Type == Domain.Enums.TaskType.Regular)
             {
-                var isCompletedThisWeek = await _executionRepository.IsTaskCompletedThisWeekAsync(request.TaskId, cancellationToken);
-                if (isCompletedThisWeek)
-                    throw new ValidationException("TaskId", "This task has already been completed this week");
+                var (periodStart, periodEnd, periodName) = GetCurrentPeriodForTask(task.RecurrenceRule);
+                var isCompletedInPeriod = await _executionRepository.IsTaskCompletedInPeriodAsync(request.TaskId, periodStart, periodEnd, cancellationToken);
+                if (isCompletedInPeriod)
+                    throw new ValidationException("TaskId", $"This task has already been completed {periodName}");
             }
 
             // Upload photo if provided
@@ -276,10 +277,13 @@ namespace HouseholdManager.Application.Services
 
         // Reset operations
         /// <summary>
-        /// Invalidates (uncounts) this week's execution for a Regular task.
+        /// Invalidates (uncounts) current period's execution for a Regular task.
+        /// For FREQ=WEEKLY: invalidates this week's executions
+        /// For FREQ=DAILY: invalidates today's executions
+        /// For other patterns: invalidates executions within the current recurrence period
         /// Sets IsCountedForCompletion = false, preserving history but allowing recompletion.
         /// </summary>
-        public async Task InvalidateExecutionThisWeekAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default)
+        public async Task InvalidateExecutionInCurrentPeriodAsync(Guid taskId, string requestingUserId, CancellationToken cancellationToken = default)
         {
             // Get task
             var task = await _taskRepository.GetByIdAsync(taskId, cancellationToken);
@@ -293,31 +297,100 @@ namespace HouseholdManager.Application.Services
             if (task.Type != Domain.Enums.TaskType.Regular)
                 throw new ValidationException("TaskId", "Only Regular tasks can be reset. OneTime tasks cannot be reset.");
 
-            // Get this week's executions
-            // NULL is treated as true (counted), so we filter for NULL or true
-            var weekStart = TaskExecution.GetWeekStarting(DateTime.UtcNow);
+            // Determine the period based on RecurrenceRule
+            var (periodStart, periodEnd, periodName) = GetCurrentPeriodForTask(task.RecurrenceRule);
+
+            // Get all executions for this task
             var executions = await _executionRepository.GetByTaskIdAsync(taskId, cancellationToken);
-            var thisWeekExecutions = executions
-                .Where(e => e.WeekStarting == weekStart && 
+
+            // Filter executions within the current period that are counted
+            // NULL is treated as true (counted), so we filter for NULL or true
+            var periodExecutions = executions
+                .Where(e => e.CompletedAt >= periodStart &&
+                           e.CompletedAt < periodEnd &&
                            (e.IsCountedForCompletion == null || e.IsCountedForCompletion == true))
                 .ToList();
 
-            if (!thisWeekExecutions.Any())
+            if (!periodExecutions.Any())
             {
-                _logger.LogInformation("No counted execution found for task {TaskId} this week, nothing to invalidate", taskId);
-                throw new ValidationException("TaskId", "This task has no counted execution this week to invalidate.");
+                _logger.LogInformation("No counted execution found for task {TaskId} in {PeriodName}, nothing to invalidate",
+                    taskId, periodName);
+                throw new ValidationException("TaskId", $"This task has no counted execution {periodName} to invalidate.");
             }
 
-            // Invalidate all this week's executions (set IsCountedForCompletion = false)
-            foreach (var execution in thisWeekExecutions)
+            // Invalidate all period executions (set IsCountedForCompletion = false)
+            foreach (var execution in periodExecutions)
             {
                 execution.IsCountedForCompletion = false;
                 await _executionRepository.UpdateAsync(execution, cancellationToken);
             }
 
             _logger.LogInformation(
-                "Owner {UserId} invalidated {Count} execution(s) for task {TaskId} this week (history preserved, task can be recompleted)",
-                requestingUserId, thisWeekExecutions.Count, taskId);
+                "Owner {UserId} invalidated {Count} execution(s) for task {TaskId} {PeriodName} (history preserved, task can be recompleted)",
+                requestingUserId, periodExecutions.Count, taskId, periodName);
+        }
+
+        /// <summary>
+        /// Determines the current period (start, end, name) based on the task's RecurrenceRule.
+        /// For FREQ=WEEKLY: returns Monday to Sunday
+        /// For FREQ=DAILY: returns today (start of day to end of day)
+        /// For FREQ=MONTHLY: returns this month
+        /// For FREQ=YEARLY: returns this year
+        /// For others or invalid RRULE: defaults to week-based
+        /// </summary>
+        private (DateTime periodStart, DateTime periodEnd, string periodName) GetCurrentPeriodForTask(string? rrule)
+        {
+            var now = DateTime.UtcNow;
+
+            if (string.IsNullOrWhiteSpace(rrule))
+            {
+                // No RRULE, default to week-based
+                var weekStart = TaskExecution.GetWeekStarting(now);
+                return (weekStart, weekStart.AddDays(7), "this week");
+            }
+
+            try
+            {
+                var pattern = new Ical.Net.DataTypes.RecurrencePattern(rrule);
+
+                switch (pattern.Frequency)
+                {
+                    case Ical.Net.FrequencyType.Daily:
+                        // Today from start to end of day
+                        var dayStart = now.Date;
+                        var dayEnd = dayStart.AddDays(1);
+                        return (dayStart, dayEnd, "today");
+
+                    case Ical.Net.FrequencyType.Weekly:
+                        // This week (Monday to Sunday)
+                        var weekStart = TaskExecution.GetWeekStarting(now);
+                        var weekEnd = weekStart.AddDays(7);
+                        return (weekStart, weekEnd, "this week");
+
+                    case Ical.Net.FrequencyType.Monthly:
+                        // This month
+                        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                        var monthEnd = monthStart.AddMonths(1);
+                        return (monthStart, monthEnd, "this month");
+
+                    case Ical.Net.FrequencyType.Yearly:
+                        // This year
+                        var yearStart = new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                        var yearEnd = yearStart.AddYears(1);
+                        return (yearStart, yearEnd, "this year");
+
+                    default:
+                        // Unsupported frequency, default to week-based
+                        var defaultWeekStart = TaskExecution.GetWeekStarting(now);
+                        return (defaultWeekStart, defaultWeekStart.AddDays(7), "this week");
+                }
+            }
+            catch
+            {
+                // Invalid RRULE, default to week-based
+                var weekStart = TaskExecution.GetWeekStarting(now);
+                return (weekStart, weekStart.AddDays(7), "this week");
+            }
         }
     }
 }

@@ -127,10 +127,6 @@ namespace HouseholdManager.Infrastructure.Data
                 .Property(e => e.Priority)
                 .HasConversion<string>();
 
-            builder.Entity<HouseholdTask>()
-                .Property(e => e.ScheduledWeekday)
-                .HasConversion<string>();
-
             // CONCURRENCY TOKENS
 
             builder.Entity<HouseholdTask>()

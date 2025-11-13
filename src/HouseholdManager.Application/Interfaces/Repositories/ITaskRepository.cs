@@ -25,6 +25,7 @@ namespace HouseholdManager.Application.Interfaces.Repositories
 
         // Task type specific queries
         Task<IReadOnlyList<HouseholdTask>> GetRegularTasksByWeekdayAsync(Guid householdId, DayOfWeek weekday, CancellationToken cancellationToken = default);
+        // Task<IReadOnlyList<HouseholdTask>> GetRegularTasksByWeekdayAsync(Guid householdId, DayOfWeek weekday, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<HouseholdTask>> GetOverdueTasksAsync(Guid householdId, CancellationToken cancellationToken = default);
     }
 }
