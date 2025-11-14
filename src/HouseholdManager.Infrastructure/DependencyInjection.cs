@@ -4,6 +4,7 @@ using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Infrastructure.Configuration;
 using HouseholdManager.Infrastructure.Data;
 using HouseholdManager.Infrastructure.ExternalServices.Auth0;
+using HouseholdManager.Infrastructure.ExternalServices.Calendar;
 using HouseholdManager.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +46,9 @@ namespace HouseholdManager.Infrastructure
             // External Services - Auth0
             services.Configure<Auth0Settings>(configuration.GetSection("Auth0"));
             services.AddScoped<IAuth0ManagementApiClient, Auth0ManagementApiClient>();
+
+            // External Services - Calendar
+            services.AddScoped<ICalendarGenerator, ICalendarGeneratorImpl>();
 
             // Data Seeder
             services.AddScoped<DataSeeder>();

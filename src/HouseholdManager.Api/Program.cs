@@ -157,6 +157,9 @@ builder.Services.AddAuthorization(options =>
 // Api Layer Services (Infrastructure implementations at Api layer)
 builder.Services.AddScoped<IFileSystemService, FileSystemService>();
 
+// Add HttpContextAccessor (required by CalendarExportService)
+builder.Services.AddHttpContextAccessor();
+
 // Application Layer  
 builder.Services.AddApplication();
 

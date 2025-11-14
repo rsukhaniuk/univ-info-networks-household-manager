@@ -31,6 +31,7 @@ namespace HouseholdManager.Application
             services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
             services.AddScoped<IHouseholdMemberService, HouseholdMemberService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ICalendarExportService, CalendarExportService>();
 
             // FluentValidation validators
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
