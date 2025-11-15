@@ -15,15 +15,18 @@ namespace HouseholdManager.Application.Services
     {
         private readonly ITaskRepository _taskRepository;
         private readonly IHouseholdMemberRepository _memberRepository;
+        private readonly IExecutionRepository _executionRepository;
         private readonly ILogger<TaskAssignmentService> _logger;
 
         public TaskAssignmentService(
             ITaskRepository taskRepository,
             IHouseholdMemberRepository memberRepository,
+            IExecutionRepository executionRepository,
             ILogger<TaskAssignmentService> logger)
         {
             _taskRepository = taskRepository;
             _memberRepository = memberRepository;
+            _executionRepository = executionRepository;
             _logger = logger;
         }
 
@@ -296,22 +299,55 @@ namespace HouseholdManager.Application.Services
                 .First();
         }
 
+        /// <summary>
+        /// Get workload statistics for all household members
+        /// Workload = active tasks + completed tasks this week
+        /// Higher workload means the user has done more total work and should receive lower priority for new assignments
+        /// This prevents overloading productive users while encouraging less active users to take on more tasks
+        /// </summary>
         public async Task<Dictionary<string, int>> GetWorkloadStatsAsync(Guid householdId, CancellationToken cancellationToken = default)
         {
             var activeMembers = await _memberRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
             var memberUserIds = activeMembers.Select(m => m.UserId).ToList();
 
-            // Initialize all members with 0 tasks
-            var workloadStats = memberUserIds.ToDictionary(userId => userId, _ => 0);
-
             // Get active tasks assigned to users
             var activeTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
 
+            // Get completed task IDs this week
+            var weekStart = DateTime.UtcNow.Date.AddDays(-(int)DateTime.UtcNow.DayOfWeek);
+            var weekEnd = weekStart.AddDays(7);
+
+            var completionsThisWeek = await _executionRepository.GetByHouseholdIdAsync(householdId, cancellationToken);
+
+            // Calculate workload: active tasks + completed this week
+            // Higher workload = more total work done = lower priority for new assignments
+            // This ensures users who complete more tasks don't get overloaded with new ones
+            var workloadStats = memberUserIds.ToDictionary(userId => userId, _ => 0);
+
+            // Count all active tasks assigned to each user
             foreach (var task in activeTasks.Where(t => !string.IsNullOrEmpty(t.AssignedUserId)))
             {
                 if (workloadStats.ContainsKey(task.AssignedUserId!))
                 {
                     workloadStats[task.AssignedUserId!]++;
+                }
+            }
+
+            // Add completed tasks this week to workload score
+            // Users who complete more tasks get higher workload score (lower priority for new tasks)
+            var completionsByUser = completionsThisWeek
+                .Where(e =>
+                    e.CompletedAt >= weekStart &&
+                    e.CompletedAt < weekEnd &&
+                    (e.IsCountedForCompletion == null || e.IsCountedForCompletion == true))
+                .GroupBy(e => e.UserId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            foreach (var userId in memberUserIds)
+            {
+                if (completionsByUser.TryGetValue(userId, out var completions))
+                {
+                    workloadStats[userId] += completions;
                 }
             }
 

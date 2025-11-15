@@ -18,6 +18,7 @@ namespace HouseholdManager.Application.Tests.Services
     {
         private Mock<ITaskRepository> _mockTaskRepository;
         private Mock<IHouseholdMemberRepository> _mockMemberRepository;
+        private Mock<IExecutionRepository> _mockExecutionRepository;
         private Mock<ILogger<TaskAssignmentService>> _mockLogger;
         private TaskAssignmentService _taskAssignmentService;
 
@@ -26,11 +27,13 @@ namespace HouseholdManager.Application.Tests.Services
         {
             _mockTaskRepository = new Mock<ITaskRepository>();
             _mockMemberRepository = new Mock<IHouseholdMemberRepository>();
+            _mockExecutionRepository = new Mock<IExecutionRepository>();
             _mockLogger = new Mock<ILogger<TaskAssignmentService>>();
 
             _taskAssignmentService = new TaskAssignmentService(
                 _mockTaskRepository.Object,
                 _mockMemberRepository.Object,
+                _mockExecutionRepository.Object,
                 _mockLogger.Object);
         }
 
@@ -62,6 +65,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<HouseholdTask>());
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
             _mockTaskRepository.Setup(r => r.AssignTaskAsync(taskId, suggestedUserId, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
@@ -122,6 +127,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mondayTasks);
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
 
             _mockTaskRepository.Setup(r => r.BulkAssignTasksAsync(It.IsAny<Dictionary<Guid, string>>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
@@ -280,6 +287,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(activeTasks);
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
 
             // Act
             var result = await _taskAssignmentService.GetSuggestedAssigneeAsync(taskId);
@@ -336,6 +345,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(activeTasks);
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
 
             // Act
             var result = await _taskAssignmentService.GetWorkloadStatsAsync(householdId);
@@ -359,6 +370,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(new List<HouseholdMember>());
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<HouseholdTask>());
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
 
             // Act
             var result = await _taskAssignmentService.GetWorkloadStatsAsync(householdId);
@@ -392,6 +405,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(activeTasks);
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
 
             // Act
             var result = await _taskAssignmentService.GetWorkloadStatsAsync(householdId);
@@ -399,6 +414,73 @@ namespace HouseholdManager.Application.Tests.Services
             // Assert
             Assert.That(result.Count, Is.EqualTo(1));
             Assert.That(result[user1Id], Is.EqualTo(1)); // Only one assigned task counted
+        }
+
+        [Test]
+        [Category("TaskAssignmentService")]
+        [Category("GetWorkloadStats")]
+        public async Task GetWorkloadStatsAsync_IncludesCompletedTasksInWorkload_WhenCalculatingFairDistribution()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var user1Id = "user1"; // Hard worker - completes many tasks
+            var user2Id = "user2"; // Less active - completes fewer tasks
+
+            var members = new List<HouseholdMember>
+            {
+                new HouseholdMember { UserId = user1Id, HouseholdId = householdId },
+                new HouseholdMember { UserId = user2Id, HouseholdId = householdId }
+            };
+
+            // Both users have 5 active tasks
+            var activeTasks = new List<HouseholdTask>
+            {
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user1Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user1Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user1Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user1Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user1Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user2Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user2Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user2Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user2Id, HouseholdId = householdId, IsActive = true },
+                new HouseholdTask { Id = Guid.NewGuid(), AssignedUserId = user2Id, HouseholdId = householdId, IsActive = true }
+            };
+
+            // User1 completed 8 tasks this week, User2 completed 1 task
+            var weekStart = DateTime.UtcNow.Date.AddDays(-(int)DateTime.UtcNow.DayOfWeek);
+            var executions = new List<TaskExecution>
+            {
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(1), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(2), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(3), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(4), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(5), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(6), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(6), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user1Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(6), IsCountedForCompletion = true },
+                new TaskExecution { UserId = user2Id, HouseholdId = householdId, CompletedAt = weekStart.AddDays(1), IsCountedForCompletion = true }
+            };
+
+            _mockMemberRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(members);
+            _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(activeTasks);
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(executions);
+
+            // Act
+            var result = await _taskAssignmentService.GetWorkloadStatsAsync(householdId);
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(2));
+            // User1: 5 active + 8 completed = 13 workload (higher = should get lower priority)
+            Assert.That(result[user1Id], Is.EqualTo(13));
+            // User2: 5 active + 1 completed = 6 workload (lower = should get higher priority)
+            Assert.That(result[user2Id], Is.EqualTo(6));
+
+            // User2 should be prioritized for new assignments since they have lower total workload
+            Assert.That(result[user2Id], Is.LessThan(result[user1Id]));
         }
 
         [Test]
@@ -458,6 +540,8 @@ namespace HouseholdManager.Application.Tests.Services
                 .ReturnsAsync(members);
             _mockTaskRepository.Setup(r => r.GetActiveByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<HouseholdTask>());
+            _mockExecutionRepository.Setup(r => r.GetByHouseholdIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution>());
             _mockTaskRepository.Setup(r => r.BulkAssignTasksAsync(It.IsAny<Dictionary<Guid, string>>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
