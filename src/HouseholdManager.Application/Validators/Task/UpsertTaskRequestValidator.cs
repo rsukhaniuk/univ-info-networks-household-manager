@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using HouseholdManager.Application.DTOs.Task;
 using HouseholdManager.Domain.Enums;
+using Ical.Net.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -123,26 +124,76 @@ namespace HouseholdManager.Application.Validators.Task
                 .NotNull()
                 .WithMessage("Row version is required for updates to prevent concurrency conflicts")
                 .When(x => x.Id.HasValue);
+
+            // Auto-extract RecurrenceEndDate from RRULE UNTIL component
+            RuleFor(x => x)
+                .Custom((request, context) =>
+                {
+                    if (request.Type == TaskType.Regular &&
+                        !string.IsNullOrWhiteSpace(request.RecurrenceRule) &&
+                        !request.RecurrenceEndDate.HasValue)
+                    {
+                        try
+                        {
+                            var pattern = new RecurrencePattern(request.RecurrenceRule);
+                            if (pattern.Until != null && pattern.Until.HasTime)
+                            {
+                                // Extract UNTIL from RRULE and set RecurrenceEndDate
+                                request.RecurrenceEndDate = pattern.Until.AsUtc;
+                            }
+                        }
+                        catch
+                        {
+                            // If parsing fails, validation will be caught by BeValidRrule
+                        }
+                    }
+                });
         }
 
         /// <summary>
-        /// Validates that the RRULE format is correct (basic check)
+        /// Validates that the RRULE format is correct using Ical.Net parser
         /// </summary>
         private bool BeValidRrule(string? rrule)
         {
             if (string.IsNullOrWhiteSpace(rrule))
                 return true; // Null/empty is valid (will be caught by required validation if needed)
 
-            // Basic RRULE format check: must contain FREQ=
-            if (!rrule.Contains("FREQ=", StringComparison.OrdinalIgnoreCase))
+            try
+            {
+                // Use Ical.Net to validate RRULE can be parsed
+                var pattern = new RecurrencePattern(rrule);
+
+                // Validate frequency is supported
+                var validFreqs = new[]
+                {
+                    Ical.Net.FrequencyType.Daily,
+                    Ical.Net.FrequencyType.Weekly,
+                    Ical.Net.FrequencyType.Monthly,
+                    Ical.Net.FrequencyType.Yearly
+                };
+
+                if (!validFreqs.Contains(pattern.Frequency))
+                    return false;
+
+                // For WEEKLY, validate BYDAY is specified
+                if (pattern.Frequency == Ical.Net.FrequencyType.Weekly &&
+                    (pattern.ByDay == null || !pattern.ByDay.Any()))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                // Ical.Net throws ArgumentException for invalid RRULE
                 return false;
-
-            // Valid frequency types
-            var validFrequencies = new[] { "DAILY", "WEEKLY", "MONTHLY", "YEARLY" };
-            var hasValidFrequency = validFrequencies.Any(freq =>
-                rrule.Contains($"FREQ={freq}", StringComparison.OrdinalIgnoreCase));
-
-            return hasValidFrequency;
+            }
+            catch (Exception)
+            {
+                // Catch any other parsing errors
+                return false;
+            }
         }
     }
 }

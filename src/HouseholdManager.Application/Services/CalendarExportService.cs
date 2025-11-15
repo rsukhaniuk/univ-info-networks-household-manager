@@ -18,6 +18,7 @@ namespace HouseholdManager.Application.Services
         private readonly IExecutionRepository _executionRepository;
         private readonly IHouseholdService _householdService;
         private readonly ICalendarGenerator _calendarGenerator;
+        private readonly ICalendarTokenService _calendarTokenService;
         private readonly ILogger<CalendarExportService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -27,6 +28,7 @@ namespace HouseholdManager.Application.Services
             IExecutionRepository executionRepository,
             IHouseholdService householdService,
             ICalendarGenerator calendarGenerator,
+            ICalendarTokenService calendarTokenService,
             ILogger<CalendarExportService> logger,
             IConfiguration configuration,
             IHttpContextAccessor httpContextAccessor)
@@ -35,6 +37,7 @@ namespace HouseholdManager.Application.Services
             _executionRepository = executionRepository;
             _householdService = householdService;
             _calendarGenerator = calendarGenerator;
+            _calendarTokenService = calendarTokenService;
             _logger = logger;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
@@ -157,10 +160,13 @@ namespace HouseholdManager.Application.Services
                 throw new NotFoundException("Household", householdId);
             }
 
-            // Generate subscription URL
+            // Generate calendar subscription token
+            var token = await _calendarTokenService.GenerateTokenAsync(householdId, userId, cancellationToken);
+
+            // Generate subscription URL with token parameter
             var request = _httpContextAccessor.HttpContext?.Request;
             var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
-            var feedUrl = $"{baseUrl}/api/households/{householdId}/calendar/feed.ics";
+            var feedUrl = $"{baseUrl}/api/households/{householdId}/calendar/feed.ics?token={token}";
 
             // Use webcal protocol for calendar subscription (same as http but indicates calendar feed)
             var subscriptionUrl = feedUrl.Replace("https://", "webcal://").Replace("http://", "webcal://");

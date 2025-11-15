@@ -20,6 +20,7 @@ namespace HouseholdManager.Infrastructure.Data
         public DbSet<Room> Rooms { get; set; } = null!;
         public DbSet<HouseholdTask> HouseholdTasks { get; set; } = null!;
         public DbSet<TaskExecution> TaskExecutions { get; set; } = null!;
+        public DbSet<CalendarSubscriptionToken> CalendarSubscriptionTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -57,6 +58,14 @@ namespace HouseholdManager.Infrastructure.Data
 
             builder.Entity<HouseholdTask>()
                 .HasIndex(e => new { e.HouseholdId, e.IsActive });
+
+            // Calendar token unique index and lookup indexes
+            builder.Entity<CalendarSubscriptionToken>()
+                .HasIndex(e => e.Token)
+                .IsUnique();
+
+            builder.Entity<CalendarSubscriptionToken>()
+                .HasIndex(e => new { e.HouseholdId, e.UserId });
 
             // RELATIONSHIPS
 
@@ -108,6 +117,13 @@ namespace HouseholdManager.Infrastructure.Data
                 .WithMany(u => u.TaskExecutions)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // CalendarSubscriptionToken -> Household (cascade delete)
+            builder.Entity<CalendarSubscriptionToken>()
+                .HasOne(t => t.Household)
+                .WithMany()
+                .HasForeignKey(t => t.HouseholdId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // ENUM STRING CONVERSION
 

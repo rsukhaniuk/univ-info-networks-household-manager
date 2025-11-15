@@ -20,15 +20,18 @@ namespace HouseholdManager.Api.Controllers
     public class CalendarController : ControllerBase
     {
         private readonly ICalendarExportService _calendarExportService;
+        private readonly ICalendarTokenService _calendarTokenService;
         private readonly IHouseholdService _householdService;
         private readonly ILogger<CalendarController> _logger;
 
         public CalendarController(
             ICalendarExportService calendarExportService,
+            ICalendarTokenService calendarTokenService,
             IHouseholdService householdService,
             ILogger<CalendarController> logger)
         {
             _calendarExportService = calendarExportService;
+            _calendarTokenService = calendarTokenService;
             _householdService = householdService;
             _logger = logger;
         }
@@ -152,36 +155,55 @@ namespace HouseholdManager.Api.Controllers
         /// Calendar feed endpoint for CalDAV subscriptions
         /// </summary>
         /// <param name="householdId">Household ID (from route)</param>
+        /// <param name="token">Subscription token from query parameter (required for calendar apps)</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>iCalendar feed content (dynamically generated)</returns>
         /// <remarks>
         /// This endpoint is used by calendar applications that subscribe to the feed.
         /// It returns the same content as the export endpoint but is meant for automated polling.
         ///
-        /// **Note:** In production, this endpoint should require authentication via:
-        /// - Query parameter token: `?token={jwt}`
-        /// - Or header-based authentication
+        /// **Authentication:** Requires a subscription token passed via query parameter.
+        /// Get your token from the `/subscription` endpoint first.
         ///
         /// Example:
-        /// `GET /api/households/{householdId}/calendar/feed.ics`
+        /// `GET /api/households/{householdId}/calendar/feed.ics?token={your-token}`
         /// </remarks>
         [HttpGet("feed.ics")]
+        [AllowAnonymous] // Allow anonymous access, validate via token instead
         [Produces("text/calendar")]
         [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetCalendarFeed(
             [FromRoute] Guid householdId,
+            [FromQuery] string? token = null,
             CancellationToken cancellationToken = default)
         {
-            var userId = GetCurrentUserId();
+            // Validate calendar subscription token
+            var validation = await _calendarTokenService.ValidateTokenAsync(token, cancellationToken);
+
+            if (validation == null || validation.Value.householdId != householdId)
+            {
+                _logger.LogWarning(
+                    "Invalid or expired calendar token for household {HouseholdId}",
+                    householdId);
+
+                return Unauthorized(new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Invalid or expired calendar token",
+                    Detail = "The calendar subscription token is invalid or has expired. Please generate a new subscription URL."
+                });
+            }
+
+            var userId = validation.Value.userId;
 
             _logger.LogInformation(
-                "User {UserId} accessing calendar feed for household {HouseholdId}",
+                "User {UserId} accessing calendar feed for household {HouseholdId} via token",
                 userId,
                 householdId);
 
-            // Validate user access
+            // Validate user still has access to household
             await _householdService.ValidateUserAccessAsync(householdId, userId, cancellationToken);
 
             // Export calendar (same as export, but meant for subscription/polling)

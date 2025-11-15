@@ -6,6 +6,7 @@ using HouseholdManager.Infrastructure.Data;
 using HouseholdManager.Infrastructure.ExternalServices.Auth0;
 using HouseholdManager.Infrastructure.ExternalServices.Calendar;
 using HouseholdManager.Infrastructure.Repositories;
+using HouseholdManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,7 @@ namespace HouseholdManager.Infrastructure
 
             // External Services - Calendar
             services.AddScoped<ICalendarGenerator, ICalendarGeneratorImpl>();
+            services.AddScoped<ICalendarTokenService, CalendarTokenService>();
 
             // Data Seeder
             services.AddScoped<DataSeeder>();
