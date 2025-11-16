@@ -361,12 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/src/HouseholdManager.Api/appsettings.json
-/src/HouseholdManager.Api/appsettings.Development.json
-/src/HouseholdManager.Api/appsettings.json
-/src/HouseholdManager.Api/appsettings.Development.json
-/src/HouseholdManager.Api/appsettings.json
-/src/HouseholdManager.Api/appsettings.Development.json
+backend/src/HouseholdManager.Api/appsettings.json
+backend/src/HouseholdManager.Api/appsettings.Development.json
+backend/src/HouseholdManager.Api/appsettings.json
+backend/src/HouseholdManager.Api/appsettings.Development.json
+backend/src/HouseholdManager.Api/appsettings.json
+backend/src/HouseholdManager.Api/appsettings.Development.json
 frontend/household-manager-ui/.github/copilot-instructions.md
 frontend/household-manager-ui/.claude/CLAUDE.md
 frontend/household-manager-ui/.vscode/extensions.json

@@ -3,21 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36511.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager", "HouseholdManager\HouseholdManager.csproj", "{75548D5C-69EA-44CC-A896-31AFF93C9272}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager", "lab1-mvc-legacy\HouseholdManager\HouseholdManager.csproj", "{75548D5C-69EA-44CC-A896-31AFF93C9272}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Tests", "HouseholdManager.Tests\HouseholdManager.Tests.csproj", "{4AB35E22-AE9C-4D9C-9726-26924A539383}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Tests", "lab1-mvc-legacy\HouseholdManager.Tests\HouseholdManager.Tests.csproj", "{4AB35E22-AE9C-4D9C-9726-26924A539383}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Domain", "src\HouseholdManager.Domain\HouseholdManager.Domain.csproj", "{F1A82356-E9E7-4BA5-B64F-D52FBD86E9E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Domain", "backend\src\HouseholdManager.Domain\HouseholdManager.Domain.csproj", "{F1A82356-E9E7-4BA5-B64F-D52FBD86E9E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Infrastructure", "src\HouseholdManager.Infrastructure\HouseholdManager.Infrastructure.csproj", "{3F5F2315-3B83-4230-8B55-12824B611C44}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Infrastructure", "backend\src\HouseholdManager.Infrastructure\HouseholdManager.Infrastructure.csproj", "{3F5F2315-3B83-4230-8B55-12824B611C44}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Application", "src\HouseholdManager.Application\HouseholdManager.Application.csproj", "{BF8079EA-55FD-44EF-B6A6-505E87FC532E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Application", "backend\src\HouseholdManager.Application\HouseholdManager.Application.csproj", "{BF8079EA-55FD-44EF-B6A6-505E87FC532E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Api", "src\HouseholdManager.Api\HouseholdManager.Api.csproj", "{9F28E361-599B-434B-B75F-B94D68355E71}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Api", "backend\src\HouseholdManager.Api\HouseholdManager.Api.csproj", "{9F28E361-599B-434B-B75F-B94D68355E71}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdManager.Application.Tests", "tests\HouseholdManager.Application.Tests\HouseholdManager.Application.Tests.csproj", "{E753354A-97EF-4268-82B3-EB2009358D24}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lab1-mvc-legacy", "lab1-mvc-legacy", "{A19B24A2-8B9B-43A3-9533-534D3B9663D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +60,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{75548D5C-69EA-44CC-A896-31AFF93C9272} = {A19B24A2-8B9B-43A3-9533-534D3B9663D9}
+		{4AB35E22-AE9C-4D9C-9726-26924A539383} = {A19B24A2-8B9B-43A3-9533-534D3B9663D9}
 		{E753354A-97EF-4268-82B3-EB2009358D24} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

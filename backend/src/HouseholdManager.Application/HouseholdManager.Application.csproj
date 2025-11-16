@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\HouseholdManager\HouseholdManager.csproj" />
     <ProjectReference Include="..\HouseholdManager.Domain\HouseholdManager.Domain.csproj" />
   </ItemGroup>
 

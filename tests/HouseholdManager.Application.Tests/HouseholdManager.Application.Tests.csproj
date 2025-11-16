@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HouseholdManager.Application\HouseholdManager.Application.csproj" />
-    <ProjectReference Include="..\..\src\HouseholdManager.Domain\HouseholdManager.Domain.csproj" />
+    <ProjectReference Include="..\..\backend\src\HouseholdManager.Application\HouseholdManager.Application.csproj" />
+    <ProjectReference Include="..\..\backend\src\HouseholdManager.Domain\HouseholdManager.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
