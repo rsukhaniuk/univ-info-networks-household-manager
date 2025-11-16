@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { RecurrenceRuleService } from '../../../shared/services/recurrence-rule.service';
 
 @Component({
   selector: 'app-room-details',
@@ -27,6 +28,7 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private auth = inject(AuthService);
   private toastService = inject(ToastService);
+  private recurrenceRuleService = inject(RecurrenceRuleService);
 
   roomId: string = '';
   householdId: string = '';
@@ -214,10 +216,8 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
     this.showConfirmDialog = false;
   }
 
-  getWeekdayName(weekday: number | null | undefined): string {
-    if (weekday === null || weekday === undefined) return 'N/A';
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[weekday] || 'N/A';
+  formatRecurrenceRule(rrule: string | null | undefined): string {
+    return this.recurrenceRuleService.formatRule(rrule);
   }
 
   ngOnDestroy(): void {

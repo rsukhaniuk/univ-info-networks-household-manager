@@ -10,9 +10,10 @@ import { ExecutionHistoryComponent } from '../../executions/execution-history/ex
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TaskDetailsDto, TaskPriority, TaskType, DayOfWeek } from '../../../core/models/task.model';
+import { TaskDetailsDto, TaskPriority, TaskType } from '../../../core/models/task.model';
 import { CompleteTaskRequest } from '../../../core/models/execution.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { RecurrenceRuleService } from '../../../shared/services/recurrence-rule.service';
 
 @Component({
   selector: 'app-task-details',
@@ -33,6 +34,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private recurrenceRuleService = inject(RecurrenceRuleService);
 
   // Data
   householdId: string = '';
@@ -375,27 +377,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
     );
   }
 
-  getWeekdayName(weekday: DayOfWeek | null | undefined): string {
-    if (weekday === null || weekday === undefined) {
-      return 'N/A';
-    }
-    switch (weekday) {
-      case DayOfWeek.Monday:
-        return 'Monday';
-      case DayOfWeek.Tuesday:
-        return 'Tuesday';
-      case DayOfWeek.Wednesday:
-        return 'Wednesday';
-      case DayOfWeek.Thursday:
-        return 'Thursday';
-      case DayOfWeek.Friday:
-        return 'Friday';
-      case DayOfWeek.Saturday:
-        return 'Saturday';
-      case DayOfWeek.Sunday:
-        return 'Sunday';
-      default:
-        return 'N/A';
-    }
+  formatRecurrenceRule(rrule: string | null | undefined): string {
+    return this.recurrenceRuleService.formatRule(rrule);
   }
 }

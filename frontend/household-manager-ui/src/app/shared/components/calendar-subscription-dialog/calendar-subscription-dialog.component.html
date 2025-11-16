@@ -1,0 +1,163 @@
+@if (show && subscriptionData) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <!-- Header -->
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="fas fa-calendar-plus me-2"></i>
+            Subscribe to Calendar
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="onClose()"></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <!-- Calendar Name -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-primary">
+              <i class="fas fa-tag me-2"></i>Calendar Name
+            </h6>
+            <p class="mb-0">{{ subscriptionData.calendarName }}</p>
+          </div>
+
+          <!-- Subscription URL -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-primary">
+              <i class="fas fa-link me-2"></i>Subscription URL
+            </h6>
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [value]="subscriptionData.subscriptionUrl"
+                readonly>
+              <button
+                class="btn btn-outline-primary"
+                type="button"
+                (click)="copyToClipboard(subscriptionData.subscriptionUrl)">
+                <i class="fas fa-copy me-1"></i>
+                {{ copySuccess ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              Copy this URL and use it in your calendar application
+            </small>
+          </div>
+
+          <!-- Instructions -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-primary">
+              <i class="fas fa-book me-2"></i>How to Subscribe
+            </h6>
+            <div class="accordion" id="calendarInstructions">
+
+              <!-- Google Calendar -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingGoogle">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseGoogle">
+                    <i class="fab fa-google me-2 text-danger"></i>
+                    Google Calendar
+                  </button>
+                </h2>
+                <div id="collapseGoogle" class="accordion-collapse collapse" data-bs-parent="#calendarInstructions">
+                  <div class="accordion-body">
+                    <ol class="mb-0">
+                      <li>Open <a href="https://calendar.google.com" target="_blank">Google Calendar</a></li>
+                      <li>Click the <strong>+</strong> button next to "Other calendars"</li>
+                      <li>Select <strong>"From URL"</strong></li>
+                      <li>Paste the subscription URL above</li>
+                      <li>Click <strong>"Add calendar"</strong></li>
+                    </ol>
+                    <div class="alert alert-info mt-3 mb-0">
+                      <i class="fas fa-lightbulb me-1"></i>
+                      Google Calendar updates subscribed calendars every few hours.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Outlook -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOutlook">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseOutlook">
+                    <i class="fab fa-microsoft me-2 text-primary"></i>
+                    Microsoft Outlook
+                  </button>
+                </h2>
+                <div id="collapseOutlook" class="accordion-collapse collapse" data-bs-parent="#calendarInstructions">
+                  <div class="accordion-body">
+                    <ol class="mb-0">
+                      <li>Open <a href="https://outlook.live.com/calendar" target="_blank">Outlook Calendar</a></li>
+                      <li>Click <strong>"Add calendar"</strong></li>
+                      <li>Select <strong>"Subscribe from web"</strong></li>
+                      <li>Paste the subscription URL above</li>
+                      <li>Enter a calendar name and click <strong>"Import"</strong></li>
+                    </ol>
+                    <div class="alert alert-info mt-3 mb-0">
+                      <i class="fas fa-lightbulb me-1"></i>
+                      Outlook updates subscribed calendars every 3 hours.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Apple Calendar -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingApple">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseApple">
+                    <i class="fab fa-apple me-2"></i>
+                    Apple Calendar
+                  </button>
+                </h2>
+                <div id="collapseApple" class="accordion-collapse collapse" data-bs-parent="#calendarInstructions">
+                  <div class="accordion-body">
+                    <ol class="mb-0">
+                      <li>Open the <strong>Calendar</strong> app</li>
+                      <li>Go to <strong>File → New Calendar Subscription</strong></li>
+                      <li>Paste the subscription URL above</li>
+                      <li>Click <strong>"Subscribe"</strong></li>
+                      <li>Configure refresh frequency (recommended: every 15 minutes)</li>
+                    </ol>
+                    <div class="alert alert-info mt-3 mb-0">
+                      <i class="fas fa-lightbulb me-1"></i>
+                      You can set how often Apple Calendar checks for updates.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Auto-Update Notice -->
+          <div class="alert alert-success">
+            <i class="fas fa-sync-alt me-2"></i>
+            <strong>Automatic Updates:</strong> Your calendar will automatically update when tasks are created, modified, or completed.
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="onClose()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

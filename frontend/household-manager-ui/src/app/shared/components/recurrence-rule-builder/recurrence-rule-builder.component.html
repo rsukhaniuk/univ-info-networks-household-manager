@@ -1,0 +1,85 @@
+<div class="recurrence-rule-builder">
+  <!-- Frequency Selector -->
+  <div class="mb-3">
+    <label class="form-label fw-semibold">
+      <i class="fas fa-repeat text-info me-2"></i>
+      Repeat
+    </label>
+    <select
+      [(ngModel)]="selectedFrequency"
+      (change)="onFrequencyChange()"
+      class="form-select"
+      [disabled]="disabled">
+      <option *ngFor="let freq of frequencies" [value]="freq.value">
+        {{ freq.label }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Weekday Selector (only for Weekly) -->
+  <div class="mb-3" *ngIf="selectedFrequency === 'WEEKLY'">
+    <label class="form-label fw-semibold">
+      <i class="fas fa-calendar-week text-info me-2"></i>
+      On days <span class="text-danger" *ngIf="required">*</span>
+    </label>
+    <div class="weekday-selector">
+      <button
+        type="button"
+        *ngFor="let day of weekdays"
+        class="btn btn-weekday"
+        [class.active]="isDaySelected(day.code)"
+        (click)="onDayToggle(day.code)"
+        [disabled]="disabled">
+        {{ day.label }}
+      </button>
+    </div>
+    <div class="invalid-feedback d-block" *ngIf="required && selectedDays.length === 0 && touched">
+      Please select at least one day
+    </div>
+  </div>
+
+  <!-- Interval Selector -->
+  <div class="mb-3">
+    <label class="form-label fw-semibold">
+      <i class="fas fa-arrows-rotate text-info me-2"></i>
+      Every
+    </label>
+    <div class="input-group">
+      <input
+        type="number"
+        [(ngModel)]="interval"
+        (change)="onIntervalChange()"
+        class="form-control"
+        min="1"
+        max="99"
+        [disabled]="disabled">
+      <span class="input-group-text">{{ getFrequencyLabel() }}</span>
+    </div>
+    <small class="form-text text-muted">
+      How often should this task repeat?
+    </small>
+  </div>
+
+  <!-- End Date (Optional) -->
+  <div class="mb-3">
+    <label class="form-label fw-semibold">
+      <i class="fas fa-calendar-xmark text-info me-2"></i>
+      End date (optional)
+    </label>
+    <input
+      type="date"
+      [(ngModel)]="endDate"
+      (change)="onEndDateChange()"
+      class="form-control"
+      [disabled]="disabled">
+    <small class="form-text text-muted">
+      Leave empty for indefinite recurrence
+    </small>
+  </div>
+
+  <!-- Preview -->
+  <div class="alert alert-info mb-0" *ngIf="value">
+    <strong><i class="fas fa-eye me-2"></i>Preview:</strong>
+    <div class="mt-1">{{ getPreviewText() }}</div>
+  </div>
+</div>

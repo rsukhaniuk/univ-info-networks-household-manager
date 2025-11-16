@@ -239,9 +239,9 @@
                     <i class="far fa-calendar-alt me-1"></i>
                     {{ task.dueDate | utcDate : 'MMM d, y HH:mm' }}
                   </small>
-                  } @else if (task.type === 0 && task.scheduledWeekday !== null && task.scheduledWeekday !== undefined) {
+                  } @else if (task.type === 0 && task.recurrenceRule) {
                   <small class="text-muted">
-                    <i class="fas fa-redo me-1"></i>{{ getWeekdayName(task.scheduledWeekday) }}
+                    <i class="fas fa-redo me-1"></i>{{ formatRecurrenceRule(task.recurrenceRule) }}
                   </small>
                   } @else {
                   <span class="text-muted">N/A</span>

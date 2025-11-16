@@ -10,15 +10,18 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { Subject, debounceTime, finalize } from 'rxjs';
 
 import { TaskService } from '../services/task.service';
+import { CalendarService, CalendarSubscriptionDto } from '../services/calendar.service';
 import { HouseholdService } from '../../households/services/household.service';
 import { HouseholdContext } from '../../households/services/household-context';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TaskDto, TaskPriority, TaskType, DayOfWeek, TaskAssignmentPreviewDto } from '../../../core/models/task.model';
+import { TaskDto, TaskPriority, TaskType, TaskAssignmentPreviewDto } from '../../../core/models/task.model';
+import { RecurrenceRuleService } from '../../../shared/services/recurrence-rule.service';
 import { HouseholdDto } from '../../../core/models/household.model';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { AutoAssignPreviewDialogComponent } from '../../../shared/components/auto-assign-preview-dialog/auto-assign-preview-dialog.component';
+import { CalendarSubscriptionDialogComponent } from '../../../shared/components/calendar-subscription-dialog/calendar-subscription-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 
 type SortBy = 'title' | 'priority' | 'createdAt' | 'dueDate' | 'roomName' | 'type' | 'isActive' | 'assignedUserName';
@@ -36,6 +39,7 @@ type SortOrder = 'asc' | 'desc';
     SkeletonModule,
     ConfirmationDialogComponent,
     AutoAssignPreviewDialogComponent,
+    CalendarSubscriptionDialogComponent,
     UtcDatePipe
   ],
   templateUrl: './task-list.component.html',
@@ -43,12 +47,14 @@ type SortOrder = 'asc' | 'desc';
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   private taskService = inject(TaskService);
+  private calendarService = inject(CalendarService);
   private householdService = inject(HouseholdService);
   private householdContext = inject(HouseholdContext);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
   private loadingService = inject(LoadingService);
   private toastService = inject(ToastService);
+  private recurrenceRuleService = inject(RecurrenceRuleService);
 
   isSystemAdmin$ = this.auth.isSystemAdmin$();
 
@@ -80,7 +86,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
   filterAssignedUserId: string = '';
   filterIsActive: string = '';
   filterIsOverdue: string = '';
-  filterScheduledWeekday: string = '';
 
   // Data for filter dropdowns
   availableRooms: { id: string; name: string }[] = [];
@@ -100,10 +105,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
   showAutoAssignPreview = false;
   autoAssignPreview: TaskAssignmentPreviewDto[] = [];
 
+  // Calendar subscription
+  showCalendarSubscriptionDialog = false;
+  calendarSubscriptionData: CalendarSubscriptionDto | null = null;
+
   // Enums for template
   TaskPriority = TaskPriority;
   TaskType = TaskType;
-  DayOfWeek = DayOfWeek;
 
   ngOnInit(): void {
     this.householdId = this.route.snapshot.paramMap.get('householdId')!;
@@ -228,8 +236,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
         priority: this.filterPriority ? +this.filterPriority as TaskPriority : undefined,
         assignedUserId: this.filterAssignedUserId || undefined,
         isActive: this.filterIsActive === 'true' ? true : this.filterIsActive === 'false' ? false : undefined,
-        isOverdue: this.filterIsOverdue === 'true' ? true : this.filterIsOverdue === 'false' ? false : undefined,
-        scheduledWeekday: this.filterScheduledWeekday ? +this.filterScheduledWeekday as DayOfWeek : undefined
+        isOverdue: this.filterIsOverdue === 'true' ? true : this.filterIsOverdue === 'false' ? false : undefined
       })
       .pipe(
         finalize(() => {
@@ -333,7 +340,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.filterAssignedUserId = '';
     this.filterIsActive = '';
     this.filterIsOverdue = '';
-    this.filterScheduledWeekday = '';
     this.first = 0;
     this.loadData();
   }
@@ -346,8 +352,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
       this.filterPriority ||
       this.filterAssignedUserId ||
       this.filterIsActive ||
-      this.filterIsOverdue ||
-      this.filterScheduledWeekday
+      this.filterIsOverdue
     );
   }
 
@@ -372,28 +377,41 @@ export class TaskListComponent implements OnInit, OnDestroy {
     return isActive ? 'bg-success' : 'bg-secondary';
   }
 
-  getWeekdayName(weekday: DayOfWeek | null | undefined): string {
-    if (weekday === null || weekday === undefined) {
-      return 'N/A';
+  formatRecurrenceRule(rrule: string | null | undefined): string {
+    return this.recurrenceRuleService.formatRule(rrule);
+  }
+
+  // Calendar export methods
+  exportCalendar(): void {
+    try {
+      this.calendarService.exportCalendar(this.householdId);
+      this.toastService.success('Calendar export started. Check your downloads.');
+    } catch (error) {
+      this.toastService.error('Failed to export calendar');
+      console.error('Calendar export error:', error);
     }
-    switch (weekday) {
-      case DayOfWeek.Monday:
-        return 'Monday';
-      case DayOfWeek.Tuesday:
-        return 'Tuesday';
-      case DayOfWeek.Wednesday:
-        return 'Wednesday';
-      case DayOfWeek.Thursday:
-        return 'Thursday';
-      case DayOfWeek.Friday:
-        return 'Friday';
-      case DayOfWeek.Saturday:
-        return 'Saturday';
-      case DayOfWeek.Sunday:
-        return 'Sunday';
-      default:
-        return 'N/A';
-    }
+  }
+
+  openSubscriptionDialog(): void {
+    this.calendarService.getSubscriptionUrl(this.householdId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.calendarSubscriptionData = response.data;
+          this.showCalendarSubscriptionDialog = true;
+        } else {
+          this.toastService.error('Failed to get subscription URL');
+        }
+      },
+      error: (error) => {
+        this.toastService.error('Failed to get subscription URL');
+        console.error('Subscription URL error:', error);
+      }
+    });
+  }
+
+  closeSubscriptionDialog(): void {
+    this.showCalendarSubscriptionDialog = false;
+    this.calendarSubscriptionData = null;
   }
 
   autoAssignTasks(): void {

@@ -18,11 +18,11 @@ import {
   UpsertTaskRequest,
   TaskPriority,
   TaskType,
-  DayOfWeek,
   TaskDetailsDto
 } from '../../../core/models/task.model';
 import { RoomDto } from '../../../core/models/room.model';
 import { HouseholdMemberDto } from '../../../core/models/household.model';
+import { RecurrenceRuleBuilderComponent } from '../../../shared/components/recurrence-rule-builder/recurrence-rule-builder.component';
 
 @Component({
   selector: 'app-task-form',
@@ -30,7 +30,8 @@ import { HouseholdMemberDto } from '../../../core/models/household.model';
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    FlatpickrDirective
+    FlatpickrDirective,
+    RecurrenceRuleBuilderComponent
   ],
   providers: [FlatpickrDefaults],
   templateUrl: './task-form.component.html',
@@ -66,8 +67,6 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   TaskType = TaskType;
   TaskPriorityKeys = Object.keys(TaskPriority).filter(k => isNaN(Number(k)));
   TaskTypeKeys = Object.keys(TaskType).filter(k => isNaN(Number(k)));
-  DayOfWeekEnum = DayOfWeek;
-  DayOfWeekKeys = Object.keys(DayOfWeek).filter(k => isNaN(Number(k)));
 
   // Helper: parse backend UTC string into a local Date
   // Some API responses may omit the trailing 'Z'. In that case
@@ -156,7 +155,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       assignedUserId: [''],
       isActive: [true],
       dueDate: [null],
-      scheduledWeekday: [null],
+      recurrenceRule: [null],
       rowVersion: [null]
     });
 
@@ -271,7 +270,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
               assignedUserId: task.assignedUserId,
               isActive: task.isActive,
               dueDate: localDueDate,
-              scheduledWeekday: task.scheduledWeekday,
+              recurrenceRule: task.recurrenceRule,
               rowVersion: task.rowVersion
             });
 
@@ -287,22 +286,22 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
   onTaskTypeChange(type: any): void {
     const dueDateControl = this.form.get('dueDate');
-    const scheduledWeekdayControl = this.form.get('scheduledWeekday');
+    const recurrenceRuleControl = this.form.get('recurrenceRule');
 
     if (type === TaskType.OneTime || type === 1) {
       // One-time task: require due date with future date validation
       dueDateControl?.setValidators([Validators.required, this.futureDateValidator()]);
-      scheduledWeekdayControl?.clearValidators();
-      scheduledWeekdayControl?.setValue(null);
+      recurrenceRuleControl?.clearValidators();
+      recurrenceRuleControl?.setValue(null);
     } else {
-      // Regular task: require weekday, clear due date
-      scheduledWeekdayControl?.setValidators([Validators.required]);
+      // Regular task: require recurrence rule, clear due date
+      recurrenceRuleControl?.setValidators([Validators.required]);
       dueDateControl?.clearValidators();
       dueDateControl?.setValue(null);
     }
 
     dueDateControl?.updateValueAndValidity();
-    scheduledWeekdayControl?.updateValueAndValidity();
+    recurrenceRuleControl?.updateValueAndValidity();
   }
 
   onSubmit(): void {
@@ -342,7 +341,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       assignedUserId: formValue.assignedUserId || undefined,
       isActive: formValue.isActive,
       dueDate: dueDateForApi as any,
-      scheduledWeekday: formValue.scheduledWeekday !== null ? Number(formValue.scheduledWeekday) : undefined,
+      recurrenceRule: formValue.recurrenceRule || undefined,
       rowVersion: formValue.rowVersion
     };
 
@@ -384,7 +383,7 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   get estimatedMinutes() { return this.form.get('estimatedMinutes'); }
   get assignedUserId() { return this.form.get('assignedUserId'); }
   get dueDate() { return this.form.get('dueDate'); }
-  get scheduledWeekday() { return this.form.get('scheduledWeekday'); }
+  get recurrenceRule() { return this.form.get('recurrenceRule'); }
   get isActive() { return this.form.get('isActive'); }
 
   // Helper methods

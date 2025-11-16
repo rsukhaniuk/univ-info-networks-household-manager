@@ -144,10 +144,10 @@
                       <span class="badge bg-primary">
                         <i class="fas fa-repeat me-1"></i>Regular
                       </span>
-                      @if (taskDetails.task.scheduledWeekday !== undefined) {
+                      @if (taskDetails.task.recurrenceRule) {
                         <span class="ms-2">
                           <i class="fas fa-calendar-week me-1"></i>
-                          {{ getWeekdayName(taskDetails.task.scheduledWeekday) }}
+                          {{ formatRecurrenceRule(taskDetails.task.recurrenceRule) }}
                         </span>
                       }
                     } @else {

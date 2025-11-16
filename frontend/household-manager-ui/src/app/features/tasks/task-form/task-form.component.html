@@ -208,28 +208,17 @@
                 </div>
               }
 
-              <!-- Scheduled Weekday (Regular tasks) -->
+              <!-- Recurrence Rule (Regular tasks) -->
               @if (type?.value === TaskType.Regular) {
                 <div class="mb-4">
-                  <label for="scheduledWeekday" class="form-label fw-semibold">
-                    <i class="fas fa-calendar-week text-info me-2"></i>
-                    Scheduled Weekday <span class="text-danger">*</span>
-                  </label>
-                  <select id="scheduledWeekday"
-                          formControlName="scheduledWeekday"
-                          class="form-select form-select-lg"
-                          [class.is-invalid]="scheduledWeekday?.invalid && scheduledWeekday?.touched">
-                    <option [value]="null">-- Select Weekday --</option>
-                    <option [value]="DayOfWeekEnum.Monday">Monday</option>
-                    <option [value]="DayOfWeekEnum.Tuesday">Tuesday</option>
-                    <option [value]="DayOfWeekEnum.Wednesday">Wednesday</option>
-                    <option [value]="DayOfWeekEnum.Thursday">Thursday</option>
-                    <option [value]="DayOfWeekEnum.Friday">Friday</option>
-                    <option [value]="DayOfWeekEnum.Saturday">Saturday</option>
-                    <option [value]="DayOfWeekEnum.Sunday">Sunday</option>
-                  </select>
-                  @if (scheduledWeekday?.invalid && scheduledWeekday?.touched) {
-                    <div class="invalid-feedback">Please select a weekday</div>
+                  <app-recurrence-rule-builder
+                    formControlName="recurrenceRule"
+                    [required]="true">
+                  </app-recurrence-rule-builder>
+                  @if (recurrenceRule?.invalid && recurrenceRule?.touched) {
+                    <div class="invalid-feedback d-block">
+                      Please configure the recurrence pattern
+                    </div>
                   }
                 </div>
               }

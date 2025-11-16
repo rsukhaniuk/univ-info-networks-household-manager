@@ -14,7 +14,10 @@ export interface TaskDto {
   estimatedMinutes: number;
   formattedEstimatedTime: string;
   dueDate?: Date;
-  scheduledWeekday?: DayOfWeek;
+  recurrenceRule?: string; // RRULE format (e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR")
+  recurrenceEndDate?: Date; // End date for recurring tasks (extracted from RRULE UNTIL)
+  externalCalendarId?: string; // For bidirectional sync with external calendars
+  lastSyncedAt?: Date; // Last time this task was synced with external calendar
   assignedUserId?: string;
   assignedUserName?: string;
   isActive: boolean;
@@ -35,16 +38,6 @@ export enum TaskPriority {
   High = 3
 }
 
-export enum DayOfWeek {
-  Sunday = 0,
-  Monday = 1,
-  Tuesday = 2,
-  Wednesday = 3,
-  Thursday = 4,
-  Friday = 5,
-  Saturday = 6
-}
-
 export interface UpsertTaskRequest {
   id?: string;
   title: string;
@@ -56,7 +49,8 @@ export interface UpsertTaskRequest {
   assignedUserId?: string;
   isActive: boolean;
   dueDate?: Date | string;
-  scheduledWeekday?: DayOfWeek;
+  recurrenceRule?: string; // RRULE format (e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR")
+  recurrenceEndDate?: Date | string; // End date for recurring tasks (will be auto-extracted from RRULE by backend)
   rowVersion?: Uint8Array;
 }
 
@@ -102,7 +96,6 @@ export interface TaskQueryParameters extends BaseQueryParameters {
   assignedUserId?: string;   // Filter by assigned user
   isActive?: boolean;        // Filter by active status
   isOverdue?: boolean;       // Show only overdue tasks
-  scheduledWeekday?: DayOfWeek; // Filter by weekday
 }
 
 export interface TaskDetailsDto {
