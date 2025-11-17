@@ -103,20 +103,49 @@
                       <span class="badge bg-info me-2">
                         {{ member.activeTaskCount }} tasks
                       </span>
-                      @if (member.role === 'Owner') {
+
+                      @if (household.isOwner && member.role !== 'Owner') {
+                        <!-- Role dropdown for non-owner members (only visible to owner) -->
+                        <div class="btn-group me-2">
+                          <button type="button"
+                                  class="btn btn-sm btn-secondary dropdown-toggle"
+                                  data-bs-toggle="dropdown"
+                                  aria-expanded="false">
+                            <i class="fas fa-user me-1"></i>{{ member.role }}
+                          </button>
+                          <ul class="dropdown-menu">
+                            @for (role of availableRoles; track role) {
+                              <li>
+                                <a class="dropdown-item"
+                                   [class.active]="member.role === role"
+                                   (click)="changeMemberRole(member, role)"
+                                   style="cursor: pointer;">
+                                  @if (role === HouseholdRole.Owner) {
+                                    <i class="fas fa-crown me-2"></i>Transfer Ownership
+                                  } @else {
+                                    <i class="fas fa-user me-2"></i>Member
+                                  }
+                                </a>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                (click)="confirmRemoveMember(member)"
+                                title="Remove member">
+                          <i class="fas fa-user-minus"></i>
+                        </button>
+                      } @else if (member.role === 'Owner') {
+                        <!-- Owner badge (not editable) -->
                         <span class="badge bg-warning text-dark">
                           <i class="fas fa-crown me-1"></i>Owner
                         </span>
                       } @else {
-                        <span class="badge bg-secondary">Member</span>
-                        @if (household.isOwner) {
-                          <button type="button"
-                                  class="btn btn-sm btn-outline-danger ms-2"
-                                  (click)="confirmRemoveMember(member)"
-                                  title="Remove member">
-                            <i class="fas fa-user-minus"></i>
-                          </button>
-                        }
+                        <!-- Role badge for non-owners viewing -->
+                        <span class="badge bg-secondary">
+                          <i class="fas fa-user me-1"></i>{{ member.role }}
+                        </span>
                       }
                     </div>
                   </div>

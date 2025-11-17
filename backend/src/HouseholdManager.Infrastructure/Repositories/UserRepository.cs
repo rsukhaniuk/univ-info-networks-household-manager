@@ -221,5 +221,98 @@ namespace HouseholdManager.Infrastructure.Repositories
                 .AnyAsync(u => u.Id == userId && u.Role == SystemRole.SystemAdmin,
                     cancellationToken);
         }
+
+        // Account deletion
+
+        public async Task<bool> IsOwnerOfAnyHouseholdAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.HouseholdMembers
+                .AnyAsync(hm => hm.UserId == userId && hm.Role == HouseholdRole.Owner,
+                    cancellationToken);
+        }
+
+        public async Task<(int OwnedCount, int MemberCount, int AssignedTasksCount, List<string> OwnedHouseholdNames)>
+            GetUserDeletionInfoAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            // Get households where user is owner
+            var userOwnedHouseholdIds = await _context.HouseholdMembers
+                .Where(hm => hm.UserId == userId && hm.Role == HouseholdRole.Owner)
+                .Select(hm => hm.HouseholdId)
+                .ToListAsync(cancellationToken);
+
+            // For each household, check if user is the ONLY owner
+            var soleOwnerHouseholds = new List<string>();
+            foreach (var householdId in userOwnedHouseholdIds)
+            {
+                var ownerCount = await _context.HouseholdMembers
+                    .CountAsync(hm => hm.HouseholdId == householdId && hm.Role == HouseholdRole.Owner,
+                        cancellationToken);
+
+                // If user is the only owner, add to list
+                if (ownerCount == 1)
+                {
+                    var householdName = await _context.Households
+                        .Where(h => h.Id == householdId)
+                        .Select(h => h.Name)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (householdName != null)
+                        soleOwnerHouseholds.Add(householdName);
+                }
+            }
+
+            // Get total households where user is member (any role)
+            var memberCount = await _context.HouseholdMembers
+                .CountAsync(hm => hm.UserId == userId, cancellationToken);
+
+            // Get tasks assigned to user
+            var assignedTasksCount = await _context.HouseholdTasks
+                .CountAsync(t => t.AssignedUserId == userId, cancellationToken);
+
+            return (soleOwnerHouseholds.Count, memberCount, assignedTasksCount, soleOwnerHouseholds);
+        }
+
+        public async Task<List<Guid>> GetSoleOwnerHouseholdIdsAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            // Get households where user is owner
+            var userOwnedHouseholdIds = await _context.HouseholdMembers
+                .Where(hm => hm.UserId == userId && hm.Role == HouseholdRole.Owner)
+                .Select(hm => hm.HouseholdId)
+                .ToListAsync(cancellationToken);
+
+            // Filter to households where user is the ONLY owner
+            var soleOwnerHouseholdIds = new List<Guid>();
+            foreach (var householdId in userOwnedHouseholdIds)
+            {
+                var ownerCount = await _context.HouseholdMembers
+                    .CountAsync(hm => hm.HouseholdId == householdId && hm.Role == HouseholdRole.Owner,
+                        cancellationToken);
+
+                if (ownerCount == 1)
+                {
+                    soleOwnerHouseholdIds.Add(householdId);
+                }
+            }
+
+            return soleOwnerHouseholdIds;
+        }
+
+        public async Task DeleteUserAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+                ?? throw new KeyNotFoundException($"User with ID '{userId}' not found");
+
+            // EF Core will handle cascade delete for HouseholdMember
+            // and set null for HouseholdTask.AssignedUserId based on our configuration
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 }

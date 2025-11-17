@@ -61,6 +61,24 @@ namespace HouseholdManager.Application.Interfaces.Services
             string? lastName = null,
             string? profilePictureUrl = null,
             CancellationToken cancellationToken = default);
+
+        // Account deletion
+        /// <summary>
+        /// Check if user can delete their account
+        /// Returns false if user is owner of any household
+        /// </summary>
+        Task<AccountDeletionCheckResult> CanDeleteAccountAsync(
+            string userId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Delete user account permanently
+        /// Removes user from Auth0 and database
+        /// WARNING: This action cannot be undone
+        /// </summary>
+        Task DeleteAccountAsync(
+            string userId,
+            CancellationToken cancellationToken = default);
     }
 
 }

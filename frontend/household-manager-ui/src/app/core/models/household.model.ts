@@ -38,8 +38,8 @@
   }
 
   export enum HouseholdRole {
-    Member = 'Member',  
-    Owner = 'Owner'   
+    Member = 'Member',
+    Owner = 'Owner'
   }
 
   export interface UpsertHouseholdRequest {
@@ -55,6 +55,10 @@
   export interface RegenerateInviteCodeResponse {
     inviteCode: string;
     inviteCodeExpiresAt?: Date;
+  }
+
+  export interface UpdateMemberRoleRequest {
+    newRole: HouseholdRole;
   }
 
   export interface HouseholdQueryParameters extends BaseQueryParameters {

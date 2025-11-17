@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HouseholdService } from '../services/household.service';
-import { HouseholdDetailsDto, HouseholdMemberDto } from '../../../core/models/household.model';
+import { HouseholdDetailsDto, HouseholdMemberDto, HouseholdRole } from '../../../core/models/household.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 import { HouseholdContext } from '../services/household-context';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
@@ -38,6 +38,10 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
     confirmClass: 'danger'
   };
   private pendingAction: (() => void) | null = null;
+
+  // Role management
+  HouseholdRole = HouseholdRole;
+  availableRoles = [HouseholdRole.Member, HouseholdRole.Owner];
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -189,5 +193,61 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
   onDialogCancelled(): void {
     this.showConfirmDialog = false;
     this.pendingAction = null;
+  }
+
+  /**
+   * Update member role (promote/demote)
+   */
+  changeMemberRole(member: HouseholdMemberDto, newRole: HouseholdRole): void {
+    if (!this.household) return;
+    if (member.role === newRole) return; // No change
+
+    const roleNames: { [key in HouseholdRole]: string } = {
+      [HouseholdRole.Member]: 'Member',
+      [HouseholdRole.Owner]: 'Owner'
+    };
+
+    this.showConfirmDialog = true;
+
+    // Special handling for ownership transfer
+    if (newRole === HouseholdRole.Owner) {
+      this.confirmDialogData = {
+        title: 'Transfer Ownership',
+        message: `Are you sure you want to transfer ownership to ${member.userName}?\n\nIMPORTANT: You will be automatically demoted to Member role and will lose owner privileges.`,
+        confirmText: 'Transfer Ownership',
+        cancelText: 'Cancel',
+        confirmClass: 'warning',
+        icon: 'fa-crown',
+        iconClass: 'text-warning'
+      };
+    } else {
+      this.confirmDialogData = {
+        title: 'Change Member Role',
+        message: `Are you sure you want to change ${member.userName}'s role from ${roleNames[member.role]} to ${roleNames[newRole]}?`,
+        confirmText: 'Change Role',
+        cancelText: 'Cancel',
+        confirmClass: 'primary',
+        icon: 'fa-user-shield',
+        iconClass: 'text-primary'
+      };
+    }
+
+    this.pendingAction = () => {
+      if (!this.household) return;
+
+      this.householdService.updateMemberRole(
+        this.household.household.id,
+        member.userId,
+        { newRole }
+      ).subscribe({
+        next: () => {
+          this.toastService.success(`${member.userName}'s role updated to ${roleNames[newRole]}`);
+          this.loadHousehold(this.household!.household.id);
+        },
+        error: () => {
+          // Error will be shown by error interceptor
+        }
+      });
+    };
   }
 }

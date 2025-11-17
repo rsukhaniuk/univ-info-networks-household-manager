@@ -238,19 +238,33 @@
           </div>
         </div>
 
-        <!-- Account Actions Card -->
-        <div class="card shadow-sm border-warning">
-          <div class="card-header bg-warning text-dark">
+        <!-- Danger Zone - Delete Account -->
+        <div class="card shadow-sm border-danger">
+          <div class="card-header bg-danger text-white">
             <h5 class="card-title mb-0">
-              <i class="fas fa-sign-out-alt me-2"></i>Account Actions
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Danger Zone
             </h5>
           </div>
           <div class="card-body">
-            <p class="mb-3">
-              Sign out of your Household Manager account
-            </p>
-            <button type="button" class="btn btn-warning" (click)="logout()">
-              <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+            <div class="alert alert-warning mb-3">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Warning:</strong> Account deletion is permanent and cannot be undone.
+              Your account will be removed from all households and tasks.
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-danger"
+              (click)="openDeleteAccountDialog()"
+              [disabled]="isDeletingAccount">
+              <i class="fas fa-trash-alt me-2"></i>
+              @if (isDeletingAccount) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Deleting Account...
+              } @else {
+                Delete Account
+              }
             </button>
           </div>
         </div>
@@ -318,3 +332,77 @@
     </div>
   }
 </div>
+
+<!-- Delete Account Confirmation Dialog -->
+@if (showDeleteDialog && deleteDialogData) {
+  <div class="modal show" style="display: block;" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-2 fs-4 text-danger"></i>
+            <span>{{ deleteDialogData.title }}</span>
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            (click)="onDeleteCancelled()">
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="text-secondary" style="white-space: pre-line;">
+            {{ deleteDialogData.message }}
+          </p>
+
+          <!-- Email Confirmation Input - Only show if can delete -->
+          @if (deletionCheck?.canDelete) {
+            <div class="mt-3">
+              <input
+                type="email"
+                class="form-control"
+                [(ngModel)]="emailConfirmation"
+                placeholder="Enter your email"
+                [class.is-invalid]="emailConfirmation && !isEmailConfirmed"
+                [class.is-valid]="isEmailConfirmed">
+              @if (emailConfirmation && !isEmailConfirmed) {
+                <div class="invalid-feedback d-block">
+                  Email does not match
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer border-0 pt-0">
+          @if (deletionCheck?.canDelete) {
+            <button
+              type="button"
+              class="btn btn-light px-4"
+              (click)="onDeleteCancelled()">
+              <i class="fas fa-times me-1"></i>
+              {{ deleteDialogData.cancelText }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger px-4"
+              (click)="onDeleteConfirmed()"
+              [disabled]="!isEmailConfirmed">
+              <i class="fas fa-trash me-1"></i>
+              {{ deleteDialogData.confirmText }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn btn-primary px-4"
+              (click)="onDeleteCancelled()">
+              <i class="fas fa-check me-1"></i>
+              {{ deleteDialogData.confirmText }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop show"></div>
+}

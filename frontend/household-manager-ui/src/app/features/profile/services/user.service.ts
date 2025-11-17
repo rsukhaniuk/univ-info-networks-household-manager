@@ -10,7 +10,8 @@ import {
   RequestPasswordChangeRequest,
   PasswordChangeTicketResponse,
   ChangeEmailRequest,
-  ConnectionInfo
+  ConnectionInfo,
+  AccountDeletionCheckResult
 } from '../../../core/models/user.model';
 import { ApiResponse } from '../../../core/models/api-response.model';
 
@@ -67,5 +68,21 @@ export class UserService {
    */
   getConnectionInfo(): Observable<ApiResponse<ConnectionInfo>> {
     return this.api.get<ConnectionInfo>('/users/me/connection-info');
+  }
+
+  /**
+   * Check if current user can delete their account
+   * Returns false if user is owner of any household
+   */
+  canDeleteAccount(): Observable<ApiResponse<AccountDeletionCheckResult>> {
+    return this.api.get<AccountDeletionCheckResult>('/users/me/can-delete');
+  }
+
+  /**
+   * Delete current user's account permanently
+   * WARNING: This action cannot be undone!
+   */
+  deleteAccount(): Observable<ApiResponse<void>> {
+    return this.api.delete<void>('/users/me');
   }
 }

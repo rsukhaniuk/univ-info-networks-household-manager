@@ -67,11 +67,11 @@ namespace HouseholdManager.Application.Interfaces.Services
         Task UpdateMemberRoleAsync(Guid householdId, string userId, HouseholdRole newRole, string requestingUserId, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Promotes a member to owner role. Wrapper around UpdateMemberRoleAsync with Owner role.
+        /// Transfers ownership to another member. The requesting user (current owner) will be demoted to member role.
         /// </summary>
         /// <param name="householdId">Household ID</param>
-        /// <param name="userId">User ID to promote</param>
-        /// <param name="requestingUserId">ID of user making the request</param>
+        /// <param name="userId">User ID to transfer ownership to</param>
+        /// <param name="requestingUserId">ID of user making the request (current owner)</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Task</returns>
         Task PromoteToOwnerAsync(Guid householdId, string userId, string requestingUserId, CancellationToken cancellationToken = default);

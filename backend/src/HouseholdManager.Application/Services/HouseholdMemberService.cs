@@ -104,8 +104,24 @@ namespace HouseholdManager.Application.Services
 
         public async Task PromoteToOwnerAsync(Guid householdId, string userId, string requestingUserId, CancellationToken cancellationToken = default)
         {
-            await UpdateMemberRoleAsync(householdId, userId, HouseholdRole.Owner, requestingUserId, cancellationToken);
-            _logger.LogInformation("Promoted user {UserId} to owner in household {HouseholdId}", userId, householdId);
+            // Transfer ownership: promote the target user to owner and demote the requesting user to member
+            await ValidateOwnerAccessAsync(householdId, requestingUserId, cancellationToken);
+
+            var targetMember = await _memberRepository.GetMemberAsync(householdId, userId, cancellationToken);
+            if (targetMember == null)
+                throw new NotFoundException("User is not a member of this household");
+
+            if (targetMember.Role == HouseholdRole.Owner)
+                throw new ValidationException("User is already an owner");
+
+            // Promote target user to owner
+            await _memberRepository.UpdateRoleAsync(householdId, userId, HouseholdRole.Owner, cancellationToken);
+
+            // Demote requesting user (current owner) to member
+            await _memberRepository.UpdateRoleAsync(householdId, requestingUserId, HouseholdRole.Member, cancellationToken);
+
+            _logger.LogInformation("Transferred ownership from {RequestingUserId} to {UserId} in household {HouseholdId}",
+                requestingUserId, userId, householdId);
         }
 
         public async Task DemoteFromOwnerAsync(Guid householdId, string userId, string requestingUserId, CancellationToken cancellationToken = default)

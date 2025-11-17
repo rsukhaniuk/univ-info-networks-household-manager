@@ -440,6 +440,117 @@ namespace HouseholdManager.Api.Controllers
 
         #endregion
 
+        #region Account Deletion
+
+        /// <summary>
+        /// Check if current user can delete their account
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Account deletion check result with household and task information</returns>
+        /// <remarks>
+        /// Returns information about whether the user can delete their account.
+        ///
+        /// Users CANNOT delete their account if they are the owner of any household.
+        /// They must transfer ownership or delete those households first.
+        ///
+        /// Returns:
+        /// - canDelete: Whether account can be deleted
+        /// - ownedHouseholdsCount: Number of households user owns
+        /// - memberHouseholdsCount: Total households user is member of
+        /// - assignedTasksCount: Number of tasks assigned to user
+        /// - ownedHouseholdNames: Names of households user owns
+        /// - message: Explanation if account cannot be deleted
+        /// </remarks>
+        [HttpGet("me/can-delete")]
+        [ProducesResponseType(typeof(ApiResponse<AccountDeletionCheckResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiResponse<AccountDeletionCheckResult>>> CanDeleteAccount(
+            CancellationToken cancellationToken = default)
+        {
+            var userId = GetCurrentUserId();
+
+            _logger.LogInformation("User {UserId} checking if they can delete account", userId);
+
+            var result = await _userService.CanDeleteAccountAsync(userId, cancellationToken);
+
+            return Ok(ApiResponse<AccountDeletionCheckResult>.SuccessResponse(
+                result,
+                result.CanDelete
+                    ? "Account can be deleted"
+                    : "Account cannot be deleted - see message for details"));
+        }
+
+        /// <summary>
+        /// Delete current user's account permanently
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>No content on success</returns>
+        /// <remarks>
+        /// **WARNING: This action is permanent and cannot be undone!**
+        ///
+        /// Deletes the user's account from both Auth0 and the local database.
+        ///
+        /// **What happens:**
+        /// - User is removed from all households (HouseholdMember records deleted)
+        /// - Tasks assigned to user become unassigned (AssignedUserId set to null)
+        /// - Task execution history is PRESERVED for statistics (not deleted)
+        /// - User is deleted from Auth0
+        /// - User is deleted from local database
+        ///
+        /// **Requirements:**
+        /// - User must NOT be owner of any household
+        /// - If user owns households, they must transfer ownership or delete households first
+        ///
+        /// **Authentication:**
+        /// - User must have recently authenticated (within last 5 minutes)
+        /// - This prevents accidental deletion if user left browser open
+        /// - Frontend should prompt for Auth0 re-authentication before calling this endpoint
+        ///
+        /// **Frontend flow:**
+        /// 1. Show warning dialog with household/task counts
+        /// 2. User enters email to confirm
+        /// 3. Trigger Auth0 re-authentication popup (prompt: 'login', max_age: 0)
+        /// 4. After re-auth success, call this DELETE endpoint
+        /// 5. Logout user and redirect to account-deleted page
+        /// </remarks>
+        [HttpDelete("me")]
+        [RequireFreshAuth(MaxAuthAgeSeconds = 300)] // Require authentication within last 5 minutes
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)] // User owns households
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteMyAccount(
+            CancellationToken cancellationToken = default)
+        {
+            var userId = GetCurrentUserId();
+
+            _logger.LogWarning("User {UserId} requesting account deletion", userId);
+
+            try
+            {
+                await _userService.DeleteAccountAsync(userId, cancellationToken);
+
+                _logger.LogWarning("Account deleted for user {UserId}", userId);
+
+                return NoContent(); // 204 No Content
+            }
+            catch (Domain.Exceptions.ValidationException ex) when (ex.Message.Contains("household"))
+            {
+                // User owns households - return 409 Conflict
+                return Conflict(new ProblemDetails
+                {
+                    Title = "Cannot Delete Account",
+                    Status = StatusCodes.Status409Conflict,
+                    Detail = ex.Message,
+                    Instance = HttpContext.Request.Path
+                });
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>

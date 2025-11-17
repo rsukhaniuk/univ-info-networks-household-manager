@@ -18,13 +18,16 @@ namespace HouseholdManager.Api.Controllers
     public class HouseholdsController : ControllerBase
     {
         private readonly IHouseholdService _householdService;
+        private readonly IHouseholdMemberService _householdMemberService;
         private readonly ILogger<HouseholdsController> _logger;
 
         public HouseholdsController(
             IHouseholdService householdService,
+            IHouseholdMemberService householdMemberService,
             ILogger<HouseholdsController> logger)
         {
             _householdService = householdService;
+            _householdMemberService = householdMemberService;
             _logger = logger;
         }
 
@@ -443,6 +446,56 @@ namespace HouseholdManager.Api.Controllers
                 requestingUserId, userId, id);
 
             await _householdService.RemoveMemberAsync(id, userId, requestingUserId, cancellationToken);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Update a member's role in the household (Owner only)
+        /// </summary>
+        /// <param name="id">Household ID (GUID)</param>
+        /// <param name="userId">User ID whose role to update</param>
+        /// <param name="request">Request containing the new role</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>No content</returns>
+        /// <remarks>
+        /// Only household owners can update member roles.
+        /// Cannot demote the last owner - promote another member to owner first.
+        ///
+        /// Sample request:
+        ///
+        ///     PUT /api/households/{id}/members/{userId}/role
+        ///     {
+        ///        "newRole": "Owner"
+        ///     }
+        ///
+        /// Available roles: Owner, PowerUser, Member
+        /// </remarks>
+        [HttpPut("{id:guid}/members/{userId}/role")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateMemberRole(
+            Guid id,
+            string userId,
+            [FromBody] UpdateMemberRoleRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var requestingUserId = GetCurrentUserId();
+
+            _logger.LogInformation("User {RequestingUserId} updating role of user {UserId} in household {HouseholdId} to {NewRole}",
+                requestingUserId, userId, id, request.NewRole);
+
+            await _householdMemberService.UpdateMemberRoleAsync(
+                id,
+                userId,
+                request.NewRole,
+                requestingUserId,
+                cancellationToken);
 
             return NoContent();
         }

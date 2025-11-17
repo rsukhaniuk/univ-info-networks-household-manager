@@ -21,6 +21,7 @@ namespace HouseholdManager.Application.Services
         private readonly IHouseholdMemberRepository _memberRepository;
         private readonly ITaskRepository _taskRepository;
         private readonly IExecutionRepository _executionRepository;
+        private readonly IHouseholdRepository _householdRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
         private readonly Interfaces.ExternalServices.IAuth0ManagementApiClient? _auth0Client;
@@ -30,6 +31,7 @@ namespace HouseholdManager.Application.Services
             IHouseholdMemberRepository memberRepository,
             ITaskRepository taskRepository,
             IExecutionRepository executionRepository,
+            IHouseholdRepository householdRepository,
             IMapper mapper,
             ILogger<UserService> logger,
             Interfaces.ExternalServices.IAuth0ManagementApiClient? auth0Client = null)
@@ -38,6 +40,7 @@ namespace HouseholdManager.Application.Services
             _memberRepository = memberRepository;
             _taskRepository = taskRepository;
             _executionRepository = executionRepository;
+            _householdRepository = householdRepository;
             _mapper = mapper;
             _logger = logger;
             _auth0Client = auth0Client;
@@ -355,6 +358,107 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             return await _userRepository.IsSystemAdminAsync(userId, cancellationToken);
+        }
+
+        #endregion
+
+        #region Account Deletion
+
+        public async Task<AccountDeletionCheckResult> CanDeleteAccountAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("Checking if user {UserId} can delete account", userId);
+
+            var (soleOwnedCount, memberCount, assignedTasksCount, soleOwnedHouseholdNames) =
+                await _userRepository.GetUserDeletionInfoAsync(userId, cancellationToken);
+
+            // User can always delete account now - sole-owner households will be auto-deleted
+            var canDelete = true;
+
+            string? message = null;
+            if (soleOwnedCount > 0)
+            {
+                message = $"Warning: {soleOwnedCount} household(s) where you are the sole owner will be permanently deleted: {string.Join(", ", soleOwnedHouseholdNames)}";
+            }
+
+            var result = new AccountDeletionCheckResult
+            {
+                CanDelete = canDelete,
+                OwnedHouseholdsCount = soleOwnedCount,
+                MemberHouseholdsCount = memberCount,
+                AssignedTasksCount = assignedTasksCount,
+                OwnedHouseholdNames = soleOwnedHouseholdNames,
+                Message = message
+            };
+
+            _logger.LogInformation(
+                "User {UserId} deletion check: CanDelete={CanDelete}, SoleOwnedHouseholds={SoleOwnedCount}, MemberHouseholds={MemberCount}, AssignedTasks={TasksCount}",
+                userId, canDelete, soleOwnedCount, memberCount, assignedTasksCount);
+
+            return result;
+        }
+
+        public async Task DeleteAccountAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogWarning("Starting account deletion for user {UserId}", userId);
+
+            // 1. Get sole-owner households to delete
+            var soleOwnerHouseholdIds = await _userRepository.GetSoleOwnerHouseholdIdsAsync(userId, cancellationToken);
+
+            if (soleOwnerHouseholdIds.Any())
+            {
+                _logger.LogInformation("User {UserId} is sole owner of {Count} household(s), will auto-delete",
+                    userId, soleOwnerHouseholdIds.Count);
+
+                // Delete each sole-owner household
+                foreach (var householdId in soleOwnerHouseholdIds)
+                {
+                    var household = await _householdRepository.GetByIdAsync(householdId, cancellationToken);
+                    if (household != null)
+                    {
+                        await _householdRepository.DeleteAsync(household, cancellationToken);
+                        _logger.LogInformation("Deleted household {HouseholdId} ({Name}) for user {UserId}",
+                            householdId, household.Name, userId);
+                    }
+                }
+            }
+
+            // 2. Verify user exists
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+            try
+            {
+                // 3. Delete from database first
+                // This will:
+                // - CASCADE delete HouseholdMember records
+                // - SET NULL for HouseholdTask.AssignedUserId
+                // - RESTRICT TaskExecution (but we're not deleting those)
+                await _userRepository.DeleteUserAsync(userId, cancellationToken);
+
+                _logger.LogInformation("User {UserId} deleted from database", userId);
+
+                // 4. Delete from Auth0
+                if (_auth0Client != null)
+                {
+                    await _auth0Client.DeleteUserAsync(userId);
+                    _logger.LogInformation("User {UserId} deleted from Auth0", userId);
+                }
+                else
+                {
+                    _logger.LogWarning("Auth0 client not available, user {UserId} not deleted from Auth0", userId);
+                }
+
+                _logger.LogWarning("Account deletion completed for user {UserId} ({Email})", userId, user.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete account for user {UserId}", userId);
+                throw new InvalidOperationException("Failed to delete account. Please try again or contact support.", ex);
+            }
         }
 
         #endregion

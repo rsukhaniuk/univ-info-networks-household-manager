@@ -246,6 +246,35 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
 
         #endregion
 
+        #region User Deletion
+
+        /// <inheritdoc />
+        public async Task DeleteUserAsync(string userId)
+        {
+            try
+            {
+                _logger.LogWarning("Deleting user {UserId} from Auth0 - this action cannot be undone", userId);
+
+                var client = await GetManagementClientAsync();
+
+                await client.Users.DeleteAsync(userId);
+
+                _logger.LogInformation("Successfully deleted user {UserId} from Auth0", userId);
+            }
+            catch (ErrorApiException ex)
+            {
+                _logger.LogError(ex, "Auth0 API error deleting user: {Message}", ex.Message);
+                throw new InvalidOperationException($"Failed to delete user from Auth0: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error deleting user");
+                throw new InvalidOperationException("Failed to delete user from Auth0", ex);
+            }
+        }
+
+        #endregion
+
         #region Helper Classes
 
         private class TokenResponse

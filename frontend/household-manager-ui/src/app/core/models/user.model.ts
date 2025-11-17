@@ -79,3 +79,12 @@ export interface ConnectionInfo {
   canChangeEmail: boolean;
   providerName: string;
 }
+
+export interface AccountDeletionCheckResult {
+  canDelete: boolean;
+  ownedHouseholdsCount: number;
+  memberHouseholdsCount: number;
+  assignedTasksCount: number;
+  ownedHouseholdNames: string[];
+  message?: string;
+}

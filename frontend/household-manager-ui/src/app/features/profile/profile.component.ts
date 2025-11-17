@@ -10,14 +10,17 @@ import {
   UpdateProfileRequest,
   ConnectionInfo,
   RequestPasswordChangeRequest,
-  ChangeEmailRequest
+  ChangeEmailRequest,
+  AccountDeletionCheckResult
 } from '../../core/models/user.model';
 import { UtcDatePipe } from '../../shared/pipes/utc-date.pipe';
+import { ConfirmationDialogComponent, ConfirmDialogData } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe, ConfirmationDialogComponent, FormsModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })
@@ -37,6 +40,13 @@ export class ProfileComponent implements OnInit {
   isSubmitting = false;
   isChangingPassword = false;
   isChangingEmail = false;
+
+  // Account deletion
+  showDeleteDialog = false;
+  isDeletingAccount = false;
+  deletionCheck: AccountDeletionCheckResult | null = null;
+  emailConfirmation = '';
+  deleteDialogData: ConfirmDialogData | null = null;
 
   // Forms
   profileForm: FormGroup;
@@ -75,6 +85,29 @@ export class ProfileComponent implements OnInit {
       setTimeout(() => {
         this.authService.logout();
       }, 5000);
+    }
+
+    // Check if user was redirected back after re-authentication for account deletion
+    const pendingDeletion = sessionStorage.getItem('pendingAccountDeletion');
+    if (pendingDeletion === 'true') {
+      sessionStorage.removeItem('pendingAccountDeletion');
+      this.isDeletingAccount = true;
+
+      // Proceed with account deletion
+      this.userService.deleteAccount().subscribe({
+        next: () => {
+          this.toastService.success('Account deleted successfully. Goodbye!', 3000);
+
+          // Logout and redirect
+          setTimeout(() => {
+            this.authService.logout();
+          }, 2000);
+        },
+        error: (error) => {
+          this.isDeletingAccount = false;
+          this.toastService.error(error?.error?.detail || 'Failed to delete account');
+        }
+      });
     }
   }
 
@@ -219,6 +252,128 @@ export class ProfileComponent implements OnInit {
         this.isChangingEmail = false;
       }
     });
+  }
+
+  // ========================================
+  // Account Deletion
+  // ========================================
+
+  /**
+   * Open delete account dialog
+   * First checks if user can delete account
+   */
+  openDeleteAccountDialog(): void {
+    this.userService.canDeleteAccount().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.deletionCheck = response.data;
+
+          // Always show dialog with full information
+          this.deleteDialogData = {
+            title: response.data.canDelete ? 'Delete Account' : 'Cannot Delete Account',
+            message: this.getDeleteWarningMessage(response.data),
+            confirmText: response.data.canDelete ? 'Continue' : 'OK',
+            cancelText: 'Cancel',
+            confirmClass: 'danger',
+            icon: 'fa-exclamation-triangle',
+            iconClass: 'text-danger'
+          };
+
+          this.showDeleteDialog = true;
+          this.emailConfirmation = '';
+        }
+      },
+      error: () => {
+        this.toastService.error('Failed to check account deletion status');
+      }
+    });
+  }
+
+  /**
+   * Generate warning message with household and task info
+   */
+  private getDeleteWarningMessage(check: AccountDeletionCheckResult): string {
+    if (!check.canDelete) {
+      // Show why deletion is blocked
+      let message = '❌ CANNOT DELETE ACCOUNT\n\n';
+      message += 'Your account cannot be deleted at this time for the following reason:\n\n';
+
+      if (check.message) {
+        message += `${check.message}\n\n`;
+      }
+
+      message += '📋 Account Deletion Requirements:\n\n';
+      message += '✓ You must NOT be the sole owner of any household\n';
+      message += '  → Transfer ownership or add another owner before leaving\n\n';
+
+      if (check.ownedHouseholdsCount > 0 && check.ownedHouseholdNames.length > 0) {
+        message += `⚠️ You are currently the sole owner of ${check.ownedHouseholdsCount} household(s):\n`;
+        check.ownedHouseholdNames.forEach(name => {
+          message += `  • ${name}\n`;
+        });
+        message += '\n';
+      }
+
+      message += '📊 Current Status:\n';
+      message += `• Member of ${check.memberHouseholdsCount} household(s)\n`;
+      message += `• ${check.assignedTasksCount} task(s) assigned to you\n`;
+
+      return message;
+    }
+
+    // Can delete - show warning
+    let message = '⚠️ WARNING: This action cannot be undone!\n\n';
+    message += 'Your account will be permanently deleted.\n\n';
+
+    // Warning about sole-owner households that will be deleted
+    if (check.ownedHouseholdsCount > 0 && check.ownedHouseholdNames.length > 0) {
+      message += `🗑️ ${check.ownedHouseholdsCount} household(s) where you are the sole owner will be PERMANENTLY DELETED:\n`;
+      check.ownedHouseholdNames.forEach(name => {
+        message += `  • ${name}\n`;
+      });
+      message += '\n';
+    }
+
+    message += '📊 What will happen:\n';
+    message += `• You will be removed from ${check.memberHouseholdsCount} household(s)\n`;
+    message += `• Your ${check.assignedTasksCount} assigned task(s) will be reassigned or marked as unassigned\n\n`;
+    message += `Please type your email (${this.profile?.user.email}) to confirm:`;
+    return message;
+  }
+
+  /**
+   * Check if email confirmation matches
+   */
+  get isEmailConfirmed(): boolean {
+    return this.emailConfirmation === this.profile?.user.email;
+  }
+
+  /**
+   * Handle delete dialog confirmation
+   * Triggers Auth0 re-authentication then deletes account
+   */
+  onDeleteConfirmed(): void {
+    if (!this.isEmailConfirmed) {
+      this.toastService.error('Email does not match');
+      return;
+    }
+
+    this.showDeleteDialog = false;
+
+    // Store delete flag in sessionStorage to continue after re-auth
+    sessionStorage.setItem('pendingAccountDeletion', 'true');
+
+    // Trigger Auth0 re-authentication with redirect
+    this.authService.reauthenticate({ target: '/profile' });
+  }
+
+  /**
+   * Handle delete dialog cancellation
+   */
+  onDeleteCancelled(): void {
+    this.showDeleteDialog = false;
+    this.emailConfirmation = '';
+    this.deletionCheck = null;
   }
 
   get firstName() { return this.profileForm.get('firstName'); }

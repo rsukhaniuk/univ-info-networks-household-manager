@@ -124,5 +124,41 @@ namespace HouseholdManager.Application.Interfaces.Repositories
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>True if user is SystemAdmin, false otherwise</returns>
         Task<bool> IsSystemAdminAsync(string userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Checks if user is owner of any household
+        /// </summary>
+        /// <param name="userId">Auth0 user ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>True if user is owner of at least one household</returns>
+        Task<bool> IsOwnerOfAnyHouseholdAsync(string userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets information about user's households and tasks for deletion check
+        /// Returns count of households where user is SOLE owner
+        /// </summary>
+        /// <param name="userId">Auth0 user ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Tuple with counts and household names (only sole-owner households)</returns>
+        Task<(int OwnedCount, int MemberCount, int AssignedTasksCount, List<string> OwnedHouseholdNames)>
+            GetUserDeletionInfoAsync(string userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets IDs of households where user is the SOLE owner
+        /// </summary>
+        /// <param name="userId">Auth0 user ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of household IDs</returns>
+        Task<List<Guid>> GetSoleOwnerHouseholdIdsAsync(string userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes user from database
+        /// Also cascades to HouseholdMember and sets AssignedUserId to null in tasks
+        /// Does NOT delete TaskExecution records (preserved for history)
+        /// </summary>
+        /// <param name="userId">Auth0 user ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Task</returns>
+        Task DeleteUserAsync(string userId, CancellationToken cancellationToken = default);
     }
 }

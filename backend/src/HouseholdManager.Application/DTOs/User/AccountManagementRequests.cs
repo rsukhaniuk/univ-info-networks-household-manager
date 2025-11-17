@@ -58,4 +58,43 @@ namespace HouseholdManager.Application.DTOs.User
         /// </summary>
         public string Message { get; set; } = "Redirecting to password change page...";
     }
+
+    /// <summary>
+    /// Result of checking if account can be deleted
+    /// </summary>
+    public class AccountDeletionCheckResult
+    {
+        /// <summary>
+        /// Whether the account can be deleted
+        /// False if user is owner of any household
+        /// </summary>
+        public bool CanDelete { get; set; }
+
+        /// <summary>
+        /// Number of households where user is owner
+        /// </summary>
+        public int OwnedHouseholdsCount { get; set; }
+
+        /// <summary>
+        /// Number of households where user is a member
+        /// </summary>
+        public int MemberHouseholdsCount { get; set; }
+
+        /// <summary>
+        /// Number of tasks assigned to user
+        /// </summary>
+        public int AssignedTasksCount { get; set; }
+
+        /// <summary>
+        /// List of household names where user is owner
+        /// Empty if CanDelete is true
+        /// </summary>
+        public List<string> OwnedHouseholdNames { get; set; } = new();
+
+        /// <summary>
+        /// Message explaining why account cannot be deleted
+        /// Null if CanDelete is true
+        /// </summary>
+        public string? Message { get; set; }
+    }
 }

@@ -7,7 +7,8 @@ import {
   UpsertHouseholdRequest,
   JoinHouseholdRequest,
   HouseholdQueryParameters,
-  RegenerateInviteCodeResponse
+  RegenerateInviteCodeResponse,
+  UpdateMemberRoleRequest
 } from '../../../core/models/household.model';
 import { ApiResponse, PagedResult } from '../../../core/models/api-response.model';
 
@@ -86,5 +87,12 @@ export class HouseholdService {
    */
   removeMember(householdId: string, userId: string): Observable<ApiResponse<any>> {
     return this.api.delete(`${this.endpoint}/${householdId}/members/${userId}`);
+  }
+
+  /**
+   * Update member role in household (owner only)
+   */
+  updateMemberRole(householdId: string, userId: string, request: UpdateMemberRoleRequest): Observable<ApiResponse<any>> {
+    return this.api.put(`${this.endpoint}/${householdId}/members/${userId}/role`, request);
   }
 }

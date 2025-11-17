@@ -83,6 +83,13 @@ namespace HouseholdManager.Infrastructure.Data
                 .HasForeignKey(t => t.HouseholdId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // HouseholdTask -> AssignedUser (set null when user is deleted)
+            builder.Entity<HouseholdTask>()
+                .HasOne(t => t.AssignedUser)
+                .WithMany(u => u.AssignedTasks)
+                .HasForeignKey(t => t.AssignedUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // Room -> Household (cascade delete)
             builder.Entity<Room>()
                 .HasOne(r => r.Household)
@@ -97,12 +104,12 @@ namespace HouseholdManager.Infrastructure.Data
                 .HasForeignKey(m => m.HouseholdId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // HouseholdMember -> User (restrict delete to preserve data integrity)
+            // HouseholdMember -> User (cascade delete when user is deleted)
             builder.Entity<HouseholdMember>()
                 .HasOne(m => m.User)
                 .WithMany(u => u.HouseholdMemberships)
                 .HasForeignKey(m => m.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // TaskExecution -> Task (restrict delete to preserve history)
             builder.Entity<TaskExecution>()

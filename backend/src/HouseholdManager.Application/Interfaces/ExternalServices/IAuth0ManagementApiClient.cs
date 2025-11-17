@@ -46,5 +46,13 @@ namespace HouseholdManager.Application.Interfaces.ExternalServices
         /// <param name="fullName">Full name (FirstName + LastName)</param>
         /// <returns>Task</returns>
         Task UpdateUserNameAsync(string userId, string fullName);
+
+        /// <summary>
+        /// Delete user from Auth0
+        /// WARNING: This is a permanent action and cannot be undone
+        /// </summary>
+        /// <param name="userId">Auth0 user ID (sub claim)</param>
+        /// <returns>Task</returns>
+        Task DeleteUserAsync(string userId);
     }
 }
