@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+.git/
+*.log
+coverage/
+.nyc_output/
+*.pem
+proxy.conf.json

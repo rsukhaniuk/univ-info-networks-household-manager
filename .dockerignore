@@ -1,0 +1,27 @@
+# Backend ignore patterns
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/.vs/
+**/.vscode/
+
+# Frontend ignore patterns
+**/node_modules/
+**/dist/
+**/.angular/
+
+# General
+.git/
+.github/
+*.log
+*.md
+!README.md
+lab1-mvc-legacy/
+tests/
+docs/
+
+# Keep Docker files
+!**/Dockerfile
+!docker-compose.yml
+!**/.dockerignore

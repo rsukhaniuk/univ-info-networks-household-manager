@@ -376,4 +376,13 @@ frontend/household-manager-ui/.vscode/launch.json
 frontend/household-manager-ui/.vscode/launch.json
 /frontend/household-manager-ui/.vscode
 
+# Local development certificates
+certs/**/*.pem
+certs/**/*.key
+certs/**/*.crt
+certs/**/*.pfx
 
+# Environment variables
+.env
+.env.local
+.env.*.local

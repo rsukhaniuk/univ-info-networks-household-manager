@@ -1,0 +1,78 @@
+version: '3.8'
+
+# Local Development Configuration with HTTPS
+# This setup uses HTTPS inside containers for Auth0 compatibility
+# For production (AWS), see docker-compose.prod.yml which uses HTTP internally
+# with HTTPS handled by AWS ALB + ACM
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: household-postgres
+    environment:
+      POSTGRES_DB: household_manager
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - household-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/src/HouseholdManager.Api/Dockerfile
+    container_name: household-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=household_manager;Username=postgres;Password=postgres
+      - Auth0__Domain=${AUTH0_DOMAIN}
+      - Auth0__Audience=${AUTH0_AUDIENCE}
+      - Auth0__ClientId=${AUTH0_CLIENT_ID}
+      - Auth0__ClientSecret=${AUTH0_CLIENT_SECRET}
+      - Auth0__ManagementApiClientId=${AUTH0_MGMT_CLIENT_ID}
+      - Auth0__ManagementApiClientSecret=${AUTH0_MGMT_CLIENT_SECRET}
+      - Auth0__ManagementApiAudience=${AUTH0_MGMT_AUDIENCE}
+    ports:
+      - "7047:443"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - household-network
+    volumes:
+      - api_uploads:/app/wwwroot/uploads
+      # Local development certificates (managed in certs/ directory)
+      - ./certs/frontend/localhost+1.pem:/app/certs/localhost+1.pem:ro
+      - ./certs/frontend/localhost+1-key.pem:/app/certs/localhost+1-key.pem:ro
+
+  frontend:
+    build:
+      context: ./frontend/household-manager-ui
+      dockerfile: Dockerfile
+    container_name: household-frontend
+    ports:
+      - "4200:443"
+    depends_on:
+      - api
+    networks:
+      - household-network
+    volumes:
+      # Local development certificates (managed in certs/ directory)
+      - ./certs/frontend/localhost+1.pem:/etc/nginx/certs/localhost+1.pem:ro
+      - ./certs/frontend/localhost+1-key.pem:/etc/nginx/certs/localhost+1-key.pem:ro
+
+volumes:
+  postgres_data:
+  api_uploads:
+
+networks:
+  household-network:
+    driver: bridge
