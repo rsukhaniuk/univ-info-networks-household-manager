@@ -152,9 +152,24 @@ namespace HouseholdManager.Infrastructure.Data
 
             // CONCURRENCY TOKENS
 
-            builder.Entity<HouseholdTask>()
-                .Property(e => e.RowVersion)
-                .IsRowVersion();
+            // Configure RowVersion property based on database provider
+            // This will be applied at runtime when the database provider is known
+            var rowVersionProperty = builder.Entity<HouseholdTask>()
+                .Property(e => e.RowVersion);
+
+            // Check if using PostgreSQL by inspecting the database provider
+            if (Database.ProviderName?.Contains("Npgsql") == true)
+            {
+                // PostgreSQL uses xmin for concurrency
+                rowVersionProperty.HasAnnotation("Npgsql:ValueGenerationStrategy", "Xmin");
+                rowVersionProperty.IsConcurrencyToken();
+                rowVersionProperty.ValueGeneratedOnAddOrUpdate();
+            }
+            else
+            {
+                // SQL Server uses rowversion
+                rowVersionProperty.IsRowVersion();
+            }
         }
     }
 }

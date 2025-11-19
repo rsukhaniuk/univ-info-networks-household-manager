@@ -26,11 +26,27 @@ namespace HouseholdManager.Infrastructure
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Database
+            // Database - Multi-provider support (PostgreSQL or SQL Server)
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+            {
+                // Detect database provider from connection string
+                if (!string.IsNullOrEmpty(connectionString) &&
+                    (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
+                     connectionString.Contains("Server=localhost", StringComparison.OrdinalIgnoreCase) && connectionString.Contains("Port=5432")))
+                {
+                    // PostgreSQL
+                    options.UseNpgsql(connectionString,
+                        b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                }
+                else
+                {
+                    // SQL Server (default)
+                    options.UseSqlServer(connectionString,
+                        b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                }
+            });
 
             // Repositories
             services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
