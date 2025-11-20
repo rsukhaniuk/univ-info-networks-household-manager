@@ -114,7 +114,15 @@
                   <th style="width: 35%;">
                     <i class="fas fa-door-open text-muted me-2"></i>Room
                   </th>
-                  <td>{{ taskDetails.room.name }}</td>
+                  <td>
+                    @if (taskDetails.room.name === 'General') {
+                      <span class="badge bg-primary">
+                        <i class="fas fa-home me-1"></i>General Task
+                      </span>
+                    } @else {
+                      {{ taskDetails.room.name }}
+                    }
+                  </td>
                 </tr>
                 <tr>
                   <th>

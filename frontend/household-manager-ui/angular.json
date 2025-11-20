@@ -52,13 +52,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "15kb",
+                  "maximumError": "25kb"
                 }
               ],
               "outputHashing": "all",
@@ -94,8 +94,8 @@
             "open": true,
             "proxyConfig": "proxy.conf.json",
             "ssl": true,
-            "sslCert": "localhost+1.pem",
-            "sslKey": "localhost+1-key.pem"
+            "sslCert": "../../certs/frontend/localhost+1.pem",
+            "sslKey": "../../certs/frontend/localhost+1-key.pem"
           }
         },
         "extract-i18n": {

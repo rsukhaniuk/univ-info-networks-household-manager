@@ -49,35 +49,7 @@
         <!-- Action Buttons -->
         @if (canManageTasks) {
         <div class="d-flex gap-2">
-          <!-- Calendar Export Dropdown -->
-          <div class="btn-group">
-            <button
-              type="button"
-              class="btn btn-outline-info"
-              (click)="exportCalendar()"
-              title="Export calendar">
-              <i class="fas fa-calendar-alt me-1"></i>Export Calendar
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-info dropdown-toggle dropdown-toggle-split"
-              data-bs-toggle="dropdown"
-              aria-expanded="false">
-              <span class="visually-hidden">Toggle Dropdown</span>
-            </button>
-            <ul class="dropdown-menu">
-              <li>
-                <a class="dropdown-item" (click)="exportCalendar()">
-                  <i class="fas fa-download me-2"></i>Download .ics File
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" (click)="openSubscriptionDialog()">
-                  <i class="fas fa-link me-2"></i>Get Subscription URL
-                </a>
-              </li>
-            </ul>
-          </div>
+          
 
           <button
             type="button"
@@ -87,6 +59,29 @@
           >
             <i class="fas fa-magic me-1"></i>Auto-Assign
           </button>
+
+          <!-- Calendar Export Dropdown -->
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn btn-info dropdown-toggle"
+              data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fas fa-calendar-alt me-1"></i>Calendar
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item" (click)="exportCalendar()" role="button">
+                  <i class="fas fa-download me-2"></i>Download .ics File
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" (click)="openSubscriptionDialog()" role="button">
+                  <i class="fas fa-link me-2"></i>Get Subscription URL
+                </a>
+              </li>
+            </ul>
+          </div>
           <a
             [routerLink]="['/tasks', householdId, 'create']"
             class="btn btn-info"
@@ -398,7 +393,11 @@
 
                 <!-- Room -->
                 <td>
-                  @if (task.roomName) {
+                  @if (task.roomName === 'General') {
+                  <span class="badge bg-primary">
+                    <i class="fas fa-home me-1"></i>General
+                  </span>
+                  } @else if (task.roomName) {
                   <i class="fas fa-door-open text-muted me-1"></i>
                   <span>{{ task.roomName }}</span>
                   } @else {

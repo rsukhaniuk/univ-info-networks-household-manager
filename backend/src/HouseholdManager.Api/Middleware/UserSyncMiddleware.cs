@@ -127,10 +127,11 @@ namespace HouseholdManager.Api.Middleware
                  ?? context.User.FindFirst("given_name")?.Value;
 
             var lastName = context.User.FindFirst(ClaimTypes.Surname)?.Value
-                ?? context.User.FindFirst("https://householdmanager.com/last_name")?.Value 
+                ?? context.User.FindFirst("https://householdmanager.com/last_name")?.Value
                 ?? context.User.FindFirst("family_name")?.Value;
 
-            var profilePictureUrl = context.User.FindFirst("picture")?.Value;
+            var profilePictureUrl = context.User.FindFirst("https://householdmanager.com/picture")?.Value
+                ?? context.User.FindFirst("picture")?.Value;
 
             // Sync user to database
             await userService.SyncUserFromAuth0Async(

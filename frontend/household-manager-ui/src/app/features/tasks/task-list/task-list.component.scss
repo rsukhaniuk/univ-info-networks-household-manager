@@ -55,7 +55,7 @@
   }
 
   &:disabled {
-    background-color: lighten($border-color, 10%);
+    background-color: lighten-color($border-color, 10%);
     cursor: not-allowed;
   }
 }
@@ -135,12 +135,12 @@
         transition: background-color $transition-fast;
 
         &:hover {
-          background-color: darken($bg-light, 3%) !important;
+          background-color: darken-color($bg-light, 3%) !important;
         }
 
         /* Active sorted column */
         &.p-sortable-column-sorted {
-          background-color: lighten($info-color, 45%) !important;
+          background-color: lighten-color($info-color, 45%) !important;
           color: $info-color !important;
 
           i {
@@ -166,7 +166,7 @@
     /* TABLE BODY */
     .p-datatable-tbody > tr {
       background: $bg-white;
-      border-bottom: 1px solid lighten($border-color, 5%);
+      border-bottom: 1px solid lighten-color($border-color, 5%);
       transition: background-color $transition-fast;
       height: 85px;
 
@@ -273,7 +273,7 @@
         cursor: not-allowed;
         opacity: 0.4;
         background-color: $bg-light;
-        border-color: lighten($border-color, 5%);
+        border-color: lighten-color($border-color, 5%);
         color: $text-muted;
       }
     }
@@ -287,8 +287,8 @@
       box-shadow: 0 2px 6px rgba($info-color, 0.3);
 
       &:hover {
-        background-color: darken($info-color, 8%);
-        border-color: darken($info-color, 8%);
+        background-color: darken-color($info-color, 8%);
+        border-color: darken-color($info-color, 8%);
         transform: none;
       }
     }
@@ -305,9 +305,9 @@
   .p-skeleton {
     background: linear-gradient(
       90deg,
-      lighten($border-color, 10%) 25%,
-      lighten($border-color, 15%) 50%,
-      lighten($border-color, 10%) 75%
+      lighten-color($border-color, 10%) 25%,
+      lighten-color($border-color, 15%) 50%,
+      lighten-color($border-color, 10%) 75%
     );
     background-size: 200% 100%;
     animation: p-skeleton-animation 1.5s ease-in-out infinite;
@@ -356,6 +356,26 @@
 .btn-group .btn {
   &:hover {
     z-index: 1;
+  }
+}
+
+/* =========================================
+   DROPDOWN MENU
+   ========================================= */
+.dropdown-menu {
+  .dropdown-item {
+    cursor: pointer;
+    transition: background-color $transition-fast, color $transition-fast;
+
+    &:hover {
+      background-color: $bg-light;
+      color: $info-color;
+    }
+
+    &:active {
+      background-color: $info-color;
+      color: $bg-white;
+    }
   }
 }
 

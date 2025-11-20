@@ -14,13 +14,13 @@ import {
   AccountDeletionCheckResult
 } from '../../core/models/user.model';
 import { UtcDatePipe } from '../../shared/pipes/utc-date.pipe';
-import { ConfirmationDialogComponent, ConfirmDialogData } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { ConfirmDialogData } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe, ConfirmationDialogComponent, FormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe, FormsModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })

@@ -119,16 +119,38 @@
                 </div>
               </div>
 
+              <!-- General Task Checkbox -->
+              @if (generalRoom) {
+                <div class="mb-4">
+                  <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="isGeneralTask"
+                           [(ngModel)]="isGeneralTask"
+                           [ngModelOptions]="{standalone: true}"
+                           (change)="onGeneralTaskChange(isGeneralTask)">
+                    <label class="form-check-label" for="isGeneralTask">
+                      <i class="fas fa-home text-primary me-2"></i>
+                      <strong>General household task</strong>
+                      <small class="text-muted d-block ms-4">
+                        This task is not specific to any room
+                      </small>
+                    </label>
+                  </div>
+                </div>
+              }
+
               <!-- Room -->
               <div class="mb-4">
                 <label for="roomId" class="form-label fw-semibold">
                   <i class="fas fa-door-open text-success me-2"></i>
                   Room <span class="text-danger">*</span>
                 </label>
-                <select id="roomId" 
-                        formControlName="roomId" 
+                <select id="roomId"
+                        formControlName="roomId"
                         class="form-select form-select-lg"
-                        [class.is-invalid]="roomId?.invalid && roomId?.touched">
+                        [class.is-invalid]="roomId?.invalid && roomId?.touched"
+                        [disabled]="isGeneralTask">
                   <option value="">-- Select Room --</option>
                   @for (room of rooms; track room.id) {
                     <option [value]="room.id">{{ room.name }}</option>
@@ -136,6 +158,12 @@
                 </select>
                 @if (roomId?.invalid && roomId?.touched) {
                   <div class="invalid-feedback">Please select a room</div>
+                }
+                @if (isGeneralTask) {
+                  <div class="form-text text-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    General room automatically selected
+                  </div>
                 }
               </div>
             </div>

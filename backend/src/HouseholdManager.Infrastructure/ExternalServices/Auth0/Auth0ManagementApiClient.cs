@@ -64,11 +64,11 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
             {
                 var error = await response.Content.ReadAsStringAsync();
                 _logger.LogError("Failed to get Management API token: {Error}", error);
-                throw new InvalidOperationException($"Failed to authenticate with Auth0 Management API: {error}");
+                throw new AuthenticationException($"Failed to authenticate with Auth0 Management API: {error}");
             }
 
             var tokenResponse = await response.Content.ReadFromJsonAsync<TokenResponse>()
-                ?? throw new InvalidOperationException("Failed to parse token response");
+                ?? throw new AuthenticationException("Failed to parse token response");
 
             _cachedAccessToken = tokenResponse.access_token;
             _tokenExpiration = DateTime.UtcNow.AddSeconds(tokenResponse.expires_in - 60); // Refresh 1 min early
@@ -120,12 +120,20 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
             catch (ErrorApiException ex)
             {
                 _logger.LogError(ex, "Auth0 API error creating password change ticket: {Message}", ex.Message);
-                throw new InvalidOperationException($"Failed to create password change ticket: {ex.Message}", ex);
+
+                // Check if user not found
+                if (ex.Message.Contains("user not found", StringComparison.OrdinalIgnoreCase) ||
+                    ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new NotFoundException("User", userId);
+                }
+
+                throw new DomainException($"Failed to create password change ticket: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error creating password change ticket");
-                throw new InvalidOperationException("Failed to create password change ticket", ex);
+                throw;
             }
         }
 
@@ -161,19 +169,26 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
                 _logger.LogError(ex, "Auth0 API error changing email: {Message}", ex.Message);
 
                 // Handle specific errors
-                if (ex.Message.Contains("email already exists") || ex.Message.Contains("The specified new email already exists"))
+                if (ex.Message.Contains("email already exists", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("The specified new email already exists", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new HouseholdManager.Domain.Exceptions.ValidationException(
                         "email",
                         "This email address is already in use by another account");
                 }
 
-                throw new InvalidOperationException($"Failed to change email: {ex.Message}", ex);
+                if (ex.Message.Contains("user not found", StringComparison.OrdinalIgnoreCase) ||
+                    ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new NotFoundException("User", userId);
+                }
+
+                throw new DomainException($"Failed to change email: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error changing email");
-                throw new InvalidOperationException("Failed to change email", ex);
+                throw;
             }
         }
 
@@ -196,10 +211,15 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
 
                 return connection;
             }
+            catch (ErrorApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogError(ex, "User not found when getting connection");
+                throw new NotFoundException("User", userId);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting user connection");
-                throw new InvalidOperationException("Failed to get user connection", ex);
+                throw;
             }
         }
 
@@ -235,12 +255,19 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
             catch (ErrorApiException ex)
             {
                 _logger.LogError(ex, "Auth0 API error updating name: {Message}", ex.Message);
-                throw new InvalidOperationException($"Failed to update user name: {ex.Message}", ex);
+
+                if (ex.Message.Contains("user not found", StringComparison.OrdinalIgnoreCase) ||
+                    ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new NotFoundException("User", userId);
+                }
+
+                throw new DomainException($"Failed to update user name: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error updating name");
-                throw new InvalidOperationException("Failed to update user name", ex);
+                throw;
             }
         }
 
@@ -264,12 +291,20 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Auth0
             catch (ErrorApiException ex)
             {
                 _logger.LogError(ex, "Auth0 API error deleting user: {Message}", ex.Message);
-                throw new InvalidOperationException($"Failed to delete user from Auth0: {ex.Message}", ex);
+
+                // User already deleted is not really an error for deletion
+                if (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    _logger.LogWarning("User {UserId} not found in Auth0 (may be already deleted)", userId);
+                    return; // Consider it success if user doesn't exist
+                }
+
+                throw new DomainException($"Failed to delete user from Auth0: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error deleting user");
-                throw new InvalidOperationException("Failed to delete user from Auth0", ex);
+                throw;
             }
         }
 

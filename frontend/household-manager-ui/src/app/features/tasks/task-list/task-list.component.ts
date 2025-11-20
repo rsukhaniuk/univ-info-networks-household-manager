@@ -383,13 +383,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   // Calendar export methods
   exportCalendar(): void {
-    try {
-      this.calendarService.exportCalendar(this.householdId);
-      this.toastService.success('Calendar export started. Check your downloads.');
-    } catch (error) {
-      this.toastService.error('Failed to export calendar');
-      console.error('Calendar export error:', error);
-    }
+    this.calendarService.exportCalendar(this.householdId)
+      .then(() => {
+        this.toastService.success('Calendar exported successfully. Check your downloads.');
+      })
+      .catch(() => {
+        // Error will be shown by error interceptor (which now handles blob errors)
+      });
   }
 
   openSubscriptionDialog(): void {

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 
 import { FlatpickrDirective, FlatpickrDefaults } from 'angularx-flatpickr';
 import { english } from 'flatpickr/dist/l10n/default';
@@ -30,6 +30,7 @@ import { RecurrenceRuleBuilderComponent } from '../../../shared/components/recur
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
+    FormsModule,
     FlatpickrDirective,
     RecurrenceRuleBuilderComponent
   ],
@@ -57,6 +58,8 @@ export class TaskFormComponent implements OnInit, OnDestroy {
   form: FormGroup;
   rooms: RoomDto[] = [];
   members: HouseholdMemberDto[] = [];
+  generalRoom: RoomDto | null = null;
+  isGeneralTask = false;
 
   // State
   isLoading = true;
@@ -197,6 +200,13 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       this.loadMembers(),
       this.isEdit && this.taskId ? this.loadTask() : Promise.resolve()
     ]).then(() => {
+      // Check if there are any rooms
+      if (this.rooms.length === 0 && !this.isEdit) {
+        this.toastService.error('You need to create at least one room before creating tasks.');
+        this.location.back();
+        return;
+      }
+
       this.isLoading = false;
     }).catch(() => {
       // Error will be shown in global error banner by error interceptor
@@ -210,9 +220,13 @@ export class TaskFormComponent implements OnInit, OnDestroy {
         next: (response) => {
           if (response.success && response.data) {
             // Handle both array and PagedResult
-            this.rooms = Array.isArray(response.data) 
-              ? response.data 
+            this.rooms = Array.isArray(response.data)
+              ? response.data
               : (response.data as any).items || [];
+
+            // Find the "General" room
+            this.generalRoom = this.rooms.find(r => r.name === 'General') || null;
+
             resolve();
           } else {
             reject(new Error('Failed to load rooms'));
@@ -274,6 +288,11 @@ export class TaskFormComponent implements OnInit, OnDestroy {
               rowVersion: task.rowVersion
             });
 
+            // Check if this is a General task
+            if (this.generalRoom && task.roomId === this.generalRoom.id) {
+              this.isGeneralTask = true;
+            }
+
             resolve();
           } else {
             reject(new Error('Failed to load task'));
@@ -302,6 +321,18 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
     dueDateControl?.updateValueAndValidity();
     recurrenceRuleControl?.updateValueAndValidity();
+  }
+
+  onGeneralTaskChange(isGeneral: boolean): void {
+    this.isGeneralTask = isGeneral;
+
+    if (isGeneral && this.generalRoom) {
+      // Auto-select General room
+      this.form.patchValue({ roomId: this.generalRoom.id });
+    } else if (!isGeneral) {
+      // Clear room selection when unchecking
+      this.form.patchValue({ roomId: '' });
+    }
   }
 
   onSubmit(): void {

@@ -71,7 +71,16 @@ namespace HouseholdManager.Application.Services
                 JoinedAt = DateTime.UtcNow
             }, cancellationToken);
 
-            _logger.LogInformation("Created household {HouseholdId} with owner {UserId}",
+            // Auto-create "General" room for household-wide tasks
+            await _roomRepository.AddAsync(new Room
+            {
+                HouseholdId = createdHousehold.Id,
+                Name = "General",
+                Description = "General household tasks not tied to a specific room",
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken);
+
+            _logger.LogInformation("Created household {HouseholdId} with owner {UserId} and General room",
                 createdHousehold.Id, ownerId);
 
             return _mapper.Map<HouseholdDto>(createdHousehold);
