@@ -109,7 +109,7 @@ namespace HouseholdManager.Domain.Entities
         /// Concurrency control for optimistic locking
         /// </summary>
         [Timestamp]
-        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public byte[]? RowVersion { get; set; }
 
         // Navigation properties
         /// <summary>

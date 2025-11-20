@@ -38,6 +38,66 @@
     </div>
   </div>
 
+  <!-- Month Day Selector (only for Monthly) -->
+  <div class="mb-3" *ngIf="selectedFrequency === 'MONTHLY'">
+    <label class="form-label fw-semibold">
+      <i class="fas fa-calendar-day text-info me-2"></i>
+      On day of month
+    </label>
+    <select
+      [(ngModel)]="monthDay"
+      (change)="onMonthDayChange()"
+      class="form-select"
+      [disabled]="disabled">
+      <option *ngFor="let day of monthDayOptions" [value]="day.value">
+        {{ day.label }}
+      </option>
+    </select>
+    <small class="form-text text-muted">
+      <span *ngIf="monthDay === -1">Task will repeat on the last day of every month (28-31 depending on the month)</span>
+      <span *ngIf="monthDay > 0 && monthDay <= 28">Task will repeat on day {{ monthDay }} of every month</span>
+      <span *ngIf="monthDay > 28 && monthDay < 31">Task will repeat on day {{ monthDay }} (months with fewer days will skip)</span>
+      <span *ngIf="monthDay === 31">Task will only repeat in months with 31 days</span>
+    </small>
+  </div>
+
+  <!-- Year Date Selector (only for Yearly) -->
+  <div class="mb-3" *ngIf="selectedFrequency === 'YEARLY'">
+    <label class="form-label fw-semibold">
+      <i class="fas fa-calendar-day text-info me-2"></i>
+      On date
+    </label>
+    <div class="row g-2">
+      <div class="col-md-7">
+        <select
+          [(ngModel)]="yearMonth"
+          (change)="onYearMonthChange()"
+          class="form-select"
+          [disabled]="disabled">
+          <option *ngFor="let month of months" [value]="month.value">
+            {{ month.label }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <div class="input-group">
+          <input
+            type="number"
+            [(ngModel)]="yearDay"
+            (change)="onYearDayChange()"
+            class="form-control"
+            min="1"
+            [max]="getMaxDayInMonth(yearMonth)"
+            [disabled]="disabled">
+          <span class="input-group-text">day</span>
+        </div>
+      </div>
+    </div>
+    <small class="form-text text-muted">
+      Choose the month and day for the yearly recurrence
+    </small>
+  </div>
+
   <!-- Interval Selector -->
   <div class="mb-3">
     <label class="form-label fw-semibold">
@@ -51,7 +111,7 @@
         (change)="onIntervalChange()"
         class="form-control"
         min="1"
-        max="99"
+        [max]="getMaxInterval()"
         [disabled]="disabled">
       <span class="input-group-text">{{ getFrequencyLabel() }}</span>
     </div>
@@ -67,11 +127,15 @@
       End date (optional)
     </label>
     <input
-      type="date"
+      type="text"
       [(ngModel)]="endDate"
-      (change)="onEndDateChange()"
+      (ngModelChange)="onEndDateChange()"
       class="form-control"
-      [disabled]="disabled">
+      placeholder="No end date"
+      [disabled]="disabled"
+      mwlFlatpickr
+      [options]="flatpickrEndDateOptions"
+      readonly>
     <small class="form-text text-muted">
       Leave empty for indefinite recurrence
     </small>

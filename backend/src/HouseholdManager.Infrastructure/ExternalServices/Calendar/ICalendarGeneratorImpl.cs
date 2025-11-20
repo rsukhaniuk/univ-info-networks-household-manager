@@ -1,6 +1,7 @@
 using HouseholdManager.Application.Interfaces.Services;
 using HouseholdManager.Domain.Entities;
 using HouseholdManager.Domain.Enums;
+using HouseholdManager.Domain.Exceptions;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
@@ -67,9 +68,11 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Calendar
             var calendar = new Ical.Net.Calendar
             {
                 ProductId = ProductId,
-                Version = "2.0",
-                Name = calendarName
+                Version = "2.0"
             };
+
+            // Set calendar name using X-WR-CALNAME property
+            calendar.AddProperty("X-WR-CALNAME", calendarName);
 
             if (!string.IsNullOrWhiteSpace(description))
             {
@@ -201,7 +204,7 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Calendar
             // Regular tasks must have RecurrenceRule
             if (string.IsNullOrWhiteSpace(task.RecurrenceRule))
             {
-                throw new InvalidOperationException($"Regular task {task.Id} must have a RecurrenceRule");
+                throw new ValidationException("Regular tasks must have a recurrence pattern configured");
             }
 
             var recurrencePattern = new RecurrencePattern(task.RecurrenceRule);
@@ -225,25 +228,25 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Calendar
             {
                 // For other patterns (DAILY, MONTHLY, etc.), start from today or creation date
                 startDate = task.CreatedAt > DateTime.UtcNow ? task.CreatedAt : DateTime.UtcNow;
-                startDate = startDate.Date.AddHours(9); // Default to 9 AM
+                startDate = startDate.Date;
             }
 
-            calendarEvent.Start = new CalDateTime(startDate);
-
-            // Set end time based on estimated time
-            var endDate = startDate.AddMinutes(task.EstimatedMinutes);
-            calendarEvent.End = new CalDateTime(endDate);
+            // Set as all-day event (no specific time)
+            // Use date-only format (YYYYMMDD without time component)
+            calendarEvent.Start = new CalDateTime(startDate.Year, startDate.Month, startDate.Day);
+            // Don't set End time - this makes it a task without specific duration
         }
 
         private void SetSingleEvent(CalendarEvent calendarEvent, HouseholdTask task)
         {
             if (task.DueDate.HasValue)
             {
-                calendarEvent.Start = new CalDateTime(task.DueDate.Value);
+                var dueDate = task.DueDate.Value.Date;
 
-                // Set end time based on estimated time
-                var endDate = task.DueDate.Value.AddMinutes(task.EstimatedMinutes);
-                calendarEvent.End = new CalDateTime(endDate);
+                // Set as all-day event (no specific time)
+                // Use date-only format (YYYYMMDD without time component)
+                calendarEvent.Start = new CalDateTime(dueDate.Year, dueDate.Month, dueDate.Day);
+                // Don't set End time - this makes it a task without specific duration
             }
         }
 
@@ -267,10 +270,10 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Calendar
             if (daysUntilTarget == 0)
             {
                 // If today is the target day, use today
-                return today.Date.AddHours(9); // Default to 9 AM
+                return today.Date;
             }
 
-            return today.Date.AddDays(daysUntilTarget).AddHours(9);
+            return today.Date.AddDays(daysUntilTarget);
         }
 
         private DateTime GetWeekStarting(DateTime date)

@@ -1,4 +1,19 @@
 @use 'variables' as *;
+@use 'sass:color';
+
+// ==========================================
+// COLOR FUNCTIONS (Modern Sass syntax)
+// ==========================================
+
+// Lighten color (replaces deprecated lighten-color())
+@function lighten-color($color, $amount) {
+  @return color.adjust($color, $lightness: $amount);
+}
+
+// Darken color (replaces deprecated darken-color())
+@function darken-color($color, $amount) {
+  @return color.adjust($color, $lightness: -$amount);
+}
 
 // ==========================================
 // LAYOUT MIXINS
@@ -226,7 +241,7 @@
     border-radius: 5px;
 
     &:hover {
-      background: darken($thumb-color, 10%);
+      background: darken-color($thumb-color, 10%);
     }
   }
 }

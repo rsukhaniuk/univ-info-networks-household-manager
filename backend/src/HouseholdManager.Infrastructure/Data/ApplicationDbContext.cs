@@ -161,7 +161,6 @@ namespace HouseholdManager.Infrastructure.Data
             if (Database.ProviderName?.Contains("Npgsql") == true)
             {
                 // PostgreSQL uses xmin for concurrency
-                rowVersionProperty.HasAnnotation("Npgsql:ValueGenerationStrategy", "Xmin");
                 rowVersionProperty.IsConcurrencyToken();
                 rowVersionProperty.ValueGeneratedOnAddOrUpdate();
             }

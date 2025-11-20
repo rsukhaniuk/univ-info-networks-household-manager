@@ -2,6 +2,7 @@
 @use 'app/shared/styles' as *;
 
 /* Import Bootstrap (must use @import, not @use) */
+/* stylelint-disable-next-line scss/at-import-no-partial-leading-underscore */
 @import 'bootstrap/scss/bootstrap';
 
 /* Import Font Awesome */
@@ -91,8 +92,16 @@ h1, h2, h3, h4, h5, h6 {
   @include button-gradient($primary-color, $primary-hover, $primary-hover, $primary-active);
 }
 
+.btn-info {
+  @include button-gradient($info-color, $info-hover, $info-hover, $info-active);
+}
+
 .btn-success {
   @include button-gradient($success-color, $success-hover, $success-hover, $success-active);
+}
+
+.btn-warning {
+  @include button-gradient($warning-color, $warning-hover, $warning-hover, $warning-active);
 }
 
 .btn-danger {
@@ -525,6 +534,6 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 5px;
 
   &:hover {
-    background: darken(#888, 10%);
+    background: darken-color(#888, 10%);
   }
 }

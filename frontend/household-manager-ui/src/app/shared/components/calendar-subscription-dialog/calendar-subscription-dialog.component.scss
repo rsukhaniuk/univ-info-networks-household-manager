@@ -19,6 +19,9 @@
 }
 
 .modal-content {
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.175);
+  border-radius: 0.5rem;
   box-shadow: vars.$shadow-lg;
 }
 

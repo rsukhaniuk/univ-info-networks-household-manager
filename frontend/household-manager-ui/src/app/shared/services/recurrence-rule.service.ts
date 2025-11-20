@@ -116,7 +116,7 @@ export class RecurrenceRuleService {
 
   /**
    * Create a monthly recurrence rule
-   * @param dayOfMonth Day of month (1-31)
+   * @param dayOfMonth Day of month (1-31 or -1 for last day of month)
    * @param interval Interval between occurrences (default: 1 = every month)
    * @param endDate Optional end date for recurrence
    * @returns RRULE string

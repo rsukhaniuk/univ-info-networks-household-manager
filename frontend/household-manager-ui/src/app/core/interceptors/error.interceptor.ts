@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ServerErrorService } from '../services/server-error.service';
 import { ToastService } from '../services/toast.service';
-import { catchError, throwError } from 'rxjs';
+import { catchError, throwError, from, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 
@@ -14,113 +14,145 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      let errorMessage = 'An unknown error occurred';
-      let errorDetails: any = null;
-      const extracted: string[] = [];
-
-      // Don't show errors for Auth0 or other internal requests
-      const isInternalRequest = 
-        req.url.includes('auth0.com') || 
-        req.url.includes('/oauth/') ||
-        req.url.includes('/token');
-
-      // Don't show 401 errors (handled by Auth0)
-      const shouldSkipError = isInternalRequest || error.status === 401;
-
-      if (error.error instanceof ErrorEvent) {
-        // Client-side error (network issue, etc.)
-        errorMessage = `Client Error: ${error.error.message}`;
-        extracted.push(errorMessage);
-        
-      } else {
-        // Server-side error
-        let payload: any = error.error;
-
-        // Try to parse string payloads as JSON
-        if (typeof payload === 'string') {
-          const trimmed = payload.trim();
-          if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-            try {
-              payload = JSON.parse(trimmed);
-            } catch {
-              // Keep original string if parse fails
-            }
-          }
-        }
-
-        if (payload && typeof payload === 'object') {
-          if (payload.errors && typeof payload.errors === 'object') {
-            errorDetails = payload;
-            Object.keys(payload.errors).forEach(field => {
-              const messages = payload.errors[field];
-              if (Array.isArray(messages)) {
-                messages.forEach(msg => {
-                  // Clean up technical ASP.NET Core error messages
-                  const cleanedMsg = cleanErrorMessage(msg);
-                  extracted.push(cleanedMsg);
-                });
-              }
-            });
-          }
-
-          if (extracted.length === 0 && payload.detail && typeof payload.detail === 'string') {
-            extracted.push(payload.detail);
-            errorDetails = payload;
-          }
-
-          if (extracted.length === 0 && payload.title && typeof payload.title === 'string') {
-            extracted.push(payload.title);
-            errorDetails = payload;
-          }
-        } else if (typeof payload === 'string' && payload.trim()) {
-          extracted.push(payload.trim());
-        }
-
-        if (extracted.length === 0) {
-          extracted.push(getStatusMessage(error.status));
-        }
-
-        errorMessage = extracted[0];
-
-        // Route errors based on severity
-        if (!shouldSkipError) {
-          const isCriticalError = error.status === 0 || // Network error
-                                  error.status === 403 || // Forbidden
-                                  error.status >= 500; // Server errors
-
-          if (isCriticalError) {
-            // Show critical errors in global banner (persistent)
-            serverErrorService.setErrors(extracted);
-          } else {
-            // Show feature-specific errors in toast (auto-hide)
-            // Join multiple messages with line breaks if needed
-            const toastMessage = extracted.join('\n');
-            toastService.error(toastMessage, 4000);
-          }
-        }
-
-        if (!environment.production && !shouldSkipError) {
-          console.error('[HTTP Error]', {
-            status: error.status,
-            statusText: error.statusText,
-            message: errorMessage,
-            allMessages: extracted,
-            details: errorDetails,
-            url: req.url
-          });
-        }
-      }
-
-      return throwError(() => ({
-        status: error.status,
-        message: errorMessage,
-        messages: extracted, // All error messages
-        details: errorDetails,
-        originalError: error
-      }));
+      // Use from() to handle async error processing
+      return from(
+        handleError(error, req, serverErrorService, toastService)
+      ).pipe(
+        switchMap((processedError) => throwError(() => processedError))
+      );
     })
   );
 };
+
+async function handleError(
+  error: HttpErrorResponse,
+  req: any,
+  serverErrorService: ServerErrorService,
+  toastService: ToastService
+) {
+  let errorMessage = 'An unknown error occurred';
+  let errorDetails: any = null;
+  const extracted: string[] = [];
+
+  // Don't show errors for Auth0 or other internal requests
+  const isInternalRequest =
+    req.url.includes('auth0.com') ||
+    req.url.includes('/oauth/') ||
+    req.url.includes('/token');
+
+  // Don't show 401 errors (handled by Auth0)
+  const shouldSkipError = isInternalRequest || error.status === 401;
+
+  if (error.error instanceof ErrorEvent) {
+    // Client-side error (network issue, etc.)
+    errorMessage = `Client Error: ${error.error.message}`;
+    extracted.push(errorMessage);
+
+  } else {
+    // Server-side error
+    let payload: any = error.error;
+
+    // Handle Blob errors (e.g., from file download requests with responseType: 'blob')
+    // When an error occurs with responseType: 'blob', the error body is also a Blob
+    if (payload instanceof Blob) {
+      try {
+        const text = await payload.text();
+        // Try to parse as JSON (validation errors, API errors, etc.)
+        if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+          payload = JSON.parse(text);
+        } else {
+          // If not JSON, use the text as-is
+          payload = text;
+        }
+      } catch (e) {
+        // If we can't parse the blob, treat it as unknown error
+        payload = null;
+      }
+    }
+
+    // Try to parse string payloads as JSON
+    if (typeof payload === 'string') {
+      const trimmed = payload.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          payload = JSON.parse(trimmed);
+        } catch {
+          // Keep original string if parse fails
+        }
+      }
+    }
+
+    if (payload && typeof payload === 'object') {
+      if (payload.errors && typeof payload.errors === 'object') {
+        errorDetails = payload;
+        Object.keys(payload.errors).forEach(field => {
+          const messages = payload.errors[field];
+          if (Array.isArray(messages)) {
+            messages.forEach(msg => {
+              // Clean up technical ASP.NET Core error messages
+              const cleanedMsg = cleanErrorMessage(msg);
+              extracted.push(cleanedMsg);
+            });
+          }
+        });
+      }
+
+      if (extracted.length === 0 && payload.detail && typeof payload.detail === 'string') {
+        extracted.push(payload.detail);
+        errorDetails = payload;
+      }
+
+      if (extracted.length === 0 && payload.title && typeof payload.title === 'string') {
+        extracted.push(payload.title);
+        errorDetails = payload;
+      }
+    } else if (typeof payload === 'string' && payload.trim()) {
+      extracted.push(payload.trim());
+    }
+
+    if (extracted.length === 0) {
+      extracted.push(getStatusMessage(error.status));
+    }
+
+    errorMessage = extracted[0];
+
+    // Route errors based on severity
+    if (!shouldSkipError) {
+      const isCriticalError = error.status === 0 || // Network error
+                              error.status === 403 || // Forbidden
+                              error.status >= 500; // Server errors
+
+      if (isCriticalError) {
+        // Show critical errors in global banner (persistent)
+        serverErrorService.setErrors(extracted);
+      } else {
+        // Show feature-specific errors in toast (auto-hide)
+        // Join multiple messages with line breaks if needed
+        const toastMessage = extracted.join('\n');
+        toastService.error(toastMessage, 4000);
+      }
+    }
+
+    if (!environment.production && !shouldSkipError) {
+      console.error('[HTTP Error]', {
+        status: error.status,
+        statusText: error.statusText,
+        message: errorMessage,
+        allMessages: extracted,
+        details: errorDetails,
+        url: req.url
+      });
+    }
+  }
+
+  return {
+    status: error.status,
+    message: errorMessage,
+    messages: extracted, // All error messages
+    details: errorDetails,
+    originalError: error
+  };
+}
 
 /**
  * Get user-friendly message based on HTTP status code
@@ -156,18 +188,18 @@ function cleanErrorMessage(message: string): string {
   if (message.includes('could not be converted to System.Guid')) {
     return 'Invalid invite code format. Please check and try again.';
   }
-  
+
   if (message.includes('could not be converted to System.Int32')) {
     return 'Invalid number format. Please enter a valid number.';
   }
-  
+
   if (message.includes('could not be converted to System.DateTime')) {
     return 'Invalid date format. Please select a valid date.';
   }
-  
+
   if (message.includes('could not be converted to System.')) {
     return 'Invalid data format. Please check your input.';
   }
-  
+
   return message;
 }

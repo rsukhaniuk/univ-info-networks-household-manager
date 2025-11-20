@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api.service';
 import { ApiResponse } from '../../../core/models/api-response.model';
+import { environment } from '../../../../environments/environment';
 
 /**
  * DTO for calendar subscription information
@@ -23,20 +24,22 @@ export interface CalendarSubscriptionDto {
 })
 export class CalendarService {
   private apiService = inject(ApiService);
+  private http = inject(HttpClient);
 
   /**
    * Export household tasks as .ics file (triggers download)
    * @param householdId Household ID
    * @param startDate Optional start date filter
    * @param endDate Optional end date filter
+   * @returns Promise that resolves when download completes
    */
   exportCalendar(
     householdId: string,
     startDate?: Date,
     endDate?: Date
-  ): void {
+  ): Promise<void> {
     // Build URL with query parameters
-    let url = `/api/households/${householdId}/calendar/export.ics`;
+    let url = `${environment.apiUrl}/households/${householdId}/calendar/export.ics`;
     const params: string[] = [];
 
     if (startDate) {
@@ -50,16 +53,38 @@ export class CalendarService {
       url += '?' + params.join('&');
     }
 
-    // Trigger file download by opening URL in new window
-    // The browser will automatically download the .ics file
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      console.error('No access token found');
-      return;
-    }
+    // Use HttpClient to download file (error interceptor will handle errors including blob errors)
+    return new Promise((resolve, reject) => {
+      this.http.get(url, {
+        responseType: 'blob',
+        observe: 'response'
+      }).subscribe({
+        next: (response) => {
+          const blob = response.body;
+          if (!blob || blob.size === 0) {
+            reject(new Error('Downloaded file is empty'));
+            return;
+          }
 
-    // Create a temporary link to trigger download with authorization
-    this.downloadFileWithAuth(url, `household-tasks-${householdId}.ics`, token);
+          // Create download link
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `household-tasks-${householdId}.ics`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Clean up
+          window.URL.revokeObjectURL(blobUrl);
+          resolve();
+        },
+        error: (error) => {
+          // Error will be handled by error interceptor (which now supports blob errors)
+          reject(error);
+        }
+      });
+    });
   }
 
   /**
@@ -69,48 +94,8 @@ export class CalendarService {
    */
   getSubscriptionUrl(householdId: string): Observable<ApiResponse<CalendarSubscriptionDto>> {
     return this.apiService.get<CalendarSubscriptionDto>(
-      `/api/households/${householdId}/calendar/subscription`
+      `/households/${householdId}/calendar/subscription`
     );
   }
 
-  /**
-   * Helper method to download file with authorization header
-   * Uses Blob API to download file from authenticated endpoint
-   */
-  private downloadFileWithAuth(url: string, filename: string, token: string): void {
-    // Get base URL from current location
-    const baseUrl = window.location.origin;
-    const fullUrl = baseUrl + url;
-
-    // Fetch file with auth header
-    fetch(fullUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.blob();
-      })
-      .then(blob => {
-        // Create download link
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up
-        window.URL.revokeObjectURL(blobUrl);
-      })
-      .catch(error => {
-        console.error('Error downloading calendar file:', error);
-        throw error;
-      });
-  }
 }
