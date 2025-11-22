@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace HouseholdManager.Infrastructure.Migrations
+namespace HouseholdManager.Infrastructure.Migrations.SqlServer
 {
     /// <inheritdoc />
     public partial class AllowUserDeletionWithTaskHandling : Migration

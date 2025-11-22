@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace HouseholdManager.Infrastructure.Migrations
+namespace HouseholdManager.Infrastructure.Migrations.SqlServer
 {
     /// <inheritdoc />
     public partial class AddInviteCodeExpiration : Migration

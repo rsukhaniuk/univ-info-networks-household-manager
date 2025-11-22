@@ -4,16 +4,19 @@ using HouseholdManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace HouseholdManager.Infrastructure.Migrations
+namespace HouseholdManager.Infrastructure.Migrations.SqlServer
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251102171245_AddIsCountedForCompletionToTaskExecution")]
+    partial class AddIsCountedForCompletionToTaskExecution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,47 +66,6 @@ namespace HouseholdManager.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("HouseholdManager.Domain.Entities.CalendarSubscriptionToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("HouseholdId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastAccessedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("HouseholdId", "UserId");
-
-                    b.ToTable("CalendarSubscriptionTokens");
-                });
-
             modelBuilder.Entity("HouseholdManager.Domain.Entities.Household", b =>
                 {
                     b.Property<Guid>("Id")
@@ -119,9 +81,6 @@ namespace HouseholdManager.Infrastructure.Migrations
 
                     b.Property<Guid>("InviteCode")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("InviteCodeExpiresAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -190,29 +149,15 @@ namespace HouseholdManager.Infrastructure.Migrations
                     b.Property<int>("EstimatedMinutes")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExternalCalendarId")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<Guid>("HouseholdId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("LastSyncedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RecurrenceEndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RecurrenceRule")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
@@ -222,6 +167,9 @@ namespace HouseholdManager.Infrastructure.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<string>("ScheduledWeekday")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -331,17 +279,6 @@ namespace HouseholdManager.Infrastructure.Migrations
                     b.ToTable("TaskExecutions");
                 });
 
-            modelBuilder.Entity("HouseholdManager.Domain.Entities.CalendarSubscriptionToken", b =>
-                {
-                    b.HasOne("HouseholdManager.Domain.Entities.Household", "Household")
-                        .WithMany()
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Household");
-                });
-
             modelBuilder.Entity("HouseholdManager.Domain.Entities.HouseholdMember", b =>
                 {
                     b.HasOne("HouseholdManager.Domain.Entities.Household", "Household")
@@ -353,7 +290,7 @@ namespace HouseholdManager.Infrastructure.Migrations
                     b.HasOne("HouseholdManager.Domain.Entities.ApplicationUser", "User")
                         .WithMany("HouseholdMemberships")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Household");
@@ -365,8 +302,7 @@ namespace HouseholdManager.Infrastructure.Migrations
                 {
                     b.HasOne("HouseholdManager.Domain.Entities.ApplicationUser", "AssignedUser")
                         .WithMany("AssignedTasks")
-                        .HasForeignKey("AssignedUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("AssignedUserId");
 
                     b.HasOne("HouseholdManager.Domain.Entities.Household", "Household")
                         .WithMany("Tasks")

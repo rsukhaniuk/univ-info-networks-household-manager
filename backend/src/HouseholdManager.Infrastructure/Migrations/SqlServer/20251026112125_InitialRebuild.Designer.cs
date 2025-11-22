@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace HouseholdManager.Infrastructure.Migrations
+namespace HouseholdManager.Infrastructure.Migrations.SqlServer
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251111165304_AddCalendarFieldsToHouseholdTask")]
-    partial class AddCalendarFieldsToHouseholdTask
+    [Migration("20251026112125_InitialRebuild")]
+    partial class InitialRebuild
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -82,9 +82,6 @@ namespace HouseholdManager.Infrastructure.Migrations
                     b.Property<Guid>("InviteCode")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("InviteCodeExpiresAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -152,29 +149,15 @@ namespace HouseholdManager.Infrastructure.Migrations
                     b.Property<int>("EstimatedMinutes")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExternalCalendarId")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<Guid>("HouseholdId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("LastSyncedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RecurrenceEndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RecurrenceRule")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
@@ -257,9 +240,6 @@ namespace HouseholdManager.Infrastructure.Migrations
 
                     b.Property<Guid?>("HouseholdMemberId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool?>("IsCountedForCompletion")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
