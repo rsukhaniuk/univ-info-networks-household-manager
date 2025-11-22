@@ -37,8 +37,8 @@ namespace HouseholdManager.Infrastructure.Data
         {
             try
             {
-                // Ensure database is created
-                await _context.Database.EnsureCreatedAsync();
+                // Apply pending migrations (creates __EFMigrationsHistory table)
+                await _context.Database.MigrateAsync();
 
                 // Seed admin user if configured
                 await SeedAdminUserAsync();
@@ -108,7 +108,7 @@ namespace HouseholdManager.Infrastructure.Data
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
-                "✅ System administrator created successfully: {Email} (Auth0 ID: {Auth0Id})",
+                "System administrator created successfully: {Email} (Auth0 ID: {Auth0Id})",
                 adminEmail,
                 adminAuth0Id);
         }

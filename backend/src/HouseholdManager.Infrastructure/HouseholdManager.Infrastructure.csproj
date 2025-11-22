@@ -6,6 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Exclude SQL Server migrations from compilation (kept for reference) -->
+  <ItemGroup>
+    <Compile Remove="Migrations\SqlServer\**\*.cs" />
+    <None Include="Migrations\SqlServer\**\*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Auth0.ManagementApi" Version="7.42.0" />
     <PackageReference Include="Ical.Net" Version="5.1.2" />

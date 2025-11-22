@@ -28,23 +28,27 @@ namespace HouseholdManager.Infrastructure
         {
             // Database - Multi-provider support (PostgreSQL or SQL Server)
             var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var databaseProvider = configuration.GetValue<string>("DatabaseProvider") ?? "SqlServer";
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                // Detect database provider from connection string
-                if (!string.IsNullOrEmpty(connectionString) &&
-                    (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
-                     connectionString.Contains("Server=localhost", StringComparison.OrdinalIgnoreCase) && connectionString.Contains("Port=5432")))
+                if (databaseProvider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
                 {
-                    // PostgreSQL
-                    options.UseNpgsql(connectionString,
-                        b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                    // PostgreSQL (SQL Server migrations excluded from compilation via .csproj)
+                    options.UseNpgsql(connectionString, b =>
+                    {
+                        b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                        b.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+                    });
                 }
                 else
                 {
-                    // SQL Server (default)
-                    options.UseSqlServer(connectionString,
-                        b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                    // SQL Server (to use: remove exclusion in .csproj and exclude PostgreSQL migrations)
+                    options.UseSqlServer(connectionString, b =>
+                    {
+                        b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                        b.MigrationsHistoryTable("__EFMigrationsHistory", "dbo");
+                    });
                 }
             });
 

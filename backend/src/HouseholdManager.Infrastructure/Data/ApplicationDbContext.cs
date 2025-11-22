@@ -13,6 +13,13 @@ namespace HouseholdManager.Infrastructure.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            // The snapshot is generated for one provider but runtime supports both SQL Server and PostgreSQL
+            optionsBuilder.ConfigureWarnings(warnings =>
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         // DbSets for domain models
         public DbSet<ApplicationUser> Users { get; set; } = null!;
         public DbSet<Household> Households { get; set; } = null!;

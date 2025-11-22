@@ -23,9 +23,29 @@ namespace HouseholdManager.Infrastructure.Data
                 .Build();
 
             var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var databaseProvider = configuration.GetValue<string>("DatabaseProvider") ?? "SqlServer";
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+
+            // Use DatabaseProvider from configuration (same logic as DependencyInjection.cs)
+            if (databaseProvider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
+            {
+                // PostgreSQL (SQL Server migrations excluded from compilation via .csproj)
+                optionsBuilder.UseNpgsql(connectionString, b =>
+                {
+                    b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                    b.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+                });
+            }
+            else
+            {
+                // SQL Server (to use: remove exclusion in .csproj and exclude PostgreSQL migrations)
+                optionsBuilder.UseSqlServer(connectionString, b =>
+                {
+                    b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                    b.MigrationsHistoryTable("__EFMigrationsHistory", "dbo");
+                });
+            }
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }
