@@ -27,6 +27,9 @@ services:
     container_name: household-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/localhost+1.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/localhost+1-key.pem
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=household_manager;Username=postgres;Password=postgres
       - Auth0__Domain=${AUTH0_DOMAIN}
       - Auth0__Audience=${AUTH0_AUDIENCE}

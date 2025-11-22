@@ -32,14 +32,12 @@ COPY --from=build /app/publish .
 # Create uploads directory
 RUN mkdir -p /app/wwwroot/uploads
 
-# Create directory for SSL certificates (mounted from host via docker-compose)
+# Create directory for SSL certificates (used in local development via docker-compose)
 RUN mkdir -p /app/certs
 
-# Local development: HTTPS on port 443 with certificates
-# Production (AWS): This will be overridden to use HTTP on port 8080
-EXPOSE 443
-ENV ASPNETCORE_URLS=https://+:443
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/localhost+1.pem
-ENV ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/localhost+1-key.pem
+# Default: HTTP on port 8080 (production - AWS App Runner handles HTTPS termination)
+# Local development: docker-compose.yml overrides these with HTTPS settings
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 
 ENTRYPOINT ["dotnet", "HouseholdManager.Api.dll"]
