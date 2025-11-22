@@ -38,12 +38,12 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/@fortawesome/fontawesome-free/webfonts",
-                "output": "/media"
+                "output": "webfonts"
               },
               {
                 "glob": "*.{woff,woff2,eot,ttf,svg}",
                 "input": "node_modules/primeicons/fonts",
-                "output": "/fonts"
+                "output": "fonts"
               }
             ],
             "styles": [
