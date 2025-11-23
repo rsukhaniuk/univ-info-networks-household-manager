@@ -82,6 +82,7 @@ export class RecurrenceRuleBuilderComponent implements OnInit, ControlValueAcces
   interval: number = 1;
   endDate: Date | null = null;
   monthDay: number = 1; // Day of month for MONTHLY (1-31)
+  isLastDayOfMonth: boolean = false; // Toggle for last day of month
   yearMonth: number = 1; // Month for YEARLY (1-12)
   yearDay: number = 1; // Day of month for YEARLY (1-31)
 
@@ -128,6 +129,7 @@ export class RecurrenceRuleBuilderComponent implements OnInit, ControlValueAcces
       this.interval = 1;
       this.endDate = null;
       this.monthDay = 1;
+      this.isLastDayOfMonth = false;
       this.yearMonth = 1;
       this.yearDay = 1;
       this.value = null;
@@ -149,9 +151,16 @@ export class RecurrenceRuleBuilderComponent implements OnInit, ControlValueAcces
         this.selectedDays = days;
       }
     } else if (frequency === 'MONTHLY') {
-      const monthDayMatch = rruleString.match(/BYMONTHDAY=(\d+)/);
+      const monthDayMatch = rruleString.match(/BYMONTHDAY=(-?\d+)/);
       if (monthDayMatch) {
-        this.monthDay = parseInt(monthDayMatch[1], 10);
+        const day = parseInt(monthDayMatch[1], 10);
+        if (day === -1) {
+          this.isLastDayOfMonth = true;
+          this.monthDay = -1;
+        } else {
+          this.isLastDayOfMonth = false;
+          this.monthDay = day;
+        }
       }
     } else if (frequency === 'YEARLY') {
       const monthMatch = rruleString.match(/BYMONTH=(\d+)/);
@@ -263,13 +272,25 @@ export class RecurrenceRuleBuilderComponent implements OnInit, ControlValueAcces
   onMonthDayChange(): void {
     this.markAsTouched();
 
-    // Ensure monthDay is either -1 (last day of month) or between 1 and 31
-    if (this.monthDay < -1) {
-      this.monthDay = -1;
-    } else if (this.monthDay === 0) {
+    // Ensure monthDay is between 1 and 31
+    if (this.monthDay < 1) {
       this.monthDay = 1;
     } else if (this.monthDay > 31) {
       this.monthDay = 31;
+    }
+
+    this.updateRRule();
+  }
+
+  onLastDayToggle(): void {
+    this.markAsTouched();
+
+    if (this.isLastDayOfMonth) {
+      // Store previous value and set to -1 for RRULE
+      this.monthDay = -1;
+    } else {
+      // Reset to day 1 when unchecked
+      this.monthDay = 1;
     }
 
     this.updateRRule();

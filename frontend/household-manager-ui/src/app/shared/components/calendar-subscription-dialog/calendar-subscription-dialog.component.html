@@ -3,7 +3,7 @@
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content">
         <!-- Header -->
-        <div class="modal-header bg-primary text-white">
+        <div class="modal-header bg-info text-white">
           <h5 class="modal-title">
             <i class="fas fa-calendar-plus me-2"></i>
             Subscribe to Calendar
@@ -15,7 +15,7 @@
         <div class="modal-body">
           <!-- Calendar Name -->
           <div class="mb-4">
-            <h6 class="fw-bold text-primary">
+            <h6 class="fw-bold text-info">
               <i class="fas fa-tag me-2"></i>Calendar Name
             </h6>
             <p class="mb-0">{{ subscriptionData.calendarName }}</p>
@@ -23,7 +23,7 @@
 
           <!-- Subscription URL -->
           <div class="mb-4">
-            <h6 class="fw-bold text-primary">
+            <h6 class="fw-bold text-info">
               <i class="fas fa-link me-2"></i>Subscription URL
             </h6>
             <div class="input-group">
@@ -33,7 +33,7 @@
                 [value]="subscriptionData.subscriptionUrl"
                 readonly>
               <button
-                class="btn btn-outline-primary"
+                class="btn btn-outline-info"
                 type="button"
                 (click)="copyToClipboard(subscriptionData.subscriptionUrl)">
                 <i class="fas fa-copy me-1"></i>
@@ -48,7 +48,7 @@
 
           <!-- Instructions -->
           <div class="mb-4">
-            <h6 class="fw-bold text-primary">
+            <h6 class="fw-bold text-info">
               <i class="fas fa-book me-2"></i>How to Subscribe
             </h6>
             <div class="accordion" id="calendarInstructions">

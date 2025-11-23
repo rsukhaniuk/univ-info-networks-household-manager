@@ -44,21 +44,35 @@
       <i class="fas fa-calendar-day text-info me-2"></i>
       On day of month
     </label>
-    <select
-      [(ngModel)]="monthDay"
-      (change)="onMonthDayChange()"
-      class="form-select"
-      [disabled]="disabled">
-      <option *ngFor="let day of monthDayOptions" [value]="day.value">
-        {{ day.label }}
-      </option>
-    </select>
-    <small class="form-text text-muted">
-      <span *ngIf="monthDay === -1">Task will repeat on the last day of every month (28-31 depending on the month)</span>
-      <span *ngIf="monthDay > 0 && monthDay <= 28">Task will repeat on day {{ monthDay }} of every month</span>
-      <span *ngIf="monthDay > 28 && monthDay < 31">Task will repeat on day {{ monthDay }} (months with fewer days will skip)</span>
-      <span *ngIf="monthDay === 31">Task will only repeat in months with 31 days</span>
-    </small>
+    <div class="row g-2 align-items-center">
+      <div class="col-auto">
+        <div class="input-group" style="width: 180px;">
+          <input
+            type="number"
+            [(ngModel)]="monthDay"
+            (change)="onMonthDayChange()"
+            class="form-control"
+            min="1"
+            max="31"
+            [disabled]="disabled || isLastDayOfMonth">
+          <span class="input-group-text">day</span>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="lastDayOfMonth"
+            [(ngModel)]="isLastDayOfMonth"
+            (change)="onLastDayToggle()"
+            [disabled]="disabled">
+          <label class="form-check-label" for="lastDayOfMonth">
+            Last day of month
+          </label>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Year Date Selector (only for Yearly) -->

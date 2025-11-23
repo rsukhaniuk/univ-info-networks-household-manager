@@ -86,6 +86,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
   filterAssignedUserId: string = '';
   filterIsActive: string = '';
   filterIsOverdue: string = '';
+  filterMyTasksOnly: boolean = false;
+  currentUserId: string = '';
 
   // Data for filter dropdowns
   availableRooms: { id: string; name: string }[] = [];
@@ -115,6 +117,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.householdId = this.route.snapshot.paramMap.get('householdId')!;
+
+    // Get current user ID for "My Tasks" filter
+    this.auth.getUserId$().subscribe(userId => {
+      if (userId) {
+        this.currentUserId = userId;
+      }
+    });
 
     if (this.householdId) {
       this.loadHousehold();
@@ -332,6 +341,16 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.loadData();
   }
 
+  onMyTasksToggle(): void {
+    if (this.filterMyTasksOnly) {
+      this.filterAssignedUserId = this.currentUserId;
+    } else {
+      this.filterAssignedUserId = '';
+    }
+    this.first = 0;
+    this.loadData();
+  }
+
   clearFilters(): void {
     this.searchQuery = '';
     this.filterRoomId = '';
@@ -340,6 +359,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.filterAssignedUserId = '';
     this.filterIsActive = '';
     this.filterIsOverdue = '';
+    this.filterMyTasksOnly = false;
     this.first = 0;
     this.loadData();
   }
@@ -352,7 +372,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
       this.filterPriority ||
       this.filterAssignedUserId ||
       this.filterIsActive ||
-      this.filterIsOverdue
+      this.filterIsOverdue ||
+      this.filterMyTasksOnly
     );
   }
 

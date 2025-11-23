@@ -25,11 +25,11 @@ import { RouterModule } from '@angular/router';
               <ul class="list-unstyled">
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
-                  Create and manage multiple households
+                  Belong to multiple households as owner or member
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
-                  Invite family members with shareable invite codes
+                  Invite members, remove them, or transfer ownership
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
@@ -37,7 +37,7 @@ import { RouterModule } from '@angular/router';
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
-                  Create one-time or recurring tasks (daily, weekly, monthly)
+                  Create one-time or recurring tasks (daily, weekly, monthly, yearly) with flexible scheduling
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
@@ -45,11 +45,11 @@ import { RouterModule } from '@angular/router';
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
-                  Track task completion with photo proof
+                  Track task completion with photo proof and full execution history
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-check text-success me-2"></i>
-                  Subscribe to tasks via Google Calendar or iCal
+                  Export tasks to iCal (.ics) or subscribe to live calendar feed
                 </li>
               </ul>
 
@@ -63,26 +63,6 @@ import { RouterModule } from '@angular/router';
                 <li class="mb-2">Complete tasks and optionally upload photo proof</li>
                 <li class="mb-2">Sync tasks to your calendar for reminders</li>
               </ol>
-
-              <h4 class="mt-4 mb-3">Technology Stack</h4>
-              <div class="row text-center mb-4">
-                <div class="col-6 col-md-3 mb-3">
-                  <i class="fab fa-angular fa-2x text-danger mb-2"></i>
-                  <div class="small">Angular 19</div>
-                </div>
-                <div class="col-6 col-md-3 mb-3">
-                  <i class="fab fa-microsoft fa-2x text-primary mb-2"></i>
-                  <div class="small">.NET 8</div>
-                </div>
-                <div class="col-6 col-md-3 mb-3">
-                  <i class="fas fa-database fa-2x text-info mb-2"></i>
-                  <div class="small">PostgreSQL</div>
-                </div>
-                <div class="col-6 col-md-3 mb-3">
-                  <i class="fab fa-aws fa-2x text-warning mb-2"></i>
-                  <div class="small">AWS</div>
-                </div>
-              </div>
 
               <div class="text-center mt-5">
                 <a routerLink="/" class="btn btn-primary btn-lg">
