@@ -168,7 +168,7 @@
       background: $bg-white;
       border-bottom: 1px solid lighten-color($border-color, 5%);
       transition: background-color $transition-fast;
-      height: 85px;
+      min-height: 85px;
 
       &:last-child {
         border-bottom: none;
