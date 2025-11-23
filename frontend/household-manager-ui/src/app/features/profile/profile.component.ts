@@ -14,13 +14,13 @@ import {
   AccountDeletionCheckResult
 } from '../../core/models/user.model';
 import { UtcDatePipe } from '../../shared/pipes/utc-date.pipe';
-import { ConfirmDialogData } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { ConfirmDialogData, ConfirmationDialogComponent } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe, FormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, UtcDatePipe, FormsModule, ConfirmationDialogComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })
@@ -47,6 +47,18 @@ export class ProfileComponent implements OnInit {
   deletionCheck: AccountDeletionCheckResult | null = null;
   emailConfirmation = '';
   deleteDialogData: ConfirmDialogData | null = null;
+
+  // Password change confirmation
+  showPasswordChangeDialog = false;
+  passwordChangeDialogData: ConfirmDialogData = {
+    title: 'Change Password',
+    message: 'You will be redirected to Auth0 to change your password.\n\nAfter changing your password, you will need to sign in again.',
+    confirmText: 'Continue',
+    cancelText: 'Cancel',
+    confirmClass: 'primary',
+    icon: 'fa-key',
+    iconClass: 'text-primary'
+  };
 
   // Forms
   profileForm: FormGroup;
@@ -210,6 +222,12 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    // Show confirmation dialog first
+    this.showPasswordChangeDialog = true;
+  }
+
+  onPasswordChangeConfirmed(): void {
+    this.showPasswordChangeDialog = false;
     this.isChangingPassword = true;
 
     // Force re-authentication before allowing password change
@@ -219,6 +237,10 @@ export class ProfileComponent implements OnInit {
       action: 'password-change',
       resultUrl: window.location.origin + '/profile'
     });
+  }
+
+  onPasswordChangeCancelled(): void {
+    this.showPasswordChangeDialog = false;
   }
 
   onChangeEmail(): void {
@@ -295,26 +317,26 @@ export class ProfileComponent implements OnInit {
   private getDeleteWarningMessage(check: AccountDeletionCheckResult): string {
     if (!check.canDelete) {
       // Show why deletion is blocked
-      let message = '❌ CANNOT DELETE ACCOUNT\n\n';
+      let message = 'CANNOT DELETE ACCOUNT\n\n';
       message += 'Your account cannot be deleted at this time for the following reason:\n\n';
 
       if (check.message) {
         message += `${check.message}\n\n`;
       }
 
-      message += '📋 Account Deletion Requirements:\n\n';
-      message += '✓ You must NOT be the sole owner of any household\n';
-      message += '  → Transfer ownership or add another owner before leaving\n\n';
+      message += 'Account Deletion Requirements:\n\n';
+      message += 'You must NOT be the sole owner of any household\n';
+      message += '  Transfer ownership or add another owner before leaving\n\n';
 
       if (check.ownedHouseholdsCount > 0 && check.ownedHouseholdNames.length > 0) {
-        message += `⚠️ You are currently the sole owner of ${check.ownedHouseholdsCount} household(s):\n`;
+        message += `You are currently the sole owner of ${check.ownedHouseholdsCount} household(s):\n`;
         check.ownedHouseholdNames.forEach(name => {
           message += `  • ${name}\n`;
         });
         message += '\n';
       }
 
-      message += '📊 Current Status:\n';
+      message += 'Current Status:\n';
       message += `• Member of ${check.memberHouseholdsCount} household(s)\n`;
       message += `• ${check.assignedTasksCount} task(s) assigned to you\n`;
 
@@ -322,19 +344,19 @@ export class ProfileComponent implements OnInit {
     }
 
     // Can delete - show warning
-    let message = '⚠️ WARNING: This action cannot be undone!\n\n';
+    let message = 'WARNING: This action cannot be undone!\n\n';
     message += 'Your account will be permanently deleted.\n\n';
 
     // Warning about sole-owner households that will be deleted
     if (check.ownedHouseholdsCount > 0 && check.ownedHouseholdNames.length > 0) {
-      message += `🗑️ ${check.ownedHouseholdsCount} household(s) where you are the sole owner will be PERMANENTLY DELETED:\n`;
+      message += `${check.ownedHouseholdsCount} household(s) where you are the sole owner will be PERMANENTLY DELETED:\n`;
       check.ownedHouseholdNames.forEach(name => {
         message += `  • ${name}\n`;
       });
       message += '\n';
     }
 
-    message += '📊 What will happen:\n';
+    message += 'What will happen:\n';
     message += `• You will be removed from ${check.memberHouseholdsCount} household(s)\n`;
     message += `• Your ${check.assignedTasksCount} assigned task(s) will be reassigned or marked as unassigned\n\n`;
     message += `Please type your email (${this.profile?.user.email}) to confirm:`;

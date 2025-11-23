@@ -66,14 +66,22 @@ namespace HouseholdManager.Application.Services
             }
 
             // Get active tasks for household
-            var tasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
+            var allTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
 
-            if (!tasks.Any())
-            {
-                _logger.LogInformation(
-                    "No tasks found for household {HouseholdId}",
-                    householdId);
-            }
+            // Filter tasks based on user role:
+            // - Owner sees all tasks
+            // - Member sees only tasks assigned to them
+            var isOwner = await _householdService.IsUserOwnerAsync(householdId, userId, cancellationToken);
+            var tasks = isOwner
+                ? allTasks
+                : allTasks.Where(t => t.AssignedUserId == userId).ToList();
+
+            _logger.LogInformation(
+                "User {UserId} is {Role} - showing {TaskCount} of {TotalCount} tasks",
+                userId,
+                isOwner ? "Owner" : "Member",
+                tasks.Count(),
+                allTasks.Count);
 
             // Get execution history for tasks
             var taskIds = tasks.Select(t => t.Id).ToList();
@@ -166,10 +174,7 @@ namespace HouseholdManager.Application.Services
             // Generate subscription URL with token parameter
             var request = _httpContextAccessor.HttpContext?.Request;
             var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
-            var feedUrl = $"{baseUrl}/api/households/{householdId}/calendar/feed.ics?token={token}";
-
-            // Use webcal protocol for calendar subscription (same as http but indicates calendar feed)
-            var subscriptionUrl = feedUrl.Replace("https://", "webcal://").Replace("http://", "webcal://");
+            var subscriptionUrl = $"{baseUrl}/api/households/{householdId}/calendar/feed.ics?token={token}";
 
             var subscriptionDto = new CalendarSubscriptionDto
             {

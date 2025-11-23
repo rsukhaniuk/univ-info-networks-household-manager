@@ -31,10 +31,4 @@ export class CalendarSubscriptionDialogComponent {
       console.error('Failed to copy:', err);
     });
   }
-
-  onBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.onClose();
-    }
-  }
 }

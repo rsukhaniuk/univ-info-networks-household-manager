@@ -106,7 +106,6 @@ namespace HouseholdManager.Infrastructure.ExternalServices.Calendar
             }
 
             parts.Add($"Room: {task.Room?.Name ?? "Unknown"}");
-            parts.Add($"Estimated Time: {task.FormattedEstimatedTime}");
 
             if (task.AssignedUser != null)
             {

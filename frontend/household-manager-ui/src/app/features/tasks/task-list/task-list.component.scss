@@ -187,6 +187,16 @@
         font-size: $font-size-base;
         border-left: none;
         border-right: none;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+
+        /* Recurrence text in Due Date column */
+        small.text-muted {
+          display: block;
+          max-width: 150px;
+          word-wrap: break-word;
+          line-height: 1.3;
+        }
 
         /* Action buttons spacing */
         .btn-group {

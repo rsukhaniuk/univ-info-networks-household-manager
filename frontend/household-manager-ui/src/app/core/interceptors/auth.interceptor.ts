@@ -1,10 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
-import { switchMap, take, catchError } from 'rxjs';
+import { switchMap, take, catchError, EMPTY } from 'rxjs';
 
 /**
  * Auth interceptor - adds JWT token to API requests
+ * Handles token refresh and session expiration
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -28,9 +29,22 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return next(authReq);
     }),
     catchError(err => {
+      const authErrors = ['login_required', 'consent_required', 'interaction_required'];
+      const code = err.error || err.error_description || err.code;
+      const isAuthError = code && authErrors.includes(code);
+
+      if (isAuthError) {
+        console.warn('[Auth] Session expired, logging out...');
+        auth.logout({
+          logoutParams: {
+            returnTo: window.location.origin
+          }
+        });
+        return EMPTY;
+      }
+
+      // Network or other error - let request through, API will handle it
       console.error('Failed to get auth token:', err);
-      // If we can't get token, the user is not authenticated
-      // Let the request go through without token so API returns proper 401
       return next(req);
     })
   );
