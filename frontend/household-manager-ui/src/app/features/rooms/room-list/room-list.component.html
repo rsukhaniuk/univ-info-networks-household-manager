@@ -214,7 +214,7 @@
                 <td>
                   @if (room.photoUrl) {
                   <img
-                    [src]="room.photoUrl"
+                    [src]="room.photoUrl | photoUrl"
                     [alt]="room.name"
                     class="rounded shadow-sm"
                     style="width: 64px; height: 64px; object-fit: cover"

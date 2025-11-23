@@ -47,7 +47,7 @@
                 @if (roomDetails.room.photoUrl) {
                 <div class="me-4">
                   <img
-                    [src]="roomDetails.room.photoUrl"
+                    [src]="roomDetails.room.photoUrl | photoUrl"
                     [alt]="roomDetails.room.name"
                     class="rounded shadow-sm"
                     style="width: 120px; height: 120px; object-fit: cover"
@@ -306,7 +306,7 @@
         @if (roomDetails.room.photoUrl) {
         <div class="text-center mb-4">
           <img
-            [src]="roomDetails.room.photoUrl"
+            [src]="roomDetails.room.photoUrl | photoUrl"
             [alt]="roomDetails.room.name"
             class="img-fluid rounded shadow-sm"
             style="max-height: 200px"

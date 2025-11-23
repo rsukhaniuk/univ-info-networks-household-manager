@@ -11,12 +11,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { PhotoUrlPipe } from '../../../shared/pipes/photo-url.pipe';
 import { RecurrenceRuleService } from '../../../shared/services/recurrence-rule.service';
 
 @Component({
   selector: 'app-room-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableModule, ConfirmationDialogComponent, UtcDatePipe],
+  imports: [CommonModule, RouterModule, TableModule, ConfirmationDialogComponent, UtcDatePipe, PhotoUrlPipe],
   templateUrl: './room-details.component.html',
   styleUrl: './room-details.component.scss',
 })

@@ -18,6 +18,7 @@ import { RoomDto } from '../../../core/models/room.model';
 import { HouseholdDto } from '../../../core/models/household.model';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { PhotoUrlPipe } from '../../../shared/pipes/photo-url.pipe';
 
 type SortBy = 'name' | 'priority' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
@@ -33,7 +34,8 @@ type SortOrder = 'asc' | 'desc';
     ButtonModule,
     SkeletonModule,
     ConfirmationDialogComponent,
-    UtcDatePipe
+    UtcDatePipe,
+    PhotoUrlPipe
   ],
   templateUrl: './room-list.component.html',
   styleUrl: './room-list.component.scss'

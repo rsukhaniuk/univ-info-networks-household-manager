@@ -166,6 +166,13 @@ export class TaskFormComponent implements OnInit, OnDestroy {
     this.form.get('type')?.valueChanges.subscribe(type => {
       this.onTaskTypeChange(type);
     });
+
+    // Watch roomId changes to sync isGeneralTask checkbox
+    this.form.get('roomId')?.valueChanges.subscribe(roomId => {
+      if (this.generalRoom) {
+        this.isGeneralTask = roomId === this.generalRoom.id;
+      }
+    });
   }
 
   ngOnInit(): void {

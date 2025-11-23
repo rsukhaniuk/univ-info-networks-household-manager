@@ -5,12 +5,13 @@ import { ExecutionService } from '../services/execution.service';
 import { ExecutionDto, ExecutionQueryParameters } from '../../../core/models/execution.model';
 import { PagedResult } from '../../../core/models/api-response.model';
 import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
+import { PhotoUrlPipe } from '../../../shared/pipes/photo-url.pipe';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-execution-history',
   standalone: true,
-  imports: [CommonModule, RouterModule, UtcDatePipe],
+  imports: [CommonModule, RouterModule, UtcDatePipe, PhotoUrlPipe],
   templateUrl: './execution-history.component.html',
   styleUrl: './execution-history.component.scss'
 })

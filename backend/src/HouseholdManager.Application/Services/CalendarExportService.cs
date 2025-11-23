@@ -69,8 +69,8 @@ namespace HouseholdManager.Application.Services
             var allTasks = await _taskRepository.GetActiveByHouseholdIdAsync(householdId, cancellationToken);
 
             // Filter tasks based on user role:
-            // - Owner sees all tasks
-            // - Member sees only tasks assigned to them
+            // Owner sees all tasks
+            // Member sees only tasks assigned to them
             var isOwner = await _householdService.IsUserOwnerAsync(householdId, userId, cancellationToken);
             var tasks = isOwner
                 ? allTasks
@@ -173,7 +173,10 @@ namespace HouseholdManager.Application.Services
 
             // Generate subscription URL with token parameter
             var request = _httpContextAccessor.HttpContext?.Request;
-            var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+            // Use HTTPS in production (X-Forwarded-Proto header from load balancer, or force HTTPS for non-localhost)
+            var scheme = request?.Headers["X-Forwarded-Proto"].FirstOrDefault()
+                ?? (request?.Host.Host == "localhost" ? request?.Scheme : "https");
+            var baseUrl = $"{scheme}://{request?.Host}{request?.PathBase}";
             var subscriptionUrl = $"{baseUrl}/api/households/{householdId}/calendar/feed.ics?token={token}";
 
             var subscriptionDto = new CalendarSubscriptionDto
