@@ -34,22 +34,10 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets",
-              {
-                "glob": "**/*",
-                "input": "node_modules/@fortawesome/fontawesome-free/webfonts",
-                "output": "webfonts"
-              },
-              {
-                "glob": "*.{woff,woff2,eot,ttf,svg}",
-                "input": "node_modules/primeicons/fonts",
-                "output": "fonts"
-              }
+              "src/assets"
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-              "node_modules/primeicons/primeicons.css",
               "node_modules/flatpickr/dist/flatpickr.min.css",
               "src/styles.scss"
             ],

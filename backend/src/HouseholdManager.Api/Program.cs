@@ -195,14 +195,14 @@ builder.Services.AddSwaggerWithAuth0(auth0Settings);
 
 // CORS (allow Angular frontend)
 
-builder.Services.AddCors(options =>
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:4200", "https://localhost:4200", "https://127.0.0.1:4200"];
+
+builder.Services.AddCors(options => 
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins(
-                  "http://localhost:4200",
-                  "https://localhost:4200",
-                  "https://127.0.0.1:4200")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();

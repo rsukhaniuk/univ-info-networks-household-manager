@@ -5,8 +5,7 @@
 /* stylelint-disable-next-line scss/at-import-no-partial-leading-underscore */
 @import 'bootstrap/scss/bootstrap';
 
-/* Import Font Awesome */
-@import '@fortawesome/fontawesome-free/css/all.min.css';
+/* Font Awesome and PrimeIcons loaded via CDN in index.html */
 
 /* Import Flatpickr Default Styles */
 @import 'flatpickr/dist/flatpickr.min.css';
