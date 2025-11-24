@@ -154,6 +154,11 @@
             [value]="roomDetails.activeTasks"
             [tableStyle]="{ 'min-width': '100%' }"
             styleClass="p-datatable-sm p-datatable-striped"
+            [paginator]="roomDetails.activeTasks.length > 5"
+            [rows]="rows"
+            [rowsPerPageOptions]="rowsPerPageOptions"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tasks"
           >
             <ng-template pTemplate="header">
               <tr>

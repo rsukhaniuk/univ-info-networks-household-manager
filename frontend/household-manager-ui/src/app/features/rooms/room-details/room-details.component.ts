@@ -39,6 +39,10 @@ export class RoomDetailsComponent implements OnInit, OnDestroy {
   canManageRoom = false;
   isLoading = true;
 
+  // Pagination
+  rowsPerPageOptions = [5, 10, 20, 50];
+  rows = 10;
+
   // Modal state
   showPhotoModal = false;
   selectedPhotoFile: File | null = null;

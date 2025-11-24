@@ -260,17 +260,19 @@
       }
     }
 
-    /* Active page */
-    .p-paginator-page.p-paginator-page-active {
-      background-color: $success-color;
-      border-color: $success-color;
-      color: $bg-white;
+    /* Active page - PrimeNG v20+ uses data-p-highlight attribute */
+    .p-paginator-page[data-p-highlight="true"],
+    .p-paginator-page.p-highlight,
+    .p-paginator-page[aria-current="page"] {
+      background-color: $success-color !important;
+      border-color: $success-color !important;
+      color: $bg-white !important;
       font-weight: $font-weight-semibold;
       box-shadow: 0 2px 6px rgba($success-color, 0.3);
 
       &:hover {
-        background-color: darken-color($success-color, 8%);
-        border-color: darken-color($success-color, 8%);
+        background-color: darken-color($success-color, 8%) !important;
+        border-color: darken-color($success-color, 8%) !important;
         transform: none;
       }
     }

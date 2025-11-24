@@ -174,3 +174,163 @@
     color: #dc3545;
   }
 }
+
+// ========================================
+// PRIMENG TABLE & PAGINATION OVERRIDES
+// ========================================
+
+:host ::ng-deep {
+
+  /* TABLE CONTAINER */
+  .p-datatable {
+    background: $bg-white;
+    border-radius: 0;
+    box-shadow: none;
+
+    /* Remove default borders */
+    .p-datatable-wrapper {
+      border: none;
+    }
+
+    /* TABLE HEADER */
+    .p-datatable-thead > tr > th {
+      background-color: $bg-light !important;
+      color: $text-secondary !important;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      padding: $spacing-md ($spacing-sm + 0.25rem);
+      border-bottom: 2px solid $border-color;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    /* TABLE BODY */
+    .p-datatable-tbody > tr {
+      background: $bg-white;
+      border-bottom: 1px solid lighten-color($border-color, 5%);
+      transition: background-color $transition-fast;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      /* Hover state */
+      &:hover {
+        background-color: $bg-light !important;
+      }
+
+      /* Table cells */
+      > td {
+        padding: 0.875rem ($spacing-sm + 0.25rem);
+        vertical-align: middle;
+        color: $text-primary;
+        font-size: $font-size-base;
+        border-left: none;
+        border-right: none;
+      }
+    }
+
+    /* Empty message */
+    .p-datatable-emptymessage > td {
+      text-align: center;
+      padding: ($spacing-xl + 1rem) $spacing-md;
+      color: $text-muted;
+      background: $bg-white;
+    }
+  }
+
+  /* PAGINATOR */
+  .p-paginator {
+    background: $bg-white;
+    border-top: 1px solid $border-color;
+    padding: $spacing-md ($spacing-sm + 0.25rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+
+    /* Rows per page dropdown */
+    .p-dropdown {
+      margin-right: $spacing-md;
+      min-width: 80px;
+    }
+
+    /* Page numbers */
+    .p-paginator-pages {
+      display: flex;
+      gap: $spacing-xs;
+    }
+
+    /* All paginator buttons */
+    .p-paginator-page,
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+      min-width: 2.5rem;
+      height: 2.5rem;
+      margin: 0 0.125rem;
+      padding: 0;
+      border: 2px solid $border-color;
+      border-radius: $border-radius;
+      background: $bg-white;
+      color: $success-color;
+      font-weight: $font-weight-medium;
+      font-size: $font-size-sm;
+      cursor: pointer;
+      transition: all $transition-fast;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      &:not(.p-disabled):hover {
+        background-color: $bg-light;
+        border-color: $success-color;
+        color: $success-color;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba($success-color, 0.15);
+      }
+
+      &:not(.p-disabled):active {
+        transform: translateY(0);
+      }
+
+      /* Disabled state */
+      &.p-disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+        background-color: $bg-light;
+        border-color: lighten-color($border-color, 5%);
+        color: $text-muted;
+      }
+    }
+
+    /* Active page - PrimeNG v20+ uses data-p-highlight attribute */
+    .p-paginator-page[data-p-highlight="true"],
+    .p-paginator-page.p-highlight,
+    .p-paginator-page[aria-current="page"] {
+      background-color: $success-color !important;
+      border-color: $success-color !important;
+      color: $bg-white !important;
+      font-weight: $font-weight-semibold;
+      box-shadow: 0 2px 6px rgba($success-color, 0.3);
+
+      &:hover {
+        background-color: darken-color($success-color, 8%) !important;
+        border-color: darken-color($success-color, 8%) !important;
+        transform: none;
+      }
+    }
+
+    /* Current page info */
+    .p-paginator-current {
+      color: $text-muted;
+      font-size: $font-size-sm;
+      padding: 0 $spacing-md;
+    }
+  }
+}
