@@ -29,12 +29,20 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return next(authReq);
     }),
     catchError(err => {
-      const authErrors = ['login_required', 'consent_required', 'interaction_required'];
+      const authErrors = [
+        'login_required',
+        'consent_required',
+        'interaction_required',
+        'missing_refresh_token',  // Refresh token expired or missing
+        'invalid_grant'           // Token is no longer valid
+      ];
       const code = err.error || err.error_description || err.code;
-      const isAuthError = code && authErrors.includes(code);
+      const errorMessage = err.message || '';
+      const isAuthError = (code && authErrors.includes(code)) ||
+                          errorMessage.includes('Missing Refresh Token');
 
       if (isAuthError) {
-        console.warn('[Auth] Session expired, logging out...');
+        console.warn('[Auth] Session expired or refresh token missing, logging out...', code || errorMessage);
         auth.logout({
           logoutParams: {
             returnTo: window.location.origin
