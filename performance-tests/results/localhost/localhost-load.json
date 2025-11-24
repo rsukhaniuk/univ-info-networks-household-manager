@@ -1,0 +1,213 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "User Profile": {
+                "id": "5c8dbd402c769d48cf7951281377e385",
+                "groups": {},
+                "checks": {
+                        "profile OK": {
+                            "path": "::User Profile::profile OK",
+                            "id": "fc598b4e8141287eab7eecd3091abb98",
+                            "passes": 1632,
+                            "fails": 0,
+                            "name": "profile OK"
+                        }
+                    },
+                "name": "User Profile",
+                "path": "::User Profile"
+            },
+            "Households List": {
+                "name": "Households List",
+                "path": "::Households List",
+                "id": "46770eacf0551c630297b0c48bfc6abe",
+                "groups": {},
+                "checks": {
+                        "households OK": {
+                            "path": "::Households List::households OK",
+                            "id": "a5e1fff3afd78acc73452b66cd50823b",
+                            "passes": 1632,
+                            "fails": 0,
+                            "name": "households OK"
+                        }
+                    }
+            },
+            "Household Tasks": {
+                "id": "dbf2720d16fd8dc0a03e95dd61955155",
+                "groups": {},
+                "checks": {
+                        "tasks OK": {
+                            "name": "tasks OK",
+                            "path": "::Household Tasks::tasks OK",
+                            "id": "9c66bee34aa0d25a0bde440fe13ace8d",
+                            "passes": 1632,
+                            "fails": 0
+                        }
+                    },
+                "name": "Household Tasks",
+                "path": "::Household Tasks"
+            },
+            "Household Rooms": {
+                "path": "::Household Rooms",
+                "id": "6a172b900937cab4d52b98af9d4b79ab",
+                "groups": {},
+                "checks": {
+                        "rooms OK": {
+                            "fails": 0,
+                            "name": "rooms OK",
+                            "path": "::Household Rooms::rooms OK",
+                            "id": "824424aea5a632ba683367b035ee9b52",
+                            "passes": 1632
+                        }
+                    },
+                "name": "Household Rooms"
+            },
+            "Create Task": {
+                "id": "a862d41ccaab11982b5933efafc420c4",
+                "groups": {},
+                "checks": {
+                        "create task OK": {
+                            "passes": 38,
+                            "fails": 0,
+                            "name": "create task OK",
+                            "path": "::Create Task::create task OK",
+                            "id": "dabede3868eb029606d2b43428fda14b"
+                        }
+                    },
+                "name": "Create Task",
+                "path": "::Create Task"
+            }
+        },
+        "checks": {}
+    },
+    "metrics": {
+        "iterations": {
+            "count": 1632,
+            "rate": 4.48542720649988
+        },
+        "http_reqs": {
+            "count": 6566,
+            "rate": 18.04614892026851
+        },
+        "http_req_tls_handshaking": {
+            "p(95)": 0,
+            "avg": 0.016601797136765153,
+            "min": 0,
+            "med": 0,
+            "max": 3.0619,
+            "p(90)": 0
+        },
+        "http_req_waiting": {
+            "med": 4.8651,
+            "max": 23.6648,
+            "p(90)": 13.412849999999999,
+            "p(95)": 16.5283,
+            "avg": 6.74042755102043,
+            "min": 2.1072
+        },
+        "group_duration": {
+            "min": 2.1072,
+            "med": 5.0325500000000005,
+            "max": 24.2439,
+            "p(90)": 13.485,
+            "p(95)": 16.6314,
+            "avg": 6.864902436795641
+        },
+        "checks": {
+            "passes": 6566,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.95": false
+            },
+            "value": 1
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 6.777920164483728,
+            "min": 2.1072,
+            "med": 4.90185,
+            "max": 23.6648,
+            "p(90)": 13.4621,
+            "p(95)": 16.578200000000002
+        },
+        "http_req_duration": {
+            "min": 2.1072,
+            "med": 4.90185,
+            "max": 23.6648,
+            "p(90)": 13.4621,
+            "p(95)": 16.578200000000002,
+            "avg": 6.777920164483728,
+            "thresholds": {
+                "p(95)<800": false,
+                "p(99)<1500": false
+            }
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 6566,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "http_req_connecting": {
+            "med": 0,
+            "max": 0.5729,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.0013143923240938166,
+            "min": 0
+        },
+        "iteration_duration": {
+            "max": 7655.1194,
+            "p(90)": 6498.39367,
+            "p(95)": 6739.31629,
+            "avg": 5538.205997487737,
+            "min": 3449.8908,
+            "med": 5564.772849999999
+        },
+        "data_sent": {
+            "count": 494688,
+            "rate": 1359.6121408878753
+        },
+        "data_received": {
+            "count": 20331965,
+            "rate": 55880.851086154
+        },
+        "http_req_sending": {
+            "avg": 0.0027801401157477915,
+            "min": 0,
+            "med": 0,
+            "max": 0.6374,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_blocked": {
+            "med": 0,
+            "max": 4.9825,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.01875255863539446,
+            "min": 0
+        },
+        "http_req_receiving": {
+            "min": 0,
+            "med": 0,
+            "max": 1.5131,
+            "p(90)": 0,
+            "p(95)": 0.516975,
+            "avg": 0.034712473347548
+        },
+        "vus_max": {
+            "value": 50,
+            "min": 50,
+            "max": 50
+        },
+        "vus": {
+            "value": 1,
+            "min": 0,
+            "max": 50
+        }
+    }
+}
