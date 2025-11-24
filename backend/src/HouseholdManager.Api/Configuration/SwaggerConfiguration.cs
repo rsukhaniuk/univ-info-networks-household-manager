@@ -11,38 +11,40 @@ namespace HouseholdManager.Api.Configuration
     {
         public static IServiceCollection AddSwaggerWithAuth0(
             this IServiceCollection services,
-            Auth0Settings auth0Settings)
+            Auth0Settings auth0Settings,
+            string swaggerBaseUrl = "https://localhost:7246")
         {
             services.AddEndpointsApiExplorer();
 
             services.AddSwaggerGen(options =>
             {
                 // API Info
+                var returnToUrl = Uri.EscapeDataString($"{swaggerBaseUrl}/swagger");
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "Household Manager API",
                     Version = "v1",
                     Description = $"""
-REST API for Household Task Management System with Auth0 authentication.
+                        REST API for Household Task Management System with Auth0 authentication.
 
-**Authentication (OAuth2)**
-1. Click 'Authorize' button below  
-2. Login with your Auth0 credentials  
-3. Your JWT token will be automatically added to all requests  
+                        **Authentication (OAuth2)**
+                        1. Click 'Authorize' button below
+                        2. Login with your Auth0 credentials
+                        3. Your JWT token will be automatically added to all requests
 
-**To switch accounts:**
-- [Click here to logout from Auth0](https://{auth0Settings.Domain}/v2/logout?returnTo=https://localhost:7246/swagger&client_id={auth0Settings.ClientId})
-- Then refresh this page and click Authorize again
+                        **To switch accounts:**
+                        - [Click here to logout from Auth0](https://{auth0Settings.Domain}/v2/logout?returnTo={returnToUrl}&client_id={auth0Settings.ClientId})
+                        - Then refresh this page and click Authorize again
 
-**Alternative: Manual Token (recommended for testing)**
-1. Use the 'Bearer' authorization section instead of 'oauth2'
-2. Get tokens from [Auth0 Dashboard → APIs → Test](https://{auth0Settings.Domain}/dashboard)
-3. Paste different tokens to test different users
+                        **Alternative: Manual Token (recommended for testing)**
+                        1. Use the 'Bearer' authorization section instead of 'oauth2'
+                        2. Get tokens from [Auth0 Dashboard → APIs → Test](https://{auth0Settings.Domain}/dashboard)
+                        3. Paste different tokens to test different users
 
-**Roles**
-- **SystemAdmin** – Full system access  
-- **User** – Access to own households and tasks
-""",
+                        **Roles**
+                        - **SystemAdmin** – Full system access  
+                        - **User** – Access to own households and tasks
+                        """,
                     Contact = new OpenApiContact
                     {
                         Name = "Household Manager Team",
@@ -122,22 +124,22 @@ REST API for Household Task Management System with Auth0 authentication.
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
                     Description = """
-**Manual JWT token entry (RECOMMENDED for testing with multiple accounts)**
+                        **Manual JWT token entry (RECOMMENDED for testing with multiple accounts)**
 
-If OAuth2 login doesn't work or you want to quickly switch between users, use this method:
+                        If OAuth2 login doesn't work or you want to quickly switch between users, use this method:
 
-1. Get token from Auth0 Dashboard → APIs → Your API → Test tab  
-2. Click 'Try' for different users to get their tokens
-3. Paste token here (without 'Bearer' prefix)
+                        1. Get token from Auth0 Dashboard → APIs → Your API → Test tab  
+                        2. Click 'Try' for different users to get their tokens
+                        3. Paste token here (without 'Bearer' prefix)
 
-Example:  
-`eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...`
+                        Example:  
+                        `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...`
 
-**Benefits:**
-- No need to logout/login  
-- Quick switching between test users  
-- Works even when OAuth2 cookies are cached
-"""
+                        **Benefits:**
+                        - No need to logout/login  
+                        - Quick switching between test users  
+                        - Works even when OAuth2 cookies are cached
+                        """
                 });
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement

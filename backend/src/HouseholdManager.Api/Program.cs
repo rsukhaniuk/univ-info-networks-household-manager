@@ -191,7 +191,8 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 Console.WriteLine($"[Auth0] Domain={auth0Settings.Domain}, Audience={auth0Settings.Audience}, ClientId={(string.IsNullOrWhiteSpace(auth0Settings.ClientId) ? "<EMPTY>" : auth0Settings.ClientId)}");
 
-builder.Services.AddSwaggerWithAuth0(auth0Settings);
+var swaggerBaseUrl = builder.Configuration["SwaggerBaseUrl"] ?? "https://localhost:7047";
+builder.Services.AddSwaggerWithAuth0(auth0Settings, swaggerBaseUrl);
 
 // CORS (allow Angular frontend)
 
