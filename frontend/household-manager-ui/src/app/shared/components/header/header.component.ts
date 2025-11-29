@@ -1,10 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { HouseholdContext, HouseholdContextData } from '../../../features/households/services/household-context';
 import { UserService } from '../../../features/profile/services/user.service';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, map, of, switchMap, filter, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -13,7 +13,7 @@ import { Observable, map, of, switchMap } from 'rxjs';
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   userService = inject(UserService);
   householdContext = inject(HouseholdContext);
@@ -26,8 +26,24 @@ export class HeaderComponent implements OnInit {
 
   // User display name from database (fallback to Auth0)
   userDisplayName$!: Observable<string>;
+  private routerSubscription?: Subscription;
 
   ngOnInit(): void {
+    // Clear household context when navigating away from household area
+    this.routerSubscription = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      const url = event.urlAfterRedirects;
+
+      // Clear context if navigating to non-household pages
+      const isHouseholdArea = url.includes('/households/') ||
+                            url.includes('/rooms') ||
+                            url.includes('/tasks');
+
+      if (!isHouseholdArea && this.householdContext.getCurrentHousehold()) {
+        this.householdContext.clearHousehold();
+      }
+    });
     // Get display name from database, fallback to Auth0 name, then email
     this.userDisplayName$ = this.isAuthenticated$.pipe(
       switchMap(isAuthenticated => {
@@ -77,5 +93,9 @@ export class HeaderComponent implements OnInit {
 
   isActive(path: string): boolean {
     return this.router.url.includes(path);
+  }
+
+  ngOnDestroy(): void {
+    this.routerSubscription?.unsubscribe();
   }
 }

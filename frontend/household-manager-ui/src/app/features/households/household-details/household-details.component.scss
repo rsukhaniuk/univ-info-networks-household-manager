@@ -7,6 +7,19 @@
   padding: $spacing-lg 0 ($spacing-lg + 0.5rem);
 }
 
+/* =========================================
+   DROPDOWN Z-INDEX FIX
+   ========================================= */
+.dropdown-menu {
+  z-index: 1050 !important;
+}
+
+// Ensure members card has higher z-index than rooms card
+.members-card {
+  position: relative;
+  z-index: 10;
+}
+
 // Header card specific
 .household-header-card {
   .card-body {
@@ -182,6 +195,45 @@
   }
 }
 
+/* =========================================
+   INVITE MODAL ANIMATIONS
+   ========================================= */
+// Darker primary color for better visibility
+$primary-dark: #0b5ed7;
+
+.modal-header.bg-primary {
+  background-color: $primary-dark !important;
+}
+
+.modal.fade.show {
+  opacity: 1;
+  animation: fadeIn $transition-fast;
+}
+
+.modal-dialog {
+  animation: slideIn $transition-normal;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 // Responsive
 @media (max-width: 992px) {
   .household-header-card {
@@ -210,6 +262,26 @@
       width: 100%;
       text-align: left;
       margin-top: 0.75rem;
+    }
+  }
+
+  .invite-modal {
+    .modal-dialog {
+      margin: 0.5rem;
+      max-width: calc(100% - 1rem);
+    }
+
+    .modal-content {
+      .modal-header,
+      .modal-body,
+      .modal-footer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .modal-title {
+        font-size: 1.1rem;
+      }
     }
   }
 }

@@ -105,8 +105,6 @@ export class RoomListComponent implements OnInit, OnDestroy {
     if (this.loadingTimer) {
       clearTimeout(this.loadingTimer);
     }
-    // Clear household context when leaving
-    this.householdContext.clearHousehold();
   }
 
   private loadHousehold(): void {

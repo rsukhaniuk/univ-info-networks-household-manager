@@ -26,6 +26,7 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
 
   // Modal state
   showInviteModal = false;
+  inviteModalVisible = false;
   inviteCodeCopied = false;
 
   // Confirmation dialog
@@ -75,17 +76,48 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clear household context when leaving the page
-    this.householdContext.clearHousehold();
+    // Don't clear context - allow it to persist when navigating to rooms/tasks
   }
 
   openInviteModal(): void {
     this.showInviteModal = true;
     this.inviteCodeCopied = false;
+    // Trigger animation after modal is rendered
+    setTimeout(() => {
+      this.inviteModalVisible = true;
+    }, 10);
   }
 
   closeInviteModal(): void {
-    this.showInviteModal = false;
+    this.inviteModalVisible = false;
+    // Wait for animation to complete before removing from DOM
+    setTimeout(() => {
+      this.showInviteModal = false;
+    }, 200);
+  }
+
+  onInviteModalBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('invite-modal')) {
+      this.closeInviteModal();
+    }
+  }
+
+  showRegenerateConfirm(): void {
+    if (!this.household) return;
+
+    this.showConfirmDialog = true;
+    this.confirmDialogData = {
+      title: 'Generate New Code',
+      message: 'Are you sure you want to generate a new invite code? The old code will no longer work.',
+      confirmText: 'Generate',
+      cancelText: 'Cancel',
+      confirmClass: 'warning',
+      icon: 'fa-refresh',
+      iconClass: 'text-warning'
+    };
+    this.pendingAction = () => {
+      this.performRegenerateInviteCode();
+    };
   }
 
   copyInviteCode(): void {
@@ -104,11 +136,8 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
-  regenerateInviteCode(): void {
+  private performRegenerateInviteCode(): void {
     if (!this.household) return;
-
-    const confirmed = confirm('Are you sure you want to generate a new invite code? The old code will no longer work.');
-    if (!confirmed) return;
 
     this.householdService.regenerateInviteCode(this.household.household.id).subscribe({
       next: (response) => {

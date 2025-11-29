@@ -1,12 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService as Auth0Service } from '@auth0/auth0-angular';
 import { Observable, map } from 'rxjs';
+import { HouseholdContext } from '../../features/households/services/household-context';
+import { UserService } from '../../features/profile/services/user.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private auth0 = inject(Auth0Service);
+  private householdContext = inject(HouseholdContext);
+  private userService = inject(UserService);
 
   // Observable properties
   isAuthenticated$ = this.auth0.isAuthenticated$;
@@ -76,6 +80,10 @@ export class AuthService {
    * Logout
    */
   logout(): void {
+    // Clear all cached data on logout
+    this.householdContext.clearHousehold();
+    this.userService.clearProfileCache();
+
     this.auth0.logout({
       logoutParams: {
         returnTo: window.location.origin

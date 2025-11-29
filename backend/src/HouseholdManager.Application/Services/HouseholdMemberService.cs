@@ -81,6 +81,13 @@ namespace HouseholdManager.Application.Services
             if (member == null)
                 throw new NotFoundException("User is not a member of this household");
 
+            // Special case: if promoting to owner, use the PromoteToOwnerAsync method which handles ownership transfer
+            if (newRole == HouseholdRole.Owner && member.Role != HouseholdRole.Owner)
+            {
+                await PromoteToOwnerAsync(householdId, userId, requestingUserId, cancellationToken);
+                return;
+            }
+
             // Prevent self-demotion if user is the last owner
             if (requestingUserId == userId && member.Role == HouseholdRole.Owner && newRole != HouseholdRole.Owner)
             {

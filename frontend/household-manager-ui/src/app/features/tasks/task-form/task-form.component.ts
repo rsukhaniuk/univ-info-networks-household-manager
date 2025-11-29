@@ -435,7 +435,6 @@ export class TaskFormComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // Clear household context when leaving
-    this.householdContext.clearHousehold();
   }
 
   getRoomName(roomId: string): string {

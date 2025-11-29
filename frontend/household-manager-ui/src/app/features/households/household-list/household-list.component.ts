@@ -70,6 +70,7 @@ export class HouseholdListComponent implements OnInit, OnDestroy {
   private pendingAction: (() => void) | null = null;
 
   ngOnInit(): void {
+
     this.searchSubscription = this.search$
       .pipe(debounceTime(300))
       .subscribe(q => {
