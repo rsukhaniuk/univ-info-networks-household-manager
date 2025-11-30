@@ -504,5 +504,384 @@ namespace HouseholdManager.Application.Tests.Services
 
             Assert.That(exception.Message, Does.Contain("last owner"));
         }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("GetUserHouseholds")]
+        public async Task GetUserHouseholdsAsync_ReturnsUserHouseholdsWithRoles()
+        {
+            // Arrange
+            var userId = "user123";
+            var household1 = new Household
+            {
+                Id = Guid.NewGuid(),
+                Name = "Household 1",
+                InviteCode = Guid.NewGuid(),
+                Members = new List<HouseholdMember>(),
+                Rooms = new List<Room>(),
+                Tasks = new List<HouseholdTask>()
+            };
+            var household2 = new Household
+            {
+                Id = Guid.NewGuid(),
+                Name = "Household 2",
+                InviteCode = Guid.NewGuid(),
+                Members = new List<HouseholdMember>(),
+                Rooms = new List<Room>(),
+                Tasks = new List<HouseholdTask>()
+            };
+
+            _mockHouseholdRepository.Setup(r => r.GetUserHouseholdsAsync(userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Household> { household1, household2 });
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(household1.Id, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(household2.Id, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Member);
+
+            // Act
+            var result = await _householdService.GetUserHouseholdsAsync(userId);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result[0].Name, Is.EqualTo("Household 1"));
+            Assert.That(result[0].Role, Is.EqualTo(HouseholdRole.Owner));
+            Assert.That(result[1].Name, Is.EqualTo("Household 2"));
+            Assert.That(result[1].Role, Is.EqualTo(HouseholdRole.Member));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("RegenerateInviteCode")]
+        public async Task RegenerateInviteCodeAsync_GeneratesNewCode_WhenUserIsOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var requestingUserId = "owner123";
+            var oldInviteCode = Guid.NewGuid();
+            var household = new Household
+            {
+                Id = householdId,
+                Name = "Test Household",
+                InviteCode = oldInviteCode,
+                InviteCodeExpiresAt = DateTime.UtcNow.AddHours(1)
+            };
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(household);
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+            _mockHouseholdRepository.Setup(r => r.IsInviteCodeUniqueAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            _mockHouseholdRepository.Setup(r => r.UpdateAsync(It.IsAny<Household>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _householdService.RegenerateInviteCodeAsync(householdId, requestingUserId);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.InviteCode, Is.Not.EqualTo(oldInviteCode));
+            Assert.That(result.InviteCode, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(result.InviteCodeExpiresAt, Is.Not.Null);
+            Assert.That(result.InviteCodeExpiresAt, Is.GreaterThan(DateTime.UtcNow));
+
+            _mockHouseholdRepository.Verify(r => r.UpdateAsync(
+                It.Is<Household>(h => h.InviteCode != oldInviteCode),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("RegenerateInviteCode")]
+        public void RegenerateInviteCodeAsync_ThrowsForbiddenException_WhenUserNotOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var requestingUserId = "member123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId, Name = "Test" });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Member);
+
+            // Act & Assert
+            Assert.ThrowsAsync<ForbiddenException>(
+                async () => await _householdService.RegenerateInviteCodeAsync(householdId, requestingUserId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("AddMember")]
+        public async Task AddMemberAsync_AddsNewMember_WhenUserIsOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var newUserId = "newuser123";
+            var requestingUserId = "owner123";
+            var member = new HouseholdMember
+            {
+                Id = Guid.NewGuid(),
+                HouseholdId = householdId,
+                UserId = newUserId,
+                Role = HouseholdRole.Member,
+                User = new ApplicationUser
+                {
+                    Id = newUserId,
+                    Email = "newuser@test.com",
+                    FirstName = "New",
+                    LastName = "User"
+                }
+            };
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+            _mockMemberRepository.Setup(r => r.IsUserMemberAsync(householdId, newUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.AddAsync(It.IsAny<HouseholdMember>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(member);
+            _mockMemberRepository.Setup(r => r.GetMemberAsync(householdId, newUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(member);
+
+            // Act
+            var result = await _householdService.AddMemberAsync(householdId, newUserId, HouseholdRole.Member, requestingUserId);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.UserId, Is.EqualTo(newUserId));
+            Assert.That(result.Role, Is.EqualTo("Member")); // Role is string in HouseholdMemberDto
+
+            _mockMemberRepository.Verify(r => r.AddAsync(
+                It.Is<HouseholdMember>(m =>
+                    m.HouseholdId == householdId &&
+                    m.UserId == newUserId &&
+                    m.Role == HouseholdRole.Member),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("AddMember")]
+        public void AddMemberAsync_ThrowsValidationException_WhenUserAlreadyMember()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var userId = "existinguser123";
+            var requestingUserId = "owner123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+            _mockMemberRepository.Setup(r => r.IsUserMemberAsync(householdId, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            // Act & Assert
+            Assert.ThrowsAsync<ValidationException>(
+                async () => await _householdService.AddMemberAsync(householdId, userId, HouseholdRole.Member, requestingUserId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("RemoveMember")]
+        public async Task RemoveMemberAsync_RemovesMember_WhenUserIsOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var memberUserId = "member123";
+            var requestingUserId = "owner123";
+            var member = new HouseholdMember
+            {
+                Id = Guid.NewGuid(),
+                HouseholdId = householdId,
+                UserId = memberUserId,
+                Role = HouseholdRole.Member
+            };
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+            _mockMemberRepository.Setup(r => r.GetMemberAsync(householdId, memberUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(member);
+            _mockMemberRepository.Setup(r => r.DeleteAsync(member, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _householdService.RemoveMemberAsync(householdId, memberUserId, requestingUserId);
+
+            // Assert
+            _mockMemberRepository.Verify(r => r.DeleteAsync(member, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("RemoveMember")]
+        public void RemoveMemberAsync_ThrowsValidationException_WhenRemovingLastOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var ownerUserId = "owner123";
+            var requestingUserId = "owner123";
+            var member = new HouseholdMember
+            {
+                Id = Guid.NewGuid(),
+                HouseholdId = householdId,
+                UserId = ownerUserId,
+                Role = HouseholdRole.Owner
+            };
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, requestingUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+            _mockMemberRepository.Setup(r => r.GetMemberAsync(householdId, ownerUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(member);
+            _mockMemberRepository.Setup(r => r.GetOwnerCountAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ValidationException>(
+                async () => await _householdService.RemoveMemberAsync(householdId, ownerUserId, requestingUserId));
+
+            Assert.That(exception.Message, Does.Contain("last owner"));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("ValidateUserAccess")]
+        public async Task ValidateUserAccessAsync_DoesNotThrow_WhenUserIsMember()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var userId = "member123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.IsUserMemberAsync(householdId, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            // Act & Assert
+            Assert.DoesNotThrowAsync(async () =>
+                await _householdService.ValidateUserAccessAsync(householdId, userId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("ValidateUserAccess")]
+        public void ValidateUserAccessAsync_ThrowsForbiddenException_WhenUserNotMember()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var userId = "nonmember123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.IsUserMemberAsync(householdId, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            // Act & Assert
+            Assert.ThrowsAsync<ForbiddenException>(
+                async () => await _householdService.ValidateUserAccessAsync(householdId, userId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("ValidateUserAccess")]
+        public void ValidateUserAccessAsync_ThrowsNotFoundException_WhenHouseholdNotFound()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var userId = "user123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Household?)null);
+
+            // Act & Assert
+            Assert.ThrowsAsync<NotFoundException>(
+                async () => await _householdService.ValidateUserAccessAsync(householdId, userId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("ValidateOwnerAccess")]
+        public async Task ValidateOwnerAccessAsync_DoesNotThrow_WhenUserIsOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var userId = "owner123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Owner);
+
+            // Act & Assert
+            Assert.DoesNotThrowAsync(async () =>
+                await _householdService.ValidateOwnerAccessAsync(householdId, userId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("ValidateOwnerAccess")]
+        public void ValidateOwnerAccessAsync_ThrowsForbiddenException_WhenUserNotOwner()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var userId = "member123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            _mockMemberRepository.Setup(r => r.GetUserRoleAsync(householdId, userId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(HouseholdRole.Member);
+
+            // Act & Assert
+            Assert.ThrowsAsync<ForbiddenException>(
+                async () => await _householdService.ValidateOwnerAccessAsync(householdId, userId));
+        }
+
+        [Test]
+        [Category("HouseholdService")]
+        [Category("ValidateUserAccess")]
+        public async Task ValidateUserAccessAsync_AllowsSystemAdmin_EvenWhenNotMember()
+        {
+            // Arrange
+            var householdId = Guid.NewGuid();
+            var adminUserId = "admin123";
+
+            _mockHouseholdRepository.Setup(r => r.GetByIdAsync(householdId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Household { Id = householdId });
+            _mockUserRepository.Setup(r => r.IsSystemAdminAsync(adminUserId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            // Act & Assert
+            Assert.DoesNotThrowAsync(async () =>
+                await _householdService.ValidateUserAccessAsync(householdId, adminUserId));
+
+            // Verify that member check was not called because SystemAdmin was detected
+            _mockMemberRepository.Verify(r => r.IsUserMemberAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
     }
 }

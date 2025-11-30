@@ -898,5 +898,265 @@ namespace HouseholdManager.Application.Tests.Services
         }
 
         #endregion
+
+        #region InvalidateExecutionInCurrentPeriod Tests
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public async Task InvalidateExecutionInCurrentPeriodAsync_WithWeeklyTask_InvalidatesExecutionsThisWeek()
+        {
+            // Arrange
+            var task = CreateTestTask();
+            task.Type = Domain.Enums.TaskType.Regular;
+            task.RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE,FR";
+
+            // Create executions: one this week (should be invalidated), one last week (should remain)
+            var thisWeekExecution = CreateTestExecution(task, _userId);
+            thisWeekExecution.CompletedAt = DateTime.UtcNow.Date.AddDays(-1); // Yesterday
+            thisWeekExecution.IsCountedForCompletion = true;
+
+            var lastWeekExecution = CreateTestExecution(task, _userId);
+            lastWeekExecution.Id = Guid.NewGuid();
+            lastWeekExecution.CompletedAt = DateTime.UtcNow.Date.AddDays(-8); // Last week
+            lastWeekExecution.IsCountedForCompletion = true;
+
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(task);
+
+            _mockHouseholdService
+                .Setup(x => x.ValidateOwnerAccessAsync(_householdId, _userId, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mockExecutionRepository
+                .Setup(x => x.GetByTaskIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution> { thisWeekExecution, lastWeekExecution });
+
+            _mockExecutionRepository
+                .Setup(x => x.UpdateAsync(It.IsAny<TaskExecution>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId);
+
+            // Assert
+            _mockExecutionRepository.Verify(
+                x => x.UpdateAsync(
+                    It.Is<TaskExecution>(e =>
+                        e.Id == thisWeekExecution.Id &&
+                        e.IsCountedForCompletion == false),
+                    It.IsAny<CancellationToken>()),
+                Times.Once,
+                "Should invalidate this week's execution");
+
+            _mockExecutionRepository.Verify(
+                x => x.UpdateAsync(
+                    It.Is<TaskExecution>(e => e.Id == lastWeekExecution.Id),
+                    It.IsAny<CancellationToken>()),
+                Times.Never,
+                "Should NOT invalidate last week's execution");
+        }
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public async Task InvalidateExecutionInCurrentPeriodAsync_WithDailyTask_InvalidatesExecutionsToday()
+        {
+            // Arrange
+            var task = CreateTestTask();
+            task.Type = Domain.Enums.TaskType.Regular;
+            task.RecurrenceRule = "FREQ=DAILY";
+
+            var todayExecution = CreateTestExecution(task, _userId);
+            todayExecution.CompletedAt = DateTime.UtcNow.Date.AddHours(10); // Today at 10am
+            todayExecution.IsCountedForCompletion = true;
+
+            var yesterdayExecution = CreateTestExecution(task, _userId);
+            yesterdayExecution.Id = Guid.NewGuid();
+            yesterdayExecution.CompletedAt = DateTime.UtcNow.Date.AddDays(-1).AddHours(10); // Yesterday
+            yesterdayExecution.IsCountedForCompletion = true;
+
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(task);
+
+            _mockHouseholdService
+                .Setup(x => x.ValidateOwnerAccessAsync(_householdId, _userId, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mockExecutionRepository
+                .Setup(x => x.GetByTaskIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution> { todayExecution, yesterdayExecution });
+
+            _mockExecutionRepository
+                .Setup(x => x.UpdateAsync(It.IsAny<TaskExecution>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId);
+
+            // Assert
+            _mockExecutionRepository.Verify(
+                x => x.UpdateAsync(
+                    It.Is<TaskExecution>(e =>
+                        e.Id == todayExecution.Id &&
+                        e.IsCountedForCompletion == false),
+                    It.IsAny<CancellationToken>()),
+                Times.Once,
+                "Should invalidate today's execution");
+
+            _mockExecutionRepository.Verify(
+                x => x.UpdateAsync(
+                    It.Is<TaskExecution>(e => e.Id == yesterdayExecution.Id),
+                    It.IsAny<CancellationToken>()),
+                Times.Never,
+                "Should NOT invalidate yesterday's execution");
+        }
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public void InvalidateExecutionInCurrentPeriodAsync_WithOneTimeTask_ThrowsValidationException()
+        {
+            // Arrange
+            var task = CreateTestTask();
+            task.Type = Domain.Enums.TaskType.OneTime;
+
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(task);
+
+            _mockHouseholdService
+                .Setup(x => x.ValidateOwnerAccessAsync(_householdId, _userId, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ValidationException>(
+                async () => await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId));
+
+            Assert.That(exception.Message, Does.Contain("Only Regular tasks can be reset"));
+        }
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public void InvalidateExecutionInCurrentPeriodAsync_WithNoExecutionsInPeriod_ThrowsValidationException()
+        {
+            // Arrange
+            var task = CreateTestTask();
+            task.Type = Domain.Enums.TaskType.Regular;
+            task.RecurrenceRule = "FREQ=WEEKLY";
+
+            // No executions this week, only old execution
+            var oldExecution = CreateTestExecution(task, _userId);
+            oldExecution.CompletedAt = DateTime.UtcNow.Date.AddDays(-30); // 30 days ago
+            oldExecution.IsCountedForCompletion = true;
+
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(task);
+
+            _mockHouseholdService
+                .Setup(x => x.ValidateOwnerAccessAsync(_householdId, _userId, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mockExecutionRepository
+                .Setup(x => x.GetByTaskIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution> { oldExecution });
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ValidationException>(
+                async () => await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId));
+
+            Assert.That(exception.Message, Does.Contain("no counted execution"));
+            Assert.That(exception.Message, Does.Contain("to invalidate"));
+        }
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public void InvalidateExecutionInCurrentPeriodAsync_WhenTaskNotFound_ThrowsNotFoundException()
+        {
+            // Arrange
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((HouseholdTask?)null);
+
+            // Act & Assert
+            Assert.ThrowsAsync<NotFoundException>(
+                async () => await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId));
+        }
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public void InvalidateExecutionInCurrentPeriodAsync_WhenUserNotOwner_ThrowsUnauthorizedException()
+        {
+            // Arrange
+            var task = CreateTestTask();
+            task.Type = Domain.Enums.TaskType.Regular;
+
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(task);
+
+            _mockHouseholdService
+                .Setup(x => x.ValidateOwnerAccessAsync(_householdId, _userId, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new ForbiddenException("User is not an owner"));
+
+            // Act & Assert
+            Assert.ThrowsAsync<ForbiddenException>(
+                async () => await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId));
+        }
+
+        [Test]
+        [Category("TaskExecutionService")]
+        [Category("InvalidateExecution")]
+        public async Task InvalidateExecutionInCurrentPeriodAsync_IgnoresAlreadyInvalidatedExecutions()
+        {
+            // Arrange
+            var task = CreateTestTask();
+            task.Type = Domain.Enums.TaskType.Regular;
+            task.RecurrenceRule = "FREQ=WEEKLY";
+
+            // One counted execution (should be invalidated)
+            var countedExecution = CreateTestExecution(task, _userId);
+            countedExecution.CompletedAt = DateTime.UtcNow.Date.AddDays(-1);
+            countedExecution.IsCountedForCompletion = true;
+
+            // One already invalidated execution (should be ignored)
+            var invalidatedExecution = CreateTestExecution(task, _userId);
+            invalidatedExecution.Id = Guid.NewGuid();
+            invalidatedExecution.CompletedAt = DateTime.UtcNow.Date.AddDays(-2);
+            invalidatedExecution.IsCountedForCompletion = false;
+
+            _mockTaskRepository
+                .Setup(x => x.GetByIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(task);
+
+            _mockHouseholdService
+                .Setup(x => x.ValidateOwnerAccessAsync(_householdId, _userId, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mockExecutionRepository
+                .Setup(x => x.GetByTaskIdAsync(_taskId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TaskExecution> { countedExecution, invalidatedExecution });
+
+            _mockExecutionRepository
+                .Setup(x => x.UpdateAsync(It.IsAny<TaskExecution>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _service.InvalidateExecutionInCurrentPeriodAsync(_taskId, _userId);
+
+            // Assert
+            _mockExecutionRepository.Verify(
+                x => x.UpdateAsync(It.IsAny<TaskExecution>(), It.IsAny<CancellationToken>()),
+                Times.Once,
+                "Should only update the counted execution, not the already invalidated one");
+        }
+
+        #endregion
     }
 }
