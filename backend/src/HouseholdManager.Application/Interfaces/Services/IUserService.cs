@@ -60,6 +60,7 @@ namespace HouseholdManager.Application.Interfaces.Services
             string? firstName = null,
             string? lastName = null,
             string? profilePictureUrl = null,
+            bool isSystemAdmin = false,
             CancellationToken cancellationToken = default);
 
         // Account deletion

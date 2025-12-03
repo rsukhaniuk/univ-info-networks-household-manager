@@ -307,6 +307,7 @@ namespace HouseholdManager.Application.Services
             string? firstName = null,
             string? lastName = null,
             string? profilePictureUrl = null,
+            bool isSystemAdmin = false,
             CancellationToken cancellationToken = default)
         {
             var user = await _userRepository.UpsertUserAsync(
@@ -315,12 +316,14 @@ namespace HouseholdManager.Application.Services
                 firstName,
                 lastName,
                 profilePictureUrl,
+                isSystemAdmin,
                 cancellationToken);
 
             _logger.LogInformation(
-                "Synced user from Auth0: {Email} (Auth0 ID: {Auth0Id})",
+                "Synced user from Auth0: {Email} (Auth0 ID: {Auth0Id}), Role: {Role}",
                 email,
-                auth0UserId);
+                auth0UserId,
+                isSystemAdmin ? "SystemAdmin" : "User");
 
             return _mapper.Map<UserDto>(user);
         }

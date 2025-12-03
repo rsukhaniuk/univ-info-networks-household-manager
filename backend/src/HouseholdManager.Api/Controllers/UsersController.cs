@@ -366,6 +366,7 @@ namespace HouseholdManager.Api.Controllers
                 user.FirstName,
                 user.LastName,
                 null, // Keep existing profile picture
+                user.IsSystemAdmin, // Preserve existing role
                 cancellationToken);
 
             // Clear sync cache for this user so next request will re-sync from Auth0

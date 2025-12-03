@@ -133,13 +133,30 @@ namespace HouseholdManager.Api.Middleware
             var profilePictureUrl = context.User.FindFirst("https://householdmanager.com/picture")?.Value
                 ?? context.User.FindFirst("picture")?.Value;
 
+            // Extract role from JWT token (Auth0 adds roles as claims)
+            var roles = context.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            // Also check custom namespace for roles
+            if (!roles.Any())
+            {
+                roles = context.User.FindAll("https://householdmanager.com/roles")
+                    .Select(c => c.Value)
+                    .ToList();
+            }
+
+            // Determine if user is SystemAdmin based on roles
+            bool isSystemAdmin = roles.Contains("SystemAdmin", StringComparer.OrdinalIgnoreCase);
+
             // Sync user to database
             await userService.SyncUserFromAuth0Async(
                 userId,
                 email,
                 firstName,
                 lastName,
-                profilePictureUrl);
+                profilePictureUrl,
+                isSystemAdmin);
 
             // Update cache with current timestamp
             _syncCache[userId] = DateTime.UtcNow;

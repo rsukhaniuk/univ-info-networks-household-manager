@@ -69,6 +69,7 @@ namespace HouseholdManager.Application.Interfaces.Repositories
             string? firstName = null,
             string? lastName = null,
             string? profilePictureUrl = null,
+            bool isSystemAdmin = false,
             CancellationToken cancellationToken = default);
 
         /// <summary>

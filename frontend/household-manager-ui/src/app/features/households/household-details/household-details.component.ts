@@ -7,6 +7,7 @@ import { UtcDatePipe } from '../../../shared/pipes/utc-date.pipe';
 import { HouseholdContext } from '../services/household-context';
 import { ConfirmationDialogComponent, ConfirmDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-household-details',
@@ -20,9 +21,11 @@ export class HouseholdDetailsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private householdContext = inject(HouseholdContext);
   private toastService = inject(ToastService);
+  private authService = inject(AuthService);
 
   household: HouseholdDetailsDto | null = null;
   isLoading = true;
+  isSystemAdmin$ = this.authService.isSystemAdmin$();
 
   // Modal state
   showInviteModal = false;

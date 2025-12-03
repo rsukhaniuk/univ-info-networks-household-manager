@@ -160,7 +160,7 @@ builder.Services.AddScoped<IFileSystemService, FileSystemService>();
 // Add HttpContextAccessor (required by CalendarExportService)
 builder.Services.AddHttpContextAccessor();
 
-// Application Layer  
+// Application Layer
 builder.Services.AddApplication();
 
 // Infrastructure Layer  
@@ -220,6 +220,18 @@ app.UseExceptionHandling();
 app.UseSwaggerWithAuth0(auth0Settings);
 
 app.UseHttpsRedirection();
+
+// Security headers
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    ctx.Response.Headers["X-Frame-Options"] = "DENY";
+    ctx.Response.Headers["Referrer-Policy"] = "no-referrer";
+    ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+    ctx.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+    ctx.Response.Headers["Pragma"] = "no-cache";
+    await next();
+});
 
 // Serve static files (for photo uploads in wwwroot/uploads)
 app.UseStaticFiles();

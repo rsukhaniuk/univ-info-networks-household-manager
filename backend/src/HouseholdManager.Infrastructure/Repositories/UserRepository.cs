@@ -90,6 +90,7 @@ namespace HouseholdManager.Infrastructure.Repositories
     string? firstName = null,
     string? lastName = null,
     string? profilePictureUrl = null,
+    bool isSystemAdmin = false,
     CancellationToken cancellationToken = default)
         {
             var user = await _context.Users
@@ -97,7 +98,7 @@ namespace HouseholdManager.Infrastructure.Repositories
 
             if (user == null)
             {
-                // Create new user
+                // Create new user with role from Auth0
                 user = new ApplicationUser
                 {
                     Id = userId,
@@ -106,7 +107,7 @@ namespace HouseholdManager.Infrastructure.Repositories
                     LastName = lastName,
                     ProfilePictureUrl = profilePictureUrl,
                     CreatedAt = DateTime.UtcNow,
-                    Role = SystemRole.User
+                    Role = isSystemAdmin ? SystemRole.SystemAdmin : SystemRole.User
                 };
                 await _context.Users.AddAsync(user, cancellationToken);
             }
@@ -140,6 +141,14 @@ namespace HouseholdManager.Infrastructure.Repositories
                 if (user.ProfilePictureUrl != profilePictureUrl)
                 {
                     user.ProfilePictureUrl = profilePictureUrl;
+                    hasChanges = true;
+                }
+
+                // Update role if changed (sync from Auth0)
+                var expectedRole = isSystemAdmin ? SystemRole.SystemAdmin : SystemRole.User;
+                if (user.Role != expectedRole)
+                {
+                    user.Role = expectedRole;
                     hasChanges = true;
                 }
 

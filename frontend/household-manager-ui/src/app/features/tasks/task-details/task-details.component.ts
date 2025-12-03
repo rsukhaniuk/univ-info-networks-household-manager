@@ -283,7 +283,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
     this.showConfirmDialog = true;
     this.confirmDialogData = {
       title: 'Reset Task Completion',
-      message: `Are you sure you want to reset the completion status for "${this.taskDetails.task.title}" this week?\n\nThis will allow the task to be completed again this week. The previous execution will remain in the history but will no longer count toward completion.`,
+      message: `Are you sure you want to reset the completion status for "${this.taskDetails.task.title}" this period?\n\nThis will allow the task to be completed again this period. The previous execution will remain in the history but will no longer count toward completion.`,
       confirmText: 'Reset',
       cancelText: 'Cancel',
       confirmClass: 'warning',
@@ -295,7 +295,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
       this.showConfirmDialog = false;
       this.taskService.invalidateExecutionThisWeek(this.householdId, this.taskId).subscribe({
         next: () => {
-          this.toastService.success('Task completion reset successfully. Task can now be completed again this week.');
+          this.toastService.success('Task completion reset successfully. Task can now be completed again this period.');
           this.loadTaskDetails();
 
           // Reload execution history
