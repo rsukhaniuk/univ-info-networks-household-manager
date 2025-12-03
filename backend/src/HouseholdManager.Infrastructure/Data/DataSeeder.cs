@@ -32,6 +32,7 @@ namespace HouseholdManager.Infrastructure.Data
 
         /// <summary>
         /// Seeds all required data
+        /// NOTE: Seed data disabled - users are automatically synced from Auth0 via UserSyncMiddleware
         /// </summary>
         public async Task SeedAsync()
         {
@@ -41,19 +42,22 @@ namespace HouseholdManager.Infrastructure.Data
                 await _context.Database.MigrateAsync();
 
                 // Seed admin user if configured
-                await SeedAdminUserAsync();
+                // DISABLED: Admin is not seeded because users and roles are managed in Auth0.
+                // await SeedAdminUserAsync();
 
                 // Optionally seed test data in development
-                if (_configuration.GetValue<bool>("Seeding:EnableTestData"))
-                {
-                    await SeedTestDataAsync();
-                }
+                // DISABLED: Test data seeding disabled — all households and items are created
+                // by authenticated users; no pre-populated records are needed.
+                // if (_configuration.GetValue<bool>("Seeding:EnableTestData"))
+                // {
+                //     await SeedTestDataAsync();
+                // }
 
-                _logger.LogInformation("Database seeding completed successfully");
+                _logger.LogInformation("Database migrations completed successfully (seeding disabled)");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while seeding the database");
+                _logger.LogError(ex, "An error occurred while applying database migrations");
                 throw;
             }
         }

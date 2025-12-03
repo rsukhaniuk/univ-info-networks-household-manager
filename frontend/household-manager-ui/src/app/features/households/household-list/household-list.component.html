@@ -210,7 +210,7 @@
                   @if (isSystemAdmin$ | async) {
                   <span class="badge bg-danger"> <i class="fas fa-shield-alt me-1"></i>Admin </span>
                   } @else if (h.role === 'Owner') {
-                  <span class="badge bg-primary"> <i class="fas fa-crown me-1"></i>Owner </span>
+                  <span class="badge bg-warning text-dark"> <i class="fas fa-crown me-1"></i>Owner </span>
                   } @else {
                   <span class="badge bg-success"> <i class="fas fa-user me-1"></i>Member </span>
                   }

@@ -370,6 +370,20 @@ namespace HouseholdManager.Application.Services
         {
             _logger.LogInformation("Checking if user {UserId} can delete account", userId);
 
+            // SystemAdmin cannot delete their account
+            if (await IsSystemAdminAsync(userId, cancellationToken))
+            {
+                return new AccountDeletionCheckResult
+                {
+                    CanDelete = false,
+                    OwnedHouseholdsCount = 0,
+                    MemberHouseholdsCount = 0,
+                    AssignedTasksCount = 0,
+                    OwnedHouseholdNames = new List<string>(),
+                    Message = "System administrators cannot delete their account. Please contact another administrator."
+                };
+            }
+
             var (soleOwnedCount, memberCount, assignedTasksCount, soleOwnedHouseholdNames) =
                 await _userRepository.GetUserDeletionInfoAsync(userId, cancellationToken);
 
@@ -404,6 +418,12 @@ namespace HouseholdManager.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogWarning("Starting account deletion for user {UserId}", userId);
+
+            // 0. Prevent SystemAdmin from deleting their account
+            if (await IsSystemAdminAsync(userId, cancellationToken))
+            {
+                throw new ValidationException("System administrators cannot delete their account. Please contact another administrator.");
+            }
 
             // 1. Get sole-owner households to delete
             var soleOwnerHouseholdIds = await _userRepository.GetSoleOwnerHouseholdIdsAsync(userId, cancellationToken);

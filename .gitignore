@@ -386,3 +386,8 @@ certs/**/*.pfx
 .env
 .env.local
 .env.*.local
+.env.k6
+
+# k6 performance tests (screenshots only - summary JSONs are small and can be committed)
+performance-tests/screenshots/*.png
+performance-tests/screenshots/*.jpg

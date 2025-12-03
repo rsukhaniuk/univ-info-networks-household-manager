@@ -1,12 +1,12 @@
 {
   "/api": {
-    "target": "https://localhost:7246",
+    "target": "https://localhost:7047",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/uploads": {
-    "target": "https://localhost:7246",
+    "target": "https://localhost:7047",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"

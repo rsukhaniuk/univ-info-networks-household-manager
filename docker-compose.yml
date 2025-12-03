@@ -5,9 +5,9 @@ services:
     image: postgres:16-alpine
     container_name: household-postgres
     environment:
-      POSTGRES_DB: household_manager
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-household_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +15,7 @@ services:
     networks:
       - household-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,11 +26,11 @@ services:
       dockerfile: backend/src/HouseholdManager.Api/Dockerfile
     container_name: household-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=https://+:443
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/localhost+1.pem
       - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/localhost+1-key.pem
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=household_manager;Username=postgres;Password=postgres
+      - ConnectionStrings__DefaultConnection=${DATABASE_URL}
       - Auth0__Domain=${AUTH0_DOMAIN}
       - Auth0__Audience=${AUTH0_AUDIENCE}
       - Auth0__ClientId=${AUTH0_CLIENT_ID}

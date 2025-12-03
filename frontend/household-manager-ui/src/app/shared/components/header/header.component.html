@@ -69,15 +69,6 @@
             </li>
           }
 
-          <!-- Admin panel -->
-          @if ((isAuthenticated$ | async) && (isSystemAdmin$ | async)) {
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/admin" routerLinkActive="active">
-                <i class="fas fa-users-cog me-1"></i>Admin Panel
-              </a>
-            </li>
-          }
-
           <!-- Public links -->
           @if (!(currentHousehold$ | async)) {
             <li class="nav-item">

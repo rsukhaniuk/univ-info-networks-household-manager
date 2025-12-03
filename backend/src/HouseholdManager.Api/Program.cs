@@ -234,6 +234,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Apply database migrations on startup
+// Test data seeding disabled - all households and items are created
+// by authenticated users; no pre-populated records are needed.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

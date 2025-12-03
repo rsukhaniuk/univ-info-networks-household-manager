@@ -111,13 +111,36 @@ namespace HouseholdManager.Application.Services
 
         public async Task<IReadOnlyList<HouseholdDto>> GetUserHouseholdsAsync(string userId, CancellationToken cancellationToken = default)
         {
-            var households = await _householdRepository.GetUserHouseholdsAsync(userId, cancellationToken);
+            // Check if user is SystemAdmin - they see ALL households
+            var isSystemAdmin = await _userRepository.IsSystemAdminAsync(userId, cancellationToken);
+
+            IReadOnlyList<Household> households;
+            if (isSystemAdmin)
+            {
+                // SystemAdmin sees all households
+                households = await _householdRepository.GetAllWithMembersAsync(cancellationToken);
+                _logger.LogInformation("SystemAdmin {UserId} fetching all households", userId);
+            }
+            else
+            {
+                // Regular users see only their households
+                households = await _householdRepository.GetUserHouseholdsAsync(userId, cancellationToken);
+            }
+
             var householdDtos = _mapper.Map<IReadOnlyList<HouseholdDto>>(households);
 
             // Асинхронно заповнюємо роль для кожного household
             foreach (var dto in householdDtos)
             {
-                dto.Role = await _memberRepository.GetUserRoleAsync(dto.Id, userId, cancellationToken);
+                if (isSystemAdmin)
+                {
+                    // SystemAdmin always has Owner role
+                    dto.Role = HouseholdRole.Owner;
+                }
+                else
+                {
+                    dto.Role = await _memberRepository.GetUserRoleAsync(dto.Id, userId, cancellationToken);
+                }
             }
 
             return householdDtos;

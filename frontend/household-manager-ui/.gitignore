@@ -70,9 +70,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-/environments/environment*.ts
-/src/environments/environment*.ts
-
 # SSL certificates (local development only)
 *.pem
 *.key

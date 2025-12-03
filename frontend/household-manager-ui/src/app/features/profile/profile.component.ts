@@ -285,6 +285,12 @@ export class ProfileComponent implements OnInit {
    * First checks if user can delete account
    */
   openDeleteAccountDialog(): void {
+    // Prevent SystemAdmin from attempting to delete account
+    if (this.profile?.user.isSystemAdmin) {
+      this.toastService.error('System administrators cannot delete their account. Please contact another administrator.');
+      return;
+    }
+
     this.userService.canDeleteAccount().subscribe({
       next: (response) => {
         if (response.success && response.data) {
