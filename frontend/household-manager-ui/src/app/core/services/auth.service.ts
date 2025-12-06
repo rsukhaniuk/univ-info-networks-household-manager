@@ -82,7 +82,6 @@ export class AuthService {
   logout(): void {
     // Clear all cached data on logout
     this.householdContext.clearHousehold();
-    this.userService.clearProfileCache();
 
     this.auth0.logout({
       logoutParams: {

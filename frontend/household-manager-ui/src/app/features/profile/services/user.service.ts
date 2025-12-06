@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import {
   UserProfileDto,
@@ -20,33 +20,18 @@ import { ApiResponse } from '../../../core/models/api-response.model';
 })
 export class UserService {
   private api = inject(ApiService);
-  private profileCache$?: Observable<ApiResponse<UserProfileDto>>;
 
   /**
    * Get current user's profile with stats and households
-   * Cached to prevent multiple requests
    */
   getMyProfile(): Observable<ApiResponse<UserProfileDto>> {
-    if (!this.profileCache$) {
-      this.profileCache$ = this.api.get<UserProfileDto>('/users/me').pipe(
-        shareReplay({ bufferSize: 1, refCount: true })
-      );
-    }
-    return this.profileCache$;
-  }
-
-  /**
-   * Clear profile cache (call after profile update)
-   */
-  clearProfileCache(): void {
-    this.profileCache$ = undefined;
+    return this.api.get<UserProfileDto>('/users/me');
   }
 
   /**
    * Update current user's profile (firstName, lastName only)
    */
   updateMyProfile(request: UpdateProfileRequest): Observable<ApiResponse<UserDto>> {
-    this.clearProfileCache(); // Clear cache so next getMyProfile() fetches fresh data
     return this.api.put<UserDto>('/users/me', request);
   }
 
