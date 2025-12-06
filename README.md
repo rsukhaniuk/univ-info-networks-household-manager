@@ -1,6 +1,10 @@
 # 🏠 Household Manager
 A web application for managing household chores and distributing responsibilities among residents.
 
+> **⚠️ OUTDATED DOCUMENTATION**
+> This README describes LAB1 (old MVC architecture). The current project uses Angular SPA + .NET Web API with Auth0.
+> Updated documentation coming soon.
+
 ## 📋 Overview
 Household Manager is an ASP.NET Core MVC application designed to help families and roommates organize their living spaces, assign tasks, and track completion of household chores. The system supports multiple households, role-based permissions, and task assignment.
 
