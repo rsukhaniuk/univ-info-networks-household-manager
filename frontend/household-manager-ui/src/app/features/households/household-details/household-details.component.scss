@@ -82,6 +82,13 @@
   }
 }
 
+// Room card hover effect (for inline cards)
+.hover-shadow:hover {
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
+  transform: translateY(-2px);
+  border-color: rgba(25, 135, 84, 0.3) !important;
+}
+
 // Task items
 .task-list {
   .task-item {

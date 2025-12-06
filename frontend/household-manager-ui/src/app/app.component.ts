@@ -36,7 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
       window.location.replace(newUrl);
     }
 
-    // Clear global errors and toasts on navigation (except callback page)
+    // Clear global errors and old toasts on navigation (except callback page)
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
@@ -44,7 +44,9 @@ export class AppComponent implements OnInit, OnDestroy {
         // This allows errors from auth flows to be displayed
         if (!event.url.includes('/callback')) {
           this.serverErrorService.clear();
-          this.toastService.clear();
+          // Clear only old toasts (>500ms), keep recent ones to allow
+          // success messages to display after redirects
+          this.toastService.clearOld(500);
         }
       });
   }

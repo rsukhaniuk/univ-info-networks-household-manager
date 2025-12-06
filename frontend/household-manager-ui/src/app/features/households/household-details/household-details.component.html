@@ -178,19 +178,25 @@
                   <div class="row">
                     @for (room of household.rooms; track room.id) {
                       <div class="col-sm-6 mb-3">
-                        <div class="border rounded p-3 h-100">
-                          <div class="d-flex align-items-center mb-2">
-                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-2"
-                                 style="width: 30px; height: 30px;">
-                              <i class="fas fa-door-open text-white"></i>
+                        <a [routerLink]="['/rooms', room.id]"
+                           [queryParams]="{householdId: household.household.id}"
+                           class="text-decoration-none text-reset">
+                          <div class="border rounded p-3 h-100 hover-shadow" style="cursor: pointer; transition: box-shadow 0.2s;">
+                            <div class="d-flex align-items-center mb-2">
+                              <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-2"
+                                   style="width: 30px; height: 30px;">
+                                <i class="fas fa-door-open text-white"></i>
+                              </div>
+                              <h6 class="mb-0">{{ room.name }}</h6>
                             </div>
-                            <h6 class="mb-0">{{ room.name }}</h6>
+                            @if (room.description) {
+                              <p class="text-muted small mb-2">{{ room.description }}</p>
+                            }
+                            <small class="text-muted">
+                              <i class="fas fa-tasks me-1"></i>{{ room.activeTaskCount }} tasks
+                            </small>
                           </div>
-                          @if (room.description) {
-                            <p class="text-muted small mb-2">{{ room.description }}</p>
-                          }
-                          <small class="text-muted">{{ room.activeTaskCount }} tasks</small>
-                        </div>
+                        </a>
                       </div>
                     }
                   </div>

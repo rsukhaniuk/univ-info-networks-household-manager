@@ -5,6 +5,7 @@ export interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
+  createdAt: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +20,8 @@ export class ToastService {
     const toast: Toast = {
       id: this.nextId++,
       message,
-      type
+      type,
+      createdAt: Date.now()
     };
 
     const currentToasts = this.toastsSubject.value;
@@ -54,5 +56,12 @@ export class ToastService {
 
   clear(): void {
     this.toastsSubject.next([]);
+  }
+
+  clearOld(minAge: number = 500): void {
+    const now = Date.now();
+    const currentToasts = this.toastsSubject.value;
+    const recentToasts = currentToasts.filter(t => (now - t.createdAt) < minAge);
+    this.toastsSubject.next(recentToasts);
   }
 }
