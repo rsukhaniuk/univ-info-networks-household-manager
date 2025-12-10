@@ -206,8 +206,7 @@ npm start
 │   ├── stress-test.js
 │   └── results/                               # Test results
 ├── certs/                                     # SSL/TLS certificates (local dev)
-│   ├── frontend/                              # nginx & backend certificates (*.pem - not in git)
-│   └── README.md                              # Certificate setup guide
+│   └── frontend/                              # nginx & backend certificates (*.pem - not in git)
 ├── security-reports/                          # Security audit reports
 ├── lab1-mvc-legacy/                           # Lab 1: Legacy MVC version
 ├── docker-compose.yml                         # Docker services config
@@ -429,21 +428,7 @@ This project was developed as part of the **Information Networks** course, evolv
 
 **Focus:** Security audit, vulnerability assessment, secure coding practices
 
-## 🤝 Contributing
-
-This is an academic project for the Information Networks course at university.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 👤 Author
 
 **Roman Sukhaniuk**
 - GitHub: [@rsukhaniuk](https://github.com/rsukhaniuk)
-
----
-
-**Status**: ✅ Active Development
-
-For issues and questions, please use the GitHub Issues page.
