@@ -209,6 +209,7 @@ npm start
 │   └── frontend/                              # nginx & backend certificates (*.pem - not in git)
 ├── security-reports/                          # Security audit reports
 ├── lab1-mvc-legacy/                           # Lab 1: Legacy MVC version
+├── .github/workflows/                         # GitHub Actions (backend CI/CD)
 ├── docker-compose.yml                         # Docker services config
 ├── HouseholdManager.sln                       # .NET solution file
 ├── .env.example                               # Environment template
