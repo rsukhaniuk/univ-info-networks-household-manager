@@ -105,6 +105,9 @@ namespace HouseholdManager.Api.Controllers
 
             var user = await _userService.UpdateProfileAsync(userId, request, cancellationToken);
 
+            // Clear sync cache so next request will re-sync updated profile from Auth0
+            UserSyncMiddleware.ClearCache(userId);
+
             return Ok(ApiResponse<UserDto>.SuccessResponse(
                 user,
                 "Profile updated successfully"));

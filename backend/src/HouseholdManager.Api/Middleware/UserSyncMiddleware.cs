@@ -66,47 +66,48 @@ namespace HouseholdManager.Api.Middleware
                 return;
             }
 
-            // Check if user was synced recently (within cache duration)
-            if (_syncCache.TryGetValue(userId, out var lastSync))
-            {
-                if (DateTime.UtcNow - lastSync < _cacheDuration)
-                {
-                    // User synced recently, skip
-                    _logger.LogTrace(
-                        "User {UserId} synced {Seconds} seconds ago, skipping sync",
-                        userId,
-                        (DateTime.UtcNow - lastSync).TotalSeconds);
-                    return;
-                }
-            }
-
-            // Check if user exists in database
+            // Check if user exists in database FIRST
             var userExists = await userRepository.ExistsAsync(userId);
 
             if (!userExists)
             {
-                // User doesn't exist in DB, sync from Auth0
+                // User doesn't exist in DB, sync from Auth0 immediately (no cache check)
                 _logger.LogInformation(
-                    "User {UserId} not found in database, syncing from Auth0",
+                    "User {UserId} not found in database, syncing from Auth0 (bypassing cache)",
                     userId);
 
-                await PerformSyncAsync(context, userService, userId);
+                await PerformSyncAsync(context, userService, userId, isNewUser: true);
             }
             else
             {
+                // Check if user was synced recently (within cache duration)
+                if (_syncCache.TryGetValue(userId, out var lastSync))
+                {
+                    if (DateTime.UtcNow - lastSync < _cacheDuration)
+                    {
+                        // User synced recently, skip
+                        _logger.LogTrace(
+                            "User {UserId} synced {Seconds} seconds ago, skipping sync",
+                            userId,
+                            (DateTime.UtcNow - lastSync).TotalSeconds);
+                        return;
+                    }
+                }
+
                 // User exists, but sync anyway to update email/profile if changed
                 _logger.LogTrace(
                     "User {UserId} already exists in database, syncing to update profile",
                     userId);
 
-                await PerformSyncAsync(context, userService, userId);
+                await PerformSyncAsync(context, userService, userId, isNewUser: false);
             }
         }
 
         private async Task PerformSyncAsync(
             HttpContext context,
             IUserService userService,
-            string userId)
+            string userId,
+            bool isNewUser)
         {
             // Extract user data from JWT token claims
             var email = context.User.FindFirst(ClaimTypes.Email)?.Value
@@ -162,9 +163,10 @@ namespace HouseholdManager.Api.Middleware
             _syncCache[userId] = DateTime.UtcNow;
 
             _logger.LogInformation(
-                "Successfully synced user {UserId} ({Email}) from Auth0 to database",
+                "Successfully synced user {UserId} ({Email}) from Auth0 to database (new user: {IsNewUser})",
                 userId,
-                email);
+                email,
+                isNewUser);
         }
 
         /// <summary>
